@@ -55,7 +55,7 @@ class App extends Component {
            numerator: 24, denominator: 24, swing: true},
       {key: 9, value: '5/4', numerator: 5, denominator: 4, swing: false},
       {key: 10, value: '10/8', 
-           numerator: 8, denominator: 10, swing: false},
+           numerator: 10, denominator: 8, swing: false},
       {key: 11, value: '7/4', numerator: 7, denominator: 4, swing: false},
       {key: 12, value: '14/8', numerator: 14, denominator: 8, swing: false},
       {key: 13, value: '7/8', numerator: 7, denominator: 8, swing: false},
