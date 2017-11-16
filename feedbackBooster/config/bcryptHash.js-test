@@ -1,0 +1,7 @@
+const bcrypt = require('bcrypt')
+const plainPass = 'admin'
+const saltRounds = 10
+
+bcrypt.hash(plainPass, saltRounds, function (err, hash) {
+// console.log(hash)
+})

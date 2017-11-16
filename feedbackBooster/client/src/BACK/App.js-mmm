@@ -1,0 +1,187 @@
+
+import { BrowserRouter as Router, Route, Link, Redirect, withRouter } 
+  from 'react-router-dom'
+
+class App extends Component {
+  constructor(props){
+    super(props)
+    this.state = {
+      authenticated: false
+    }
+    this.setState = this.setState.bind(this)
+  }
+
+  componentDidMount(){
+    const token = localStorage.getItem('token')
+    if (token) {
+       this.setState({authenticated : true})
+       console.log('App: Token')
+       console.log(token)
+    } else console.log('App: No Token')
+  }
+
+  render() {
+     // <Route path = '/LoginForm' component={LoginForm} />
+     // <li><Link to="/LoginForm">Login</Link></li>
+
+/*
+    return (
+     <Router>
+     <div>
+     <h1>Feedback Booster Controller</h1>
+     Just start applicaiton if your browser has a valid JSON web token.
+     If the token is invalid, try clear and login.
+     <ul>
+     <li><Link to="/clearToken">Clear JWT</Link></li>
+     <li><Link to="/ApplicationUI">ApplicationUI</Link></li>
+     </ul>
+     <Route path = '/clearToken' component={clearToken} />
+     <Route path = '/ApplicationUI' component={ApplicationUI} />
+     </div>
+     </Router>
+    )
+*/
+   return (<div>Hello</div>)
+  }
+
+}
+
+class clearToken extends Component {  
+
+  constructor(props){
+    super(props)
+    localStorage.removeItem('token') 
+//    localStorage.clear('token') 
+  }
+
+  render(){
+    const token = localStorage.getItem('token')
+    if (token){
+     return (
+      <div>JSON Web Token:<br />{token}</div>
+     )
+    } else {
+     return (
+      <div>JSON Web Token cleared</div>
+     )
+    }
+  }
+}
+
+class LoginForm extends Component {
+
+  constructor(props){
+    super(props)
+    this.state = {
+      id: '',
+      pw: '',
+      authenticated: false,
+      message: ''
+    }
+    this.changeValue = this.changeValue.bind(this)
+    this.sendForm = this.sendForm.bind(this)
+    this.setState = this.setState.bind(this)
+  } 
+
+  componentDidMount(){
+    const token = localStorage.getItem('token')
+    if (token) this.setState({authenticated : true})
+  }
+
+  render() {
+    console.log('LoginForm render()')
+
+    if (this.state.authenticated){
+       console.log('LoginForm: Has JWT')
+     /*
+       return (
+        <div>
+        {message}
+        <Router>
+        <div>
+        <Link to="/">Top</Link>, 
+        <Link to="/ApplicationUI">App</Link>
+        <Route path='/' component={App} />
+        <Route path='/ApplicationUI' component={ApplicationUI} />
+        </div>
+        </Router>
+        </div>
+       )
+     */
+     return (<div>{this.state.message}</div>)
+    } 
+
+     console.log('LoginForm: LoginForm')
+     return (
+     <div>
+     <h3>Login</h3>
+     <form onSubmit={this.sendForm}>
+     User: <input type="text" name="id" value={this.state.id} 
+      onChange={this.changeValue} /><br />
+     Pass: <input type="password" name="pw" value={this.state.pw} 
+      onChange={this.changeValue} /><br />
+     <input type="submit" value="Submit" />
+     </form>
+     </div>
+     )
+  }
+
+  changeValue(e){
+    e.preventDefault()
+    this.setState({[e.target.name] : e.target.value})
+  }
+
+  sendForm(e){
+    e.preventDefault() // required
+
+    const id = encodeURIComponent(this.state.id)  
+    const pw = encodeURIComponent(this.state.pw)  
+    const formData = `id=${id}&pw=${pw}`
+
+    const xhr = new XMLHttpRequest()
+    xhr.open('get', `/login?${formData}`)
+    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+    xhr.responseType = 'json'
+
+    xhr.addEventListener('load', function() {
+      console.log('got JSON reply, status = ' + xhr.status)
+      if (xhr.status === 200) {
+        if (xhr.response.token) {
+          localStorage.setItem('token', xhr.response.token)
+          this.setState({authenticated : true})
+  //        this.setState({message : 'token received'})
+        } else console.log('No token received')
+      }
+
+    })
+
+    console.log('sending: ' +  formData)
+    xhr.send(formData)
+  }
+
+} // end LoginForm
+
+class ApplicationUI extends Component {
+  constructor(props){
+    super(props)
+    this.state = {
+    }
+  }
+
+  componentDidMount(){
+    const token = localStorage.getItem('token')
+    // add Authentication Header
+    // get parameters over XHLhttpRequest
+  }
+
+  render() {
+    return (
+     <div>
+     <h1>Feedback Booster UI</h1>
+     </div>
+    )
+  }
+
+}
+
+export default App

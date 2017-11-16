@@ -1,0 +1,9 @@
+<Route path='manage/:roomId' component={RoomsManagerManageRoom} onEnter={requireAuth}>
+<IndexRoute component={RoomSessions} onEnter={requireAuth} />
+<Route path='sessions' component={RoomSessions} onEnter={requireAuth} />
+<Route path='meetings' component={RoomMeetings} onEnter={requireAuth} />
+<Route path='files' component={RoomFiles} onEnter={requireAuth} />
+<Route path='recordings' component={RoomRecordings} onEnter={requireAuth} />
+<Route path='sections' component={RoomSections} onEnter={requireAuth} />
+<Route path='hosts' component={RoomHosts} onEnter={requireAuth} />
+</Route>
