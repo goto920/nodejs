@@ -142,7 +142,8 @@ class App extends Component {
       this.tickEvent = this.clock.callbackAtTime(
          this.playClick,
         context.currentTime
-      ).repeat(60/num) 
+      ).tolerance({early: 0.01, late: 0.01})
+       .repeat(60.0/num) 
 
     }
 
