@@ -101,25 +101,57 @@ class App extends Component {
     return (
       <div className="metronome">
         <div>
-        Beat(presets): 
-         <select name="preset" defaultValue={this.state.preset} 
+        Beat(presets): <select name="preset" defaultValue={this.state.preset} 
            onChange = {this.handleSelect}>
          {options}
-         </select><hr />
+         </select>
+        <hr />
         </div>
-        <div>
-        <input type="number" name="bpm_number"
+        <div className="number">
+        BPM({min_bpm}--{max_bpm}): <input type="number" name="bpm_number"
            min={min_bpm} max={max_bpm} value={bpm} step="0.1"
-         onChange = {this.handleChange} /> BPM in 1/4 note
+         onChange = {this.handleChange} />
+        <button onClick={this.startStop}>
+          {playing ? 'Stop' : 'Start'}
+        </button>
         </div>
         <div className="bpm-slider">
         <input type="range" name="bpm_slider"
           min={min_bpm} max={max_bpm} value={bpm} step="0.1"
           onChange = {this.handleChange} />
         </div>
-        <button onClick={this.startStop}>
-          {playing ? 'Stop' : 'Start'}
-        </button>
+        <hr />
+        Drummer Options(not implemented yet)<br />
+        <div className="number">
+        Swing(normal 0.5): <input type="number" name="swing" 
+        min="0.0" max="1.0" value="0.5" step="0.1" />
+        </div>
+       <div className="number">
+        Incr (bpm) <input type="number" name="increment"
+           min="0" max="10" value="2"
+         onChange = {this.handleChange} />
+         (/bars) <select name="bars" onChange = {this.handleSelect}>
+         <option value="1">1</option>
+         <option value="2">2</option>
+         <option value="4">4</option>
+         <option value="8">8</option>
+         <option value="12">12</option>
+         <option value="16">16</option>
+         </select>
+         </div>
+        <div className="number">
+        Rnd Rest (bars) <select name="rests" onChange = {this.handleSelect}>
+         <option value="1">1</option>
+         <option value="2">2</option>
+         <option value="4">4</option>
+         <option value="8">8</option>
+         <option value="12">12</option>
+         <option value="16">16</option>
+         </select>
+         &nbsp; (prob) <input type="number" name="prob"
+           min="0.0" max="1.0" value="0.1" step="0.1"
+         onChange = {this.handleChange} />
+        </div>
       </div>
     )
   } // end render()
@@ -142,7 +174,7 @@ class App extends Component {
       this.tickEvent = this.clock.callbackAtTime(
          this.playClick,
         context.currentTime
-      ).tolerance({early: 0.01, late: 0.01})
+      ).tolerance({early: 0.007, late: 0.007})
        .repeat(60.0/num) 
 
     }
