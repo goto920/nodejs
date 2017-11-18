@@ -4,9 +4,6 @@ import BufferLoader from './buffer-loader'
 //import click2 from './resources/cowbell-low.wav'
 import WAAClock from 'waaclock'
 
-//import click1 from './resources/cowbell-high.wav'
-//console.log(click1.length)
-
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
