@@ -203,19 +203,19 @@ class App extends Component {
         // even
            this.evenEvent = this.clock.callbackAtTime(
            currentTime
-          ).tolerance({early: 0.01, late: 0.01})
+          ).tolerance({early: 0.02, late: 0.02})
            .repeat(60.0/clickPmin*2) 
         // odd
           this.oddEvent = this.clock.callbackAtTime(
             this.playClick,
             currentTime + 60.0/clickPmin*2*this.state.swingVal/3.0
-          ).tolerance({early: 0.01, late: 0.01})
+          ).tolerance({early: 0.02, late: 0.02})
            .repeat(60.0/clickPmin*2) 
         } else {
          this.tickEvent = this.clock.callbackAtTime(
            this.playClick,
            context.currentTime
-         ).tolerance({early: 0.01, late: 0.01})
+         ).tolerance({early: 0.02, late: 0.02})
           .repeat(60.0/clickPmin) 
         }
       }
@@ -251,20 +251,20 @@ class App extends Component {
         this.evenEvent = this.clock.callbackAtTime(
           this.playClick,
           currentTime
-        ).tolerance({early: 0.01, late: 0.01})
+        ).tolerance({early: 0.02, late: 0.02})
          .repeat(60.0/clickPmin*2) 
         // odd
         this.oddEvent = this.clock.callbackAtTime(
           this.playClick,
           currentTime + 60.0/clickPmin*2*this.state.swingVal/3.0
-        ).tolerance({early: 0.01, late: 0.01})
+        ).tolerance({early: 0.02, late: 0.02})
          .repeat(60.0/clickPmin*2) 
 
       } else {
         this.tickEvent = this.clock.callbackAtTime(
           this.playClick,
           context.currentTime
-        ).tolerance({early: 0.01, late: 0.01})
+        ).tolerance({early: 0.02, late: 0.02})
          .repeat(60.0/clickPmin) 
       }
 
