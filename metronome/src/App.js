@@ -269,7 +269,7 @@ class App extends Component {
       }
 
       if (this.state.timer > 0){
-         console.log('timer set')
+//       console.log('timer set')
 
          this.clock.callbackAtTime(function() {
            let rest = this.state.rest - 1
@@ -283,7 +283,7 @@ class App extends Component {
             this.tickEvent.clear()
             this.tickEvent = null
            }
-           this.setState({count: 0, playing: false})
+           this.setState({count: 0, playing: false, rest: this.state.timer})
          }.bind(this), this.state.timer)
       }
 
