@@ -7,12 +7,15 @@ import WAAClock from 'waaclock'
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
+var clock = new WAAClock(context, {toleranceEarly: 0.01, toleranceLate: 0.01})
 var gainNode = context.createGain()
+var version = '2017112000'
+
+clock.start()
 
 class App extends Component {
   constructor(props){
     super(props)
-    this.version = '2017111900'
     this.state = {
       timer: 0,
       rest: 0,
@@ -75,8 +78,6 @@ class App extends Component {
       {key: 17, value: '17/16', numerator: 17, denominator: 16, swing: false},
     ]
 
-    this.clock = null
-
   } // end constructor
 
   componentDidMount() {
@@ -101,7 +102,6 @@ class App extends Component {
     )
 
     bufferLoader.load()
-    this.clock = new WAAClock(context)
 
   }
 
@@ -114,7 +114,7 @@ class App extends Component {
 
     return (
       <div className="metronome">
-      Version: {this.version}
+      Version: {version}
       <hr />
         <div className="number"> 
          Beat: <select name="preset" defaultValue={this.state.preset} 
@@ -178,7 +178,7 @@ class App extends Component {
 
   changeTempo(newBpm, denominator){
       if(this.state.playing) {
-        this.clock.stop()
+        // clock.stop()
 
         if(this.tickEvent) {
            this.tickEvent.clear()
@@ -194,29 +194,26 @@ class App extends Component {
         }
         this.setState({count: 0})
 
-        this.clock.start()
+        // clock.start()
  
         let clickPmin = newBpm*denominator/4
 
         if(this.state.swing){
           var currentTime = context.currentTime
         // even
-           this.evenEvent = this.clock.callbackAtTime(
+           this.evenEvent = clock.callbackAtTime(
            currentTime
-          ).tolerance({early: 0.02, late: 0.02})
-           .repeat(60.0/clickPmin*2) 
+          ).repeat(60.0/clickPmin*2) 
         // odd
-          this.oddEvent = this.clock.callbackAtTime(
+          this.oddEvent = clock.callbackAtTime(
             this.playClick,
             currentTime + 60.0/clickPmin*2*this.state.swingVal/3.0
-          ).tolerance({early: 0.02, late: 0.02})
-           .repeat(60.0/clickPmin*2) 
+          ).repeat(60.0/clickPmin*2) 
         } else {
-         this.tickEvent = this.clock.callbackAtTime(
+         this.tickEvent = clock.callbackAtTime(
            this.playClick,
            context.currentTime
-         ).tolerance({early: 0.02, late: 0.02})
-          .repeat(60.0/clickPmin) 
+         ).repeat(60.0/clickPmin) 
         }
       }
       return
@@ -226,7 +223,7 @@ class App extends Component {
   startStop() {
 
     if (this.state.playing){
-      this.clock.stop()
+      // clock.stop()
       if (this.tickEvent) {
         this.tickEvent.clear()
         this.tickEvent = null
@@ -241,44 +238,41 @@ class App extends Component {
       }
       this.setState({count: 0, playing: false})
     } else {
-      this.clock.start()
+      // clock.start()
       let clickPmin = this.state.bpm*(this.state.denominator/4)
       this.setState({count: 0, playing: true})
 
       if (this.state.swing) {
         var currentTime = context.currentTime
         // even
-        this.evenEvent = this.clock.callbackAtTime(
+        this.evenEvent = clock.callbackAtTime(
           this.playClick,
           currentTime
-        ).tolerance({early: 0.02, late: 0.02})
-         .repeat(60.0/clickPmin*2) 
+        ).repeat(60.0/clickPmin*2) 
         // odd
-        this.oddEvent = this.clock.callbackAtTime(
+        this.oddEvent = clock.callbackAtTime(
           this.playClick,
           currentTime + 60.0/clickPmin*2*this.state.swingVal/3.0
-        ).tolerance({early: 0.02, late: 0.02})
-         .repeat(60.0/clickPmin*2) 
+        ).repeat(60.0/clickPmin*2) 
 
       } else {
-        this.tickEvent = this.clock.callbackAtTime(
+        this.tickEvent = clock.callbackAtTime(
           this.playClick,
           context.currentTime
-        ).tolerance({early: 0.02, late: 0.02})
-         .repeat(60.0/clickPmin) 
+        ).repeat(60.0/clickPmin) 
       }
 
       if (this.state.timer > 0){
 //       console.log('timer set')
 
-         this.clock.callbackAtTime(function() {
+         clock.callbackAtTime(function() {
            let rest = this.state.rest - 1
            this.setState({rest: rest})
          }.bind(this),1).repeat(1)
 
-         this.clock.setTimeout(function() {
+         clock.setTimeout(function() {
            // console.log('timer expired')
-           this.clock.stop()
+           // clock.stop()
            if (this.tickEvent) {
             this.tickEvent.clear()
             this.tickEvent = null
@@ -304,11 +298,11 @@ class App extends Component {
 
        if (swing){ 
         if(this.evenEvent && this.oddEvent)
-         this.clock.timeStretch(context.currentTime,
+         clock.timeStretch(context.currentTime,
           [this.evenEvent,this.oddEvent], bpm/newBpm)
        } else {
          if(this.tickEvent)
-           this.clock.timeStretch(context.currentTime,
+           clock.timeStretch(context.currentTime,
             [this.tickEvent], bpm/newBpm)
        }
      }
@@ -376,10 +370,11 @@ class App extends Component {
       let newBpm = parseFloat(event.target.value,10)
       this.setState({bpm: newBpm})
       if (this.state.swing){ 
-         this.clock.timeStretch(context.currentTime,
+         if (this.evenEvent && this.oddEvent)
+         clock.timeStretch(context.currentTime,
           [this.evenEvent,this.oddEvent], currentBpm/newBpm)
       } else {
-         this.clock.timeStretch(context.currentTime,
+         if (this.tickEvent) clock.timeStretch(context.currentTime,
           [this.tickEvent], currentBpm/newBpm)
       }
     }
