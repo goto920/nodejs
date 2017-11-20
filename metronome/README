@@ -5,3 +5,6 @@ https://www.quora.com/How-do-you-run-react-js-code-on-your-local
 WAAClock
 http://sebpiq.github.io/WAAClock/demos/tempoChange.html
 http://sebpiq.github.io/WAAClock/demos/beatSequence.html
+
+Real time setState https://qiita.com/kenfdev/items/dbe10e2f0256e22945ca
+this.setState(function(state,props) {return {count: state.count + 1};});
