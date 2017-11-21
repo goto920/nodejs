@@ -197,13 +197,13 @@ class App extends Component {
     } // stop
 
     if (event.target.name === 'restart' && this.state.playing){
+      this.setState({count: 0})
 
       for (let beat=0; beat < this.tickEvents.length; beat++)
           this.tickEvents[beat].clear() 
 
       // console.log('generate new tickEvents at: ' + this.state.bpm)
       let clickPmin = this.state.bpm*(this.state.denominator/4)
-      this.setState({count: 0})
 
       // let currentTime = context.currentTime
       for(let beat = 0; beat < this.state.numerator; beat++){
@@ -218,10 +218,10 @@ class App extends Component {
 
     if (event.target.name === 'startStop'){
       if (this.state.playing) {
+        this.setState({count: 0, playing: false})
         // console.log('# of events: ' + this.tickEvents.length)
         for (let beat=0; beat < this.tickEvents.length; beat++)
           this.tickEvents[beat].clear() 
-        this.setState({count: 0, playing: false})
         if(this.timer) {
            this.timer.clear()
            this.timeout.clear()
@@ -347,7 +347,7 @@ class App extends Component {
       this.setState({bpm: newBpm})
       setTimeout(() => {
         this.setState({bpm: newBpm})
-        console.log('newBpm: ' + newBpm + ' ' + this.state.bpm)
+        // console.log('newBpm: ' + newBpm + ' ' + this.state.bpm)
         if (this.state.bpm >= this.state.min_bpm && this.state.playing) 
           this.startStop({target: {name: 'restart'}})
       },200)
