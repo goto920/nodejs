@@ -10,7 +10,7 @@ var context = new AudioContext()
 // var clock = new WAAClock(context, {toleranceEarly: 0.02, toleranceLate: 0.02})
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017112000'
+var version = '2017112100'
 
 clock.start()
 
