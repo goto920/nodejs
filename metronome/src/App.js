@@ -7,10 +7,9 @@ import WAAClock from 'waaclock'
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
-// var clock = new WAAClock(context, {toleranceEarly: 0.02, toleranceLate: 0.02})
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017112100'
+var version = '2017112200'
 
 clock.start()
 
@@ -50,39 +49,48 @@ class App extends Component {
     this.handleSelect = this.handleSelect.bind(this)
     this.playClick = this.playClick.bind(this)
     this.nextTick = this.nextTick.bind(this)
-
     this.presets = [
-      {key: 0, value: '2/2', numerator: 2, denominator: 2, swing: false},
-      {key: 1, value: '3/4', numerator: 3, denominator: 4, swing: false},
-      {key: 2, value: '6/8', numerator: 6, denominator: 8, swing: false}, 
+      {key: 0, value: '2/2', numerator: 2, denominator: 2, 
+         swing: false, swingVal: 1.5},
+      {key: 1, value: '3/4', numerator: 3, denominator: 4, 
+         swing: false, swingVal: 1.5},
+      {key: 2, value: '6/8', numerator: 6, denominator: 8, 
+         swing: false, swingVal: 1.5},
       {key: 3, value: '6/8swing', numerator: 6, denominator: 8, 
         swing: true, swingVal: 2.0}, 
       {key: 4, value: '12/8', 
-           numerator: 12, denominator: 8, swing: false}, 
-      {key: 5, value:'4/4', numerator: 4, denominator: 4, swing: false},
+           numerator: 12, denominator: 8, swing: false, swingVal: 1.5}, 
+      {key: 5, value:'4/4', numerator: 4, denominator: 4, 
+           swing: false, swingVal: 1.5},
       {key: 6, value: '8/8', 
-            numerator: 8, denominator: 8, swing: false},
+            numerator: 8, denominator: 8, swing: false, swingVal: 1.5},
       {key: 7, value: '8/8swing', 
            numerator: 8, denominator: 8, swing: true, swingVal: 2.0},
       {key: 8, value: '16/16', 
-           numerator: 16, denominator: 16, swing: false},
+           numerator: 16, denominator: 16, swing: false, swingVal: 1.5},
       {key: 9, value: '16/16swing', 
            numerator: 16, denominator: 16, swing: true, swingVal: 2.0},
-      {key: 10, value: '5/4', numerator: 5, denominator: 4, swing: false},
-      {key: 11, value: '10/8', 
-           numerator: 10, denominator: 8, swing: 1.5},
-      {key: 12, value: '7/4', numerator: 7, denominator: 4, swing: false},
-      {key: 13, value: '14/8', numerator: 14, denominator: 8, swing: false},
-      {key: 14, value: '7/8', numerator: 7, denominator: 8, swing: false},
-      {key: 15, value: '14/16', numerator: 14, denominator: 16, swing: false},
-      {key: 16, value: '15/16', numerator: 15, denominator: 16, swing: false},
-      {key: 17, value: '17/16', numerator: 17, denominator: 16, swing: false},
+      {key: 10, value: '5/4', numerator: 5, denominator: 4, 
+           swing: false, swingVal: 1.5},
+      {key: 11, value: '10/8', numerator: 10, denominator: 8, 
+           swing: false, swingVal: 1.5},
+      {key: 12, value: '7/4', numerator: 7, denominator: 4, 
+           swing: false, swingVal: 1.5},
+      {key: 13, value: '14/8', numerator: 14, denominator: 8,
+           swing: false, swingVal: 1.5},
+      {key: 14, value: '7/8', numerator: 7, denominator: 8,
+           swing: false, swingVal: 1.5},
+      {key: 15, value: '14/16', numerator: 14, denominator: 16,
+           swing: false, swingVal: 1.5},
+      {key: 16, value: '15/16', numerator: 15, denominator: 16,
+           swing: false, swingVal: 1.5},
+      {key: 17, value: '17/16', numerator: 17, denominator: 16,
+           swing: false, swingVal: 1.5},
     ]
 
-    this.tickEvent = null
-    this.evenEvent = null
-    this.oddEvent = null
     this.tickEvents = []
+    this.count = 0
+    this.barCount = 0
  
 
   } // end constructor
@@ -189,23 +197,24 @@ class App extends Component {
 
     if (event.target.name === 'stop'){
       if (this.state.playing) {
+        this.setState({playing: false})
         for (let beat=0; beat < this.tickEvents.length; beat++)
           this.tickEvents[beat].clear() 
-        this.setState({count: 0, playing: false})
       }
+      this.count = 0
+      console.log('stop')
       return
     } // stop
 
     if (event.target.name === 'restart' && this.state.playing){
-      this.setState({count: 0})
 
       for (let beat=0; beat < this.tickEvents.length; beat++)
           this.tickEvents[beat].clear() 
 
-      // console.log('generate new tickEvents at: ' + this.state.bpm)
+      this.count = 0
+      this.startTime = context.currentTime
       let clickPmin = this.state.bpm*(this.state.denominator/4)
 
-      // let currentTime = context.currentTime
       for(let beat = 0; beat < this.state.numerator; beat++){
           let event = clock.callbackAtTime(
             function(event) {this.playClick(event.deadline)}.bind(this),
@@ -213,26 +222,32 @@ class App extends Component {
           ).repeat((this.state.numerator*60.0)/clickPmin) // parBar 
           this.tickEvents[beat] = event
       } // end for
+      console.log('restart')
       return
+
     } // end restart
 
     if (event.target.name === 'startStop'){
+
       if (this.state.playing) {
-        this.setState({count: 0, playing: false})
-        // console.log('# of events: ' + this.tickEvents.length)
+        this.setState({playing: false})
         for (let beat=0; beat < this.tickEvents.length; beat++)
           this.tickEvents[beat].clear() 
+        this.count = 0
         if(this.timer) {
            this.timer.clear()
            this.timeout.clear()
         }
+//        console.log('stop by startStop')
         return
       } // stop
 
-      // console.log('generate new tickEvents')
+      // start
       let clickPmin = this.state.bpm*(this.state.denominator/4)
-      this.setState({count: 0, playing: true})
-      // let currentTime = context.currentTime
+      this.setState({playing: true})
+
+      this.count = 0
+      this.startTime = context.currentTime
       for(let beat = 0; beat < this.state.numerator; beat++){
         let event = clock.callbackAtTime(
             function(event) {this.playClick(event.deadline)}.bind(this),
@@ -248,7 +263,7 @@ class App extends Component {
            this.setState({rest: rest})
          }.bind(this),1).repeat(1)
 
-         this.timeout = clock.setTimeout(function() {
+         this.timeout = clock.setTimeout(function(event) {
         //  console.log('timer expired')
          if (this.timer) this.timer.clear()
          this.startStop({target: {name: 'stop'}})
@@ -256,6 +271,7 @@ class App extends Component {
         }.bind(this), this.state.rest)
       } // end if timer
 
+//        console.log('start by startStop')
     } // button event
 
     return
@@ -264,68 +280,72 @@ class App extends Component {
 // https://github.com/sebpiq/WAAClock/blob/master/demos/beatSequence.js
    nextTick(beatInd) { 
 
-     var currentTime = context.currentTime
-     var beatDur = 60.0/(this.state.bpm*this.state.denominator/4)
-     var barDur  = beatDur*this.state.numerator
-     var currentBar = Math.floor(currentTime / barDur)  
-     var currentBeat = Math.round((currentTime % barDur) % beatDur)
+     const beatDur = 60.0/(this.state.bpm*this.state.denominator/4)
+     const barDur  = beatDur*this.state.numerator
 
-     if (currentBeat >= beatInd) currentBar++
+     const currentTime = context.currentTime
+     const relativeTime = currentTime - this.startTime
+     var currentBar = Math.floor(relativeTime / barDur)  
+     const currentBeat = Math.round((relativeTime % barDur) % beatDur)
 
-     let ret
+     if (currentBeat > beatInd) currentBar++
+
+     let offset = 0
      if (this.state.swing && (beatInd % 2) === 1){
-       ret = currentBar*barDur 
-           + (beatInd + (this.state.swingVal-1.5)/1.5)*beatDur
-     } else ret = currentBar*barDur + beatInd*beatDur
-   
-     return ret
+        const clickPmin = this.state.bpm*(this.state.denominator/4)
+        offset = ((this.state.swingVal - 1.5)/1.5 * 60.0)/clickPmin
+        // console.log(beatInd + ' offset ' + offset)
+     }
+
+     return currentTime + offset + currentBar*barDur + beatInd*beatDur
   }
 
   playClick(deadline) {
 
   // console.log('deadline = ' + deadline)
-     const {count,numerator,bpm,increment,barCount,perBars} = this.state
+     const {numerator,bpm,increment,perBars} = this.state
 
-     if(perBars > 0 && count === 0 && barCount > 0
-       && (barCount % perBars) === 0){
+     // automatic bpm increment
+     if(perBars > 0 && this.count === 0 && this.barCount > 0
+       && (this.barCount % perBars) === 0){
        let newBpm = bpm + increment
        this.setState({bpm: newBpm})
-//       console.log('bpm up to ' + newBpm + ' ' + barCount)
-       //this.startStop({target: {name: 'restart'}})
        clock.timeStretch(context.currentTime, this.tickEvents, bpm/newBpm)
-     }
+     } // end automatic bpm increment 
 
      let volume = 1.0
-     let mute = 1.0
+     let mute
 
-     if (this.state.muteBars > 0 && this.state.muteProb > 0 && count === 0){
+     // random mute
+     if (this.state.muteBars > 0 
+        && this.state.muteProb > 0 && this.count === 0){
        if (this.state.muteCount === this.state.muteBars){
-         console.log('mute off')
+         // console.log('mute off')
          this.setState({mute: false, muteCount: 0})
        } else {
-         let rand = Math.random()
          if (this.state.mute){ 
            this.setState({muteCount: this.state.muteCount+1})
-         } else if(rand < parseFloat(this.state.muteProb)){
+           console.log('mute cont' + this.state.muteCount)
+         } else if(Math.random() < parseFloat(this.state.muteProb)){
+           // console.log('mute on')
            this.setState({mute: true, muteCount: 1})
          }
        }
-     }
+     } // end random mute
 
-     if (this.state.mute) mute = 0.0
+     if (this.state.mute) mute = 0.0 
+     else mute = 1.0
 
      let source = context.createBufferSource()
-     let newBarCount = barCount
 
-     if(count % numerator === 0){
+     if(this.count === 0){
         source.buffer = this.state.click2
         volume = 1.0*mute
      } else {
         source.buffer = this.state.click3
         volume = 0.7*mute
-        if ((count + 1) % numerator === 0){ 
-           newBarCount++
-           this.setState({barCount: newBarCount})
+        if ((this.count + 1) % numerator === 0){ 
+           this.barCount++
         }
      }
 
@@ -334,8 +354,7 @@ class App extends Component {
      gainNode.gain.value = volume
      source.start(deadline)
 
-     let newCount = (count+1) % numerator
-     this.setState({count: newCount})
+     this.count = (this.count+1) % numerator
 
   } // end playClick
 
@@ -345,17 +364,20 @@ class App extends Component {
       // console.log('bpm change')
       let newBpm = parseFloat(event.target.value,10)
       this.setState({bpm: newBpm})
-      setTimeout(() => {
-        this.setState({bpm: newBpm})
-        // console.log('newBpm: ' + newBpm + ' ' + this.state.bpm)
-        if (this.state.bpm >= this.state.min_bpm && this.state.playing) 
-          this.startStop({target: {name: 'restart'}})
-      },200)
+      this.startStop({target: {name: 'stop'}})
+
+/*
+      if (this.state.bpm >= this.state.min_bpm && this.state.playing) 
+        clock.setTimeout(function(event) {
+          this.startStop({target: {name: 'restart'}}) }.bind(this),0.02)
+*/
+
     }
 
     if (event.target.name === 'swing'){ 
       this.setState({swingVal: parseFloat(event.target.value,10)})
-      if(this.state.playing) this.startStop({target: {name: 'restart'}})
+      clock.setTimeout(function(event) {
+          this.startStop({target: {name: 'restart'}}) }.bind(this),0.02)
     }
 
     if (event.target.name === 'increment') 
@@ -375,24 +397,23 @@ class App extends Component {
 
    if (event.target.name === 'preset') {
 
-//     console.log('preset: ' + event.target.value)
+     // console.log('preset changed') 
      const preset = this.presets[event.target.value]
-/*
-     console.log(
-     preset.key + ' ' 
-     + preset.value + ' ' + preset.numerator + ' ' 
-     + preset.denominator + ' ' + preset.swing + ' ' + preset.swingVal)
-*/
-      this.setState({
+     this.setState({
         count: 0,
         preset: preset.value,
         numerator: preset.numerator,
         denominator: preset.denominator,
         swing: preset.swing,
         swingVal: preset.swingVal
-      })
-      if (this.state.playing) 
-        this.startStop({target: {name: 'restart'}}) 
+     })
+
+     if (this.state.playing) {
+        clock.setTimeout(function(event) {
+          console.log('restarting') 
+          this.startStop({target: {name: 'restart'}}) 
+        }.bind(this),0.02)
+      }
     }
 
     if (event.target.name === 'perBars') 
