@@ -9,7 +9,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017112200'
+var version = '2017112201'
 
 clock.start()
 
@@ -35,7 +35,7 @@ class App extends Component {
       numerator: 4,
       denominator: 4,
       swing: false,
-      swingVal: 2.0, // 0(min),1,1.5(straight),2(full),3(max)
+      swingVal: 1.5, // 0(min),1,1.5(straight),2(full),3(max)
       click1: null,
       click2: null,
       click3: null,
@@ -220,6 +220,7 @@ class App extends Component {
             function(event) {this.playClick(event.deadline)}.bind(this),
             this.nextTick(beat)
           ).repeat((this.state.numerator*60.0)/clickPmin) // parBar 
+           .tolerance({early: 0.02, late: 0.02})
           this.tickEvents[beat] = event
       } // end for
       console.log('restart')
@@ -253,6 +254,8 @@ class App extends Component {
             function(event) {this.playClick(event.deadline)}.bind(this),
             this.nextTick(beat)
         ).repeat((this.state.numerator*60.0)/clickPmin) // parBar 
+         .tolerance({early: 0.02, late: 0.02})
+
         this.tickEvents[beat] = event
       } // end for
 
@@ -292,8 +295,7 @@ class App extends Component {
 
      let offset = 0
      if (this.state.swing && (beatInd % 2) === 1){
-        const clickPmin = this.state.bpm*(this.state.denominator/4)
-        offset = ((this.state.swingVal - 1.5)/1.5 * 60.0)/clickPmin
+        offset = (this.state.swingVal - 1.5)/1.5 * beatDur
         // console.log(beatInd + ' offset ' + offset)
      }
 
