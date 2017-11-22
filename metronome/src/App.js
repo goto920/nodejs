@@ -185,7 +185,7 @@ class App extends Component {
         </div>
       <hr />
       <div>
-      Set List: (TBD)
+      Set List: (TBD), Temp Tap (TBD)
       </div>
       </div>
     )
@@ -292,9 +292,9 @@ class App extends Component {
      const currentTime = context.currentTime
      const relativeTime = currentTime - this.startTime
      var currentBar = Math.floor(relativeTime / barDur)  
-     const currentBeat = Math.round((relativeTime % barDur) % beatDur)
 
-     if (currentBeat > beatInd) currentBar++
+   //  const currentBeat = Math.round((relativeTime % barDur) % beatDur)
+   //  if (currentBeat > beatInd) currentBar++
 
      let offset = 0
      if (this.state.swing && (beatInd % 2) === 1){
