@@ -223,7 +223,7 @@ class App extends Component {
             function(event) {this.playClick(event.deadline)}.bind(this),
             this.nextTick(beat)
           ).repeat((this.state.numerator*60.0)/clickPmin) // parBar 
-           .tolerance({early: 0.02, late: 0.02})
+           .tolerance({early: 0.01, late: 0.01})
           this.tickEvents[beat] = event
       } // end for
       console.log('restart')
@@ -257,7 +257,7 @@ class App extends Component {
             function(event) {this.playClick(event.deadline)}.bind(this),
             this.nextTick(beat)
         ).repeat((this.state.numerator*60.0)/clickPmin) // parBar 
-         .tolerance({early: 0.02, late: 0.02})
+         .tolerance({early: 0.01, late: 0.01})
 
         this.tickEvents[beat] = event
       } // end for
