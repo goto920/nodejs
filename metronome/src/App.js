@@ -202,7 +202,10 @@ class App extends Component {
           this.tickEvents[beat].clear() 
       }
       this.count = 0
-      console.log('stop')
+      if(this.timer) {
+           this.timer.clear()
+           this.timeout.clear()
+      }
       return
     } // stop
 
