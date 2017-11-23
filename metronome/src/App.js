@@ -9,7 +9,9 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017112300'
+var version = '2017112302'
+var early = 0.1
+var late = 1.0
 
 clock.start()
 
@@ -185,7 +187,8 @@ class App extends Component {
         </div>
       <hr />
       <div>
-      Set List: (TBD), Temp Tap (TBD)
+      Additional feature (thinking..)<br />
+      Set List, Tempo Tap, Sound variation
       </div>
       </div>
     )
@@ -223,7 +226,7 @@ class App extends Component {
             function(event) {this.playClick(event.deadline)}.bind(this),
             this.nextTick(beat)
           ).repeat((this.state.numerator*60.0)/clickPmin) // parBar 
-           .tolerance({early: 0.01, late: 0.01})
+           .tolerance({early: early, late: late})
           this.tickEvents[beat] = event
       } // end for
       console.log('restart')
@@ -257,7 +260,7 @@ class App extends Component {
             function(event) {this.playClick(event.deadline)}.bind(this),
             this.nextTick(beat)
         ).repeat((this.state.numerator*60.0)/clickPmin) // parBar 
-         .tolerance({early: 0.01, late: 0.01})
+         .tolerance({early: early, late: late})
 
         this.tickEvents[beat] = event
       } // end for
