@@ -9,7 +9,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017112302'
+var version = '2017112400'
 var early = 0.1
 var late = 1.0
 
@@ -134,13 +134,14 @@ class App extends Component {
       Version: {version}
       <hr />
         <div className="number"> 
-         Beat: <select name="preset" defaultValue={this.state.preset} 
+         Preset Beat: <select name="preset" defaultValue={this.state.preset} 
            onChange = {this.handleSelect}>
          {options}
-         </select>
-        &nbsp; BPM({min_bpm}--{max_bpm}): <input type="number" name="bpm_number"
+         </select><br />
+        BPM({min_bpm}-{max_bpm},0.1step): 
+        <input type="number" name="bpm_number"
            min={min_bpm} max={max_bpm} value={bpm} step="0.1"
-         onChange = {this.handleChange} />
+         onChange = {this.handleChange} /><br />
         &nbsp;&nbsp; <button name="startStop" onClick={this.startStop}>
           {playing ? 'Stop' : 'Start'}
         </button>
@@ -154,7 +155,7 @@ class App extends Component {
         Swing: <input type="number" name="swing" 
         min="0.0" max="3.0" value={this.state.swingVal} step="0.1" 
           onChange={this.handleChange} />
-        (0--1.5(straight),2.0(full)--3)
+        (0,1.5(str),2.0(swg),3)
         </div>
        <div className="number">
         Increment: bpm<input type="number" name="increment"
@@ -371,7 +372,7 @@ class App extends Component {
     if (event.target.name === 'bpm_number'){ 
       // console.log('bpm change')
       let newBpm = parseFloat(event.target.value,10)
-      this.setState({bpm: newBpm})
+      this.setState({bpm: newBpm.toFixed(1)})
       this.startStop({target: {name: 'stop'}})
 
 /*
