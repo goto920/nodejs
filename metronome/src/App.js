@@ -9,7 +9,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017112800'
+var version = '2017112900'
 var early = 0.1
 var late = 1.0
 
@@ -48,7 +48,10 @@ class App extends Component {
       voiceOne: null,
       voiceTwo: null,
       voiceThree: null,
-      voiceFour: null
+      voiceFour: null,
+      voiceFive: null,
+      voiceSix: null,
+      voiceSeven: null
     }
 
     this.setState = this.setState.bind(this)
@@ -116,7 +119,10 @@ class App extends Component {
           './resources/one-norm.wav',
           './resources/two-9.wav',
           './resources/three-6.wav',
-          './resources/four-6.wav'
+          './resources/four-6.wav',
+          './resources/five-6.wav',
+          './resources/six-6.wav',
+          './resources/seven-6.wav'
       ],
       function (bufferList) {
          this.setState({click1: bufferList[0]})
@@ -128,6 +134,9 @@ class App extends Component {
          this.setState({voiceTwo: bufferList[6]})
          this.setState({voiceThree: bufferList[7]})
          this.setState({voiceFour: bufferList[8]})
+         this.setState({voiceFive: bufferList[9]})
+         this.setState({voiceSix: bufferList[10]})
+         this.setState({voiceSeven: bufferList[11]})
          // console.log('BufferLoader loading finished')
       }.bind(this)
     )
@@ -377,9 +386,18 @@ class App extends Component {
         deadlineVoice -= 0.02
      } else if(voiceCount === 2){
         voice.buffer = this.state.voiceThree
-        deadlineVoice -= 0.01
+        deadlineVoice -= 0.02
      } else if(voiceCount === 3){
         voice.buffer = this.state.voiceFour
+        deadlineVoice -= 0.01
+     } else if(voiceCount === 4){
+        voice.buffer = this.state.voiceFive
+        deadlineVoice -= 0.01
+     } else if(voiceCount === 5){
+        voice.buffer = this.state.voiceSix
+        deadlineVoice -= 0.01
+     } else if(voiceCount === 6){
+        voice.buffer = this.state.voiceSeven
         deadlineVoice -= 0.01
      }
      
