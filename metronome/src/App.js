@@ -22,6 +22,7 @@ class App extends Component {
       timer: 0,
       rest: 0,
       playing: false, 
+      voice: false,
       count: 0, 
       min_bpm: 40,
       max_bpm: 240,
@@ -36,6 +37,7 @@ class App extends Component {
       preset: 5, // default 4/4
       numerator: 4,
       denominator: 4,
+      triplet: false,
       swing: false,
       swingVal: 1.5, // 0(min),1,1.5(straight),2(full),3(max)
       click1: null,
@@ -43,6 +45,10 @@ class App extends Component {
       click3: null,
       click4: null,
       click5: null,
+      voiceOne: null,
+      voiceTwo: null,
+      voiceThree: null,
+      voiceFour: null
     }
 
     this.setState = this.setState.bind(this)
@@ -52,41 +58,41 @@ class App extends Component {
     this.playClick = this.playClick.bind(this)
     this.nextTick = this.nextTick.bind(this)
     this.presets = [
-      {key: 0, value: '2/2', numerator: 2, denominator: 2, 
+      {key: 0, value: '2/2', triplet: false, numerator: 2, denominator: 2, 
          swing: false, swingVal: 1.5},
-      {key: 1, value: '3/4', numerator: 3, denominator: 4, 
+      {key: 1, value: '3/4', triplet: false, numerator: 3, denominator: 4, 
          swing: false, swingVal: 1.5},
-      {key: 2, value: '6/8', numerator: 6, denominator: 8, 
+      {key: 2, value: '6/8', triplet: false, numerator: 6, denominator: 8, 
          swing: false, swingVal: 1.5},
-      {key: 3, value: '6/8swing', numerator: 6, denominator: 8, 
+      {key: 3, value: '6/8swing', triplet: false, numerator: 6, denominator: 8, 
         swing: true, swingVal: 2.0}, 
-      {key: 4, value: '12/8', 
+      {key: 4, value: '12/8', triplet: true,
            numerator: 12, denominator: 8, swing: false, swingVal: 1.5}, 
-      {key: 5, value:'4/4', numerator: 4, denominator: 4, 
+      {key: 5, value:'4/4', triplet: false, numerator: 4, denominator: 4, 
            swing: false, swingVal: 1.5},
-      {key: 6, value: '8/8', 
+      {key: 6, value: '8/8', triplet: false, 
             numerator: 8, denominator: 8, swing: false, swingVal: 1.5},
-      {key: 7, value: '8/8swing', 
+      {key: 7, value: '8/8swing', triplet: false,
            numerator: 8, denominator: 8, swing: true, swingVal: 2.0},
-      {key: 8, value: '16/16', 
+      {key: 8, value: '16/16', triplet: false,
            numerator: 16, denominator: 16, swing: false, swingVal: 1.5},
-      {key: 9, value: '16/16swing', 
+      {key: 9, value: '16/16swing', triplet: false,
            numerator: 16, denominator: 16, swing: true, swingVal: 2.0},
-      {key: 10, value: '5/4', numerator: 5, denominator: 4, 
+      {key: 10, value: '5/4', triplet: false, numerator: 5, denominator: 4, 
            swing: false, swingVal: 1.5},
-      {key: 11, value: '10/8', numerator: 10, denominator: 8, 
+      {key: 11, value: '10/8', triplet: false, numerator: 10, denominator: 8, 
            swing: false, swingVal: 1.5},
-      {key: 12, value: '7/4', numerator: 7, denominator: 4, 
+      {key: 12, value: '7/4', triplet: false, numerator: 7, denominator: 4, 
            swing: false, swingVal: 1.5},
-      {key: 13, value: '14/8', numerator: 14, denominator: 8,
+      {key: 13, value: '14/8', triplet: false, numerator: 14, denominator: 8,
            swing: false, swingVal: 1.5},
-      {key: 14, value: '7/8', numerator: 7, denominator: 8,
+      {key: 14, value: '7/8', triplet: false, numerator: 7, denominator: 8,
            swing: false, swingVal: 1.5},
-      {key: 15, value: '14/16', numerator: 14, denominator: 16,
+      {key: 15, value: '14/16', triplet: false, numerator: 14, denominator: 16,
            swing: false, swingVal: 1.5},
-      {key: 16, value: '15/16', numerator: 15, denominator: 16,
+      {key: 16, value: '15/16', triplet: false, numerator: 15, denominator: 16,
            swing: false, swingVal: 1.5},
-      {key: 17, value: '17/16', numerator: 17, denominator: 16,
+      {key: 17, value: '17/16', triplet: false, numerator: 17, denominator: 16,
            swing: false, swingVal: 1.5},
     ]
 
@@ -107,6 +113,10 @@ class App extends Component {
           './resources/cowbell-mid.wav',
           './resources/cowbell-low.wav',
           './resources/cowbell-lower.wav',
+          './resources/one-norm.wav',
+          './resources/two-9.wav',
+          './resources/three-6.wav',
+          './resources/four-6.wav'
       ],
       function (bufferList) {
          this.setState({click1: bufferList[0]})
@@ -114,6 +124,10 @@ class App extends Component {
          this.setState({click3: bufferList[2]})
          this.setState({click4: bufferList[3]})
          this.setState({click5: bufferList[4]})
+         this.setState({voiceOne: bufferList[5]})
+         this.setState({voiceTwo: bufferList[6]})
+         this.setState({voiceThree: bufferList[7]})
+         this.setState({voiceFour: bufferList[8]})
          // console.log('BufferLoader loading finished')
       }.bind(this)
     )
@@ -123,7 +137,7 @@ class App extends Component {
   }
 
   render() {
-    const { playing, bpm, min_bpm, max_bpm } = this.state
+    const {voice,playing, bpm, min_bpm, max_bpm } = this.state
 
     const options = this.presets.map(e => {
       return (<option value={e.key} key={e.value}>{e.value}</option>)
@@ -137,7 +151,9 @@ class App extends Component {
          Preset Beat: <select name="preset" defaultValue={this.state.preset} 
            onChange = {this.handleSelect}>
          {options}
-         </select><br />
+         </select>
+          &nbsp;voice: <button name="voice" onClick={this.handleChange}>
+          {voice ? 'Off' : 'On'}</button><br />
         BPM({min_bpm}-{max_bpm},0.1step): 
         <input type="number" name="bpm_number"
            min={min_bpm} max={max_bpm} value={bpm} step="0.1"
@@ -312,7 +328,7 @@ class App extends Component {
   playClick(deadline) {
 
   // console.log('deadline = ' + deadline)
-     const {numerator,bpm,increment,perBars} = this.state
+     const {triplet,denominator,numerator,bpm,increment,perBars} = this.state
 
      // automatic bpm increment
      if(perBars > 0 && this.count === 0 && this.barCount > 0
@@ -346,7 +362,27 @@ class App extends Component {
      else mute = 1.0
 
      let source = context.createBufferSource()
+     let voice = context.createBufferSource()
 
+     let voiceCount
+     if(triplet) voiceCount = (this.count*4*2) / (denominator*3)
+     else voiceCount = (this.count*4) / denominator
+     // console.log('voiceCount: ' + voiceCount)
+     let deadlineVoice = deadline
+
+     if(voiceCount === 0){
+        voice.buffer = this.state.voiceOne
+     } else if(voiceCount === 1){
+        voice.buffer = this.state.voiceTwo
+        deadlineVoice -= 0.02
+     } else if(voiceCount === 2){
+        voice.buffer = this.state.voiceThree
+        deadlineVoice -= 0.01
+     } else if(voiceCount === 3){
+        voice.buffer = this.state.voiceFour
+        deadlineVoice -= 0.01
+     }
+     
      if(this.count === 0){
         source.buffer = this.state.click2
         volume = 1.0*mute
@@ -359,15 +395,22 @@ class App extends Component {
      }
 
      source.connect(gainNode)
+     if (this.state.voice) voice.connect(gainNode)
      gainNode.connect(context.destination)
      gainNode.gain.value = volume
      source.start(deadline)
+     if (this.state.voice) voice.start(deadlineVoice)
 
      this.count = (this.count+1) % numerator
 
   } // end playClick
 
   handleChange(event) {
+
+    if (event.target.name === 'voice'){ 
+      if (this.state.voice) this.setState({voice: false})
+      else this.setState({voice: true})
+    }
 
     if (event.target.name === 'bpm_number'){ 
       // console.log('bpm change')
@@ -411,6 +454,7 @@ class App extends Component {
      this.setState({
         count: 0,
         preset: preset.value,
+        triplet: preset.triplet,
         numerator: preset.numerator,
         denominator: preset.denominator,
         swing: preset.swing,
