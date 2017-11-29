@@ -9,7 +9,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017112900'
+var version = 'KG\'s Metronome 2017113000'
 var early = 0.1
 var late = 1.0
 
@@ -154,7 +154,7 @@ class App extends Component {
 
     return (
       <div className="metronome">
-      Version: {version}
+      Version: {version} 
       <hr />
         <div className="number"> 
          Preset Beat: <select name="preset" defaultValue={this.state.preset} 
@@ -342,7 +342,7 @@ class App extends Component {
      // automatic bpm increment
      if(perBars > 0 && this.count === 0 && this.barCount > 0
        && (this.barCount % perBars) === 0){
-       let newBpm = bpm + increment
+       let newBpm = parseFloat(bpm) + parseFloat(increment)
        this.setState({bpm: newBpm})
        clock.timeStretch(context.currentTime, this.tickEvents, bpm/newBpm)
      } // end automatic bpm increment 
