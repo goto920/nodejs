@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import './Metronome.css';
 import BufferLoader from './buffer-loader'
-//import click2 from './resources/cowbell-low.wav'
 import WAAClock from 'waaclock'
 
 // global variable
@@ -111,18 +110,19 @@ class App extends Component {
     let bufferLoader = new BufferLoader(
       context,
       [
-          './resources/cowbell-higher.wav',
-          './resources/cowbell-high.wav',
-          './resources/cowbell-mid.wav',
-          './resources/cowbell-low.wav',
-          './resources/cowbell-lower.wav',
-          './resources/one-norm.wav',
-          './resources/two-9.wav',
-          './resources/three-6.wav',
-          './resources/four-6.wav',
-          './resources/five-6.wav',
-          './resources/six-6.wav',
-          './resources/seven-6.wav'
+          './resources/cowbell-higher.mp3',
+          './resources/cowbell-high.mp3',
+          './resources/cowbell-mid.mp3',
+          './resources/cowbell-low.mp3',
+          './resources/cowbell-lower.mp3',
+          './resources/one-norm.mp3',
+          './resources/two-9.mp3',
+          './resources/three-6.mp3',
+          './resources/four-6.mp3',
+          './resources/five-6.mp3',
+          './resources/six-6.mp3',
+          './resources/seven-6.mp3',
+          './resources/eight-6.mp3'
       ],
       function (bufferList) {
          this.setState({click1: bufferList[0]})
