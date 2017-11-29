@@ -8,7 +8,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017113002'
+var version = '2017113004'
 var early = 0.1
 var late = 1.0
 
@@ -101,7 +101,11 @@ class App extends Component {
     this.tickEvents = []
     this.count = 0
     this.barCount = 0
- 
+    this.tap = {
+       count: 0,
+       msecsFirst: 0,
+       msecsPrevious: 0
+    }
 
   } // end constructor
 
@@ -170,6 +174,9 @@ class App extends Component {
         <input type="number" name="bpm_number"
            min={min_bpm} max={max_bpm} value={bpm} step="0.1"
          onChange = {this.handleChange} />
+        <span className="small-button">
+          <button name="tempo_tap" onClick={this.handleChange}>
+          TAP</button></span>
         </div>
         <div className="bpm-slider">
           <input type="range" name="bpm_slider"
@@ -224,7 +231,7 @@ class App extends Component {
       <hr />
       <div>
       Additional feature (thinking..)<br />
-      Set List, Tempo Tap, Sound variation
+      Set List, Sound variation
       </div>
       </div>
     )
@@ -438,6 +445,32 @@ class App extends Component {
     if (event.target.name === 'voice'){ 
       if (this.state.voice) this.setState({voice: false})
       else this.setState({voice: true})
+    }
+
+    if (event.target.name === 'tempo_tap'){ 
+// https://www.all8.com/tools/bpm.htm
+     let timeSeconds = new Date()
+     let msecs = timeSeconds.getTime() 
+
+     // console.log('TAP msec ' + msecs)
+
+     if ((msecs - this.tap.msecsPrevious) > 3000){ // timeout 3 sec
+       this.tap.count = 0;
+     }
+
+     if (this.tap.count === 0){
+       this.tap.msecsFirst = msecs
+       this.tap.count = 1
+     } else {
+       let newBpm = 60000 * this.tap.count / (msecs - this.tap.msecsFirst)
+       this.setState({bpm: newBpm.toFixed(1)})
+       clock.setTimeout(function(event) {
+          this.startStop({target: {name: 'restart'}}) }.bind(this),0.02)
+       this.tap.count++
+     }
+
+     this.tap.msecsPrevious = msecs
+
     }
 
     if (event.target.name === 'bpm_number'){ 
