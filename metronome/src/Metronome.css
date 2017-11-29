@@ -7,8 +7,9 @@
 }
 
 .bpm-slider input {
-  width: 90%;
-  margin: 10px;
+  width: 100%;
+  // margin: 10px;
+  margin: 0 auto;
 }
 
 .metronome button {
@@ -24,4 +25,14 @@
 .number input {
   width: 15%;
   margin: 10px;
+}
+
+.small-button button {
+  background: #0000ff;
+  padding: 10px;
+  border: 1px solid #832420;
+  border-radius: 2px;
+  width: 50px;
+  color: #fff;
+  font-size: 15px;
 }

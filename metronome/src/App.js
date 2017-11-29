@@ -9,7 +9,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = 'KG\'s Metronome 2017113000'
+var version = '2017113002'
 var early = 0.1
 var late = 1.0
 
@@ -154,28 +154,38 @@ class App extends Component {
 
     return (
       <div className="metronome">
-      Version: {version} 
+      KG's Metronome ({version}) 
       <hr />
-        <div className="number"> 
-         Preset Beat: <select name="preset" defaultValue={this.state.preset} 
+         Beat: <select name="preset" defaultValue={this.state.preset} 
            onChange = {this.handleSelect}>
          {options}
          </select>
-          &nbsp;voice: <button name="voice" onClick={this.handleChange}>
-          {voice ? 'Off' : 'On'}</button><br />
-        BPM({min_bpm}-{max_bpm},0.1step): 
+          &nbsp; 
+          <span className="small-button">
+           voice: <button name="voice" onClick={this.handleChange}>
+          {voice ? 'Off' : 'On'}</button></span><br />
+        <br />
+       <div className="number">
+        BPM({min_bpm}.0-{max_bpm}.9): &nbsp; 
         <input type="number" name="bpm_number"
            min={min_bpm} max={max_bpm} value={bpm} step="0.1"
-         onChange = {this.handleChange} /><br />
-        &nbsp;&nbsp; <button name="startStop" onClick={this.startStop}>
+         onChange = {this.handleChange} />
+        </div>
+        <div className="bpm-slider">
+          <input type="range" name="bpm_slider"
+          min={min_bpm} max={max_bpm} value={bpm} step="0.1"
+          onChange = {this.handleChange} />
+        </div><br />
+        <div className="number"> 
+        <button name="startStop" onClick={this.startStop}>
           {playing ? 'Stop' : 'Start'}
-        </button>
-        &nbsp;&nbsp; Timer: <input type="number" name="timer" 
+        </button> &nbsp; &nbsp;
+        Timer: <input type="number" name="timer" 
         min="0" max="180" value={this.state.timer} step="1" 
           onChange={this.handleChange} /> {this.state.rest}
         </div>
         <hr />
-        Advanced Options<br />
+        <font color="blue">Advanced Options</font><br />
         <div className="number">
         Swing: <input type="number" name="swing" 
         min="0.0" max="3.0" value={this.state.swingVal} step="0.1" 
@@ -435,14 +445,14 @@ class App extends Component {
       let newBpm = parseFloat(event.target.value,10)
       this.setState({bpm: newBpm.toFixed(1)})
       this.startStop({target: {name: 'stop'}})
-
-/*
-      if (this.state.bpm >= this.state.min_bpm && this.state.playing) 
-        clock.setTimeout(function(event) {
-          this.startStop({target: {name: 'restart'}}) }.bind(this),0.02)
-*/
-
     }
+
+    if (event.target.name === 'bpm_slider'){
+      let newBpm = parseFloat(event.target.value,10)
+      this.setState({bpm: newBpm.toFixed(1)})
+      clock.setTimeout(function(event) {
+          this.startStop({target: {name: 'restart'}}) }.bind(this),0.02)
+    } 
 
     if (event.target.name === 'swing'){ 
       this.setState({swingVal: parseFloat(event.target.value,10)})
