@@ -8,7 +8,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017113004'
+var version = '2017113006'
 var early = 0.1
 var late = 1.0
 
@@ -23,8 +23,8 @@ class App extends Component {
       playing: false, 
       voice: false,
       count: 0, 
-      min_bpm: 40,
-      max_bpm: 240,
+      min_bpm: 30.0,
+      max_bpm: 360.0,
       bpm: 100, 
       increment: 0,
       perBars: 0,
@@ -39,6 +39,7 @@ class App extends Component {
       triplet: false,
       swing: false,
       swingVal: 1.5, // 0(min),1,1.5(straight),2(full),3(max)
+      evenVol: 1.0,
       click1: null,
       click2: null,
       click3: null,
@@ -150,7 +151,7 @@ class App extends Component {
   }
 
   render() {
-    const {voice,playing, bpm, min_bpm, max_bpm } = this.state
+    const {voice,playing, bpm, min_bpm, max_bpm,evenVol} = this.state
 
     const options = this.presets.map(e => {
       return (<option value={e.key} key={e.value}>{e.value}</option>)
@@ -170,7 +171,7 @@ class App extends Component {
           {voice ? 'Off' : 'On'}</button></span><br />
         <br />
        <div className="number">
-        BPM({min_bpm}.0-{max_bpm}.9): &nbsp; 
+        BPM({min_bpm}.0-{max_bpm}.0): &nbsp; 
         <input type="number" name="bpm_number"
            min={min_bpm} max={max_bpm} value={bpm} step="0.1"
          onChange = {this.handleChange} />
@@ -201,7 +202,7 @@ class App extends Component {
         </div>
        <div className="number">
         Increment: bpm<input type="number" name="increment"
-           min="0" max="10" value={this.state.increment}
+           min="-10" max="10" value={this.state.increment}
          onChange = {this.handleChange} />
          /bars <select name="perBars" defaultValue={this.state.perBars}
            onChange={this.handleSelect}>
@@ -228,6 +229,9 @@ class App extends Component {
            min="0.0" max="1.0" value={this.state.muteProb} step="0.1"
          onChange={this.handleChange} />
         </div>
+        Even notes vol: {evenVol.toFixed(2)} <input type="range" name="evenVol"
+          min="0.0" max="1.0" value={evenVol} step="0.01"
+          onChange = {this.handleChange} />
       <hr />
       <div>
       Additional feature (thinking..)<br />
@@ -429,6 +433,12 @@ class App extends Component {
         }
      }
 
+     if (triplet){
+       if (this.count % 3 !== 2) volume *= this.state.evenVol
+     } else { 
+       if (this.count % 2 === 0) volume *= this.state.evenVol
+     }
+
      source.connect(gainNode)
      if (this.state.voice) voice.connect(gainNode)
      gainNode.connect(context.destination)
@@ -441,6 +451,12 @@ class App extends Component {
   } // end playClick
 
   handleChange(event) {
+    if (event.target.name === 'evenVol'){ 
+      if (this.state.evenVol) 
+         this.setState({evenVol: parseFloat(event.target.value)})
+      else 
+         this.setState({evenVol: 1.0})
+    }
 
     if (event.target.name === 'voice'){ 
       if (this.state.voice) this.setState({voice: false})
@@ -468,9 +484,7 @@ class App extends Component {
           this.startStop({target: {name: 'restart'}}) }.bind(this),0.02)
        this.tap.count++
      }
-
      this.tap.msecsPrevious = msecs
-
     }
 
     if (event.target.name === 'bpm_number'){ 
