@@ -235,7 +235,7 @@ class App extends Component {
       <hr />
       <div>
       Additional feature (thinking..)<br />
-      Set List, Sound variation
+      Set List, Sound variation, loop with presets
       </div>
       </div>
     )
