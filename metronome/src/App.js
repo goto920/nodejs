@@ -8,7 +8,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017113006'
+var version = '2017120100'
 var early = 0.1
 var late = 1.0
 
@@ -20,15 +20,16 @@ class App extends Component {
     this.state = {
       timer: 0,
       rest: 0,
+      barTimer: 0,
+      restBars: 0,
       playing: false, 
-      voice: false,
+      voice: 'c', // c(owbell) only, c+v, v(oice) only
       count: 0, 
       min_bpm: 30.0,
       max_bpm: 360.0,
       bpm: 100, 
       increment: 0,
       perBars: 0,
-      barCount: 0,
       muteBars: 0,
       muteProb: 0.0,
       muteCount: 0,
@@ -38,7 +39,7 @@ class App extends Component {
       denominator: 4,
       triplet: false,
       swing: false,
-      swingVal: 1.5, // 0(min),1,1.5(straight),2(full),3(max)
+      swingVal: 'N/A', // 0(min),1,1.5(straight),2(full),3(max)
       evenVol: 1.0,
       click1: null,
       click2: null,
@@ -60,43 +61,45 @@ class App extends Component {
     this.handleSelect = this.handleSelect.bind(this)
     this.playClick = this.playClick.bind(this)
     this.nextTick = this.nextTick.bind(this)
+    this.customPlay = this.customPlay.bind(this)
+
     this.presets = [
       {key: 0, value: '2/2', triplet: false, numerator: 2, denominator: 2, 
-         swing: false, swingVal: 1.5},
+         swing: false},
       {key: 1, value: '3/4', triplet: false, numerator: 3, denominator: 4, 
-         swing: false, swingVal: 1.5},
+         swing: false},
       {key: 2, value: '6/8', triplet: false, numerator: 6, denominator: 8, 
-         swing: false, swingVal: 1.5},
+         swing: false},
       {key: 3, value: '6/8swing', triplet: false, numerator: 6, denominator: 8, 
         swing: true, swingVal: 2.0}, 
       {key: 4, value: '12/8', triplet: true,
-           numerator: 12, denominator: 8, swing: false, swingVal: 1.5}, 
+           numerator: 12, denominator: 8, swing: false}, 
       {key: 5, value:'4/4', triplet: false, numerator: 4, denominator: 4, 
-           swing: false, swingVal: 1.5},
+           swing: false},
       {key: 6, value: '8/8', triplet: false, 
-            numerator: 8, denominator: 8, swing: false, swingVal: 1.5},
+            numerator: 8, denominator: 8, swing: false},
       {key: 7, value: '8/8swing', triplet: false,
            numerator: 8, denominator: 8, swing: true, swingVal: 2.0},
       {key: 8, value: '16/16', triplet: false,
-           numerator: 16, denominator: 16, swing: false, swingVal: 1.5},
+           numerator: 16, denominator: 16, swing: false},
       {key: 9, value: '16/16swing', triplet: false,
            numerator: 16, denominator: 16, swing: true, swingVal: 2.0},
       {key: 10, value: '5/4', triplet: false, numerator: 5, denominator: 4, 
-           swing: false, swingVal: 1.5},
+           swing: false},
       {key: 11, value: '10/8', triplet: false, numerator: 10, denominator: 8, 
-           swing: false, swingVal: 1.5},
+           swing: false},
       {key: 12, value: '7/4', triplet: false, numerator: 7, denominator: 4, 
-           swing: false, swingVal: 1.5},
+           swing: false},
       {key: 13, value: '14/8', triplet: false, numerator: 14, denominator: 8,
-           swing: false, swingVal: 1.5},
+           swing: false},
       {key: 14, value: '7/8', triplet: false, numerator: 7, denominator: 8,
-           swing: false, swingVal: 1.5},
+           swing: false},
       {key: 15, value: '14/16', triplet: false, numerator: 14, denominator: 16,
-           swing: false, swingVal: 1.5},
+           swing: false},
       {key: 16, value: '15/16', triplet: false, numerator: 15, denominator: 16,
-           swing: false, swingVal: 1.5},
+           swing: false},
       {key: 17, value: '17/16', triplet: false, numerator: 17, denominator: 16,
-           swing: false, swingVal: 1.5},
+           swing: false},
     ]
 
     this.tickEvents = []
@@ -157,53 +160,67 @@ class App extends Component {
       return (<option value={e.key} key={e.value}>{e.value}</option>)
     })
 
+    let voiceStr 
+    if (voice === 'c') voiceStr = 'Bell '
+    else if (voice === 'c+v') voiceStr = 'Both '
+    else voiceStr = 'Voice'
+ 
+/* 
+    const customLoopTable = 
+      '<tr>'
+      + '<th>seq<br />del: -1</th><th>preset</th><th>rep</th><th>bpm</th>'
+      + '</tr>'
+*/
+ 
     return (
       <div className="metronome">
-      KG's Metronome ({version}) 
+      KG's JavaScript Metronome ({version}) 
       <hr />
          Beat: <select name="preset" defaultValue={this.state.preset} 
            onChange = {this.handleSelect}>
          {options}
          </select>
           &nbsp; 
+          <tt><b>{voiceStr}:&nbsp;</b></tt>&nbsp;
           <span className="small-button">
-           voice: <button name="voice" onClick={this.handleChange}>
-          {voice ? 'Off' : 'On'}</button></span><br />
-        <br />
-       <div className="number">
-        BPM({min_bpm}.0-{max_bpm}.0): &nbsp; 
+          <button name="voice" onClick={this.handleChange}>
+          SND</button></span>&nbsp;
+          <button name="startStop" onClick={this.startStop}>
+          {playing ? 'Stop' : 'Start'}
+        </button>
+       <span className="number">
+        BPM({min_bpm}-{max_bpm}): &nbsp; 
         <input type="number" name="bpm_number"
            min={min_bpm} max={max_bpm} value={bpm} step="0.1"
          onChange = {this.handleChange} />
+        </span>
         <span className="small-button">
           <button name="tempo_tap" onClick={this.handleChange}>
-          TAP</button></span>
-        </div>
-        <div className="bpm-slider">
+          TAP</button></span>&nbsp;
+         <br />
+        <span className="bpm-slider">
           <input type="range" name="bpm_slider"
           min={min_bpm} max={max_bpm} value={bpm} step="0.1"
           onChange = {this.handleChange} />
-        </div><br />
-        <div className="number"> 
-        <button name="startStop" onClick={this.startStop}>
-          {playing ? 'Stop' : 'Start'}
-        </button> &nbsp; &nbsp;
-        Timer: <input type="number" name="timer" 
-        min="0" max="180" value={this.state.timer} step="1" 
-          onChange={this.handleChange} /> {this.state.rest}
-        </div>
+        </span> <br />
+        Timer: <span className="number"><input type="number" name="timer" 
+        min="0" max="600" value={this.state.rest} step="1" 
+          onChange={this.handleChange} />(secs)</span> &nbsp;
+        <span className="number"><input type="number" name="barTimer" 
+        min="0" max="124" value={this.state.restBars} step="1" 
+          onChange={this.handleChange} />(bars)</span>
         <hr />
-        <font color="blue">Advanced Options</font><br />
-        <div className="number">
+        <font color="blue">Advanced (Swing is for swing presets only)</font><br />
+        <span className="number">
         Swing: <input type="number" name="swing" 
         min="0.0" max="3.0" value={this.state.swingVal} step="0.1" 
           onChange={this.handleChange} />
-        (0,1.5(str),2.0(swg),3)
-        </div>
-       <div className="number">
+        (0,1.5(str),2.0(swg),3)</span><br />
+        <span className="number">
         Increment: bpm<input type="number" name="increment"
            min="-10" max="10" value={this.state.increment}
          onChange = {this.handleChange} />
+        </span>
          /bars <select name="perBars" defaultValue={this.state.perBars}
            onChange={this.handleSelect}>
          <option value="0">0</option>
@@ -213,9 +230,8 @@ class App extends Component {
          <option value="8">8</option>
          <option value="12">12</option>
          <option value="16">16</option>
-         </select>
-         </div>
-        <div className="number">
+         </select><br />
+        <span className="number">
         Mute: <select name="muteBars" 
            defaultValue={this.state.muteBars} onChange={this.handleSelect}>
          <option value="0">0</option>
@@ -228,10 +244,26 @@ class App extends Component {
          </select> bars at prob <input type="number" name="muteProb"
            min="0.0" max="1.0" value={this.state.muteProb} step="0.1"
          onChange={this.handleChange} />
-        </div>
+        </span><br />
+        <span>
         Even notes vol: {evenVol.toFixed(2)} <input type="range" name="evenVol"
           min="0.0" max="1.0" value={evenVol} step="0.01"
           onChange = {this.handleChange} />
+       </span>
+      <hr />
+      <div>
+      Custom Loop: &nbsp; 
+        <span className="small-button">
+        <button name="addBeats" onClick={this.customPlay}>
+        Add</button></span>&nbsp;
+        <span className="small-button">
+        <button name="clearBeats" onClick={this.customPlay}>
+        Clear</button></span>&nbsp;
+        <span className="button">
+        <button name="startCustom" onClick={this.customPlay}>
+        Start</button></span><br />
+        (not ready)
+      </div>
       <hr />
       <div>
       Additional feature (thinking..)<br />
@@ -240,6 +272,9 @@ class App extends Component {
       </div>
     )
   } // end render()
+
+  customPlay(){
+  }
 
   startStop(event) {
 
@@ -320,10 +355,9 @@ class App extends Component {
          }.bind(this),1).repeat(1)
 
          this.timeout = clock.setTimeout(function(event) {
-        //  console.log('timer expired')
-         if (this.timer) this.timer.clear()
-         this.startStop({target: {name: 'stop'}})
-         this.setState({rest: this.state.timer})
+           if (this.timer) this.timer.clear()
+           this.startStop({target: {name: 'stop'}})
+           this.setState({rest: this.state.timer})
         }.bind(this), this.state.rest)
       } // end if timer
 
@@ -360,10 +394,19 @@ class App extends Component {
   // console.log('deadline = ' + deadline)
      const {triplet,denominator,numerator,bpm,increment,perBars} = this.state
 
+     if (this.state.barTimer > 0 && this.state.restBars <= 0) {
+       console.log('barTimer ' + this.state.barTimer)
+       this.startStop({target: {name: 'stop'}})
+       this.setState({restBars: 0})
+       return
+     }
+
      // automatic bpm increment
      if(perBars > 0 && this.count === 0 && this.barCount > 0
        && (this.barCount % perBars) === 0){
        let newBpm = parseFloat(bpm) + parseFloat(increment)
+       if (newBpm >this.state.max_bpm)  newBpm = this.state.max_bpm
+       if (newBpm < this.state.min_bpm) newBpm = this.state.min_bpm
        this.setState({bpm: newBpm})
        clock.timeStretch(context.currentTime, this.tickEvents, bpm/newBpm)
      } // end automatic bpm increment 
@@ -430,6 +473,8 @@ class App extends Component {
         volume = 0.7*mute
         if ((this.count + 1) % numerator === 0){ 
            this.barCount++
+           if (this.state.restBars > 0)
+              this.setState({restBars: this.state.restBars - 1})
         }
      }
 
@@ -439,8 +484,15 @@ class App extends Component {
        if (this.count % 2 === 0) volume *= this.state.evenVol
      }
 
-     source.connect(gainNode)
-     if (this.state.voice) voice.connect(gainNode)
+     if (this.state.voice === 'c')
+       source.connect(gainNode)
+     else if (this.state.voice === 'v') 
+       voice.connect(gainNode)
+     else if (this.state.voice === 'c+v'){
+       source.connect(gainNode)
+       voice.connect(gainNode)
+     }
+
      gainNode.connect(context.destination)
      gainNode.gain.value = volume
      source.start(deadline)
@@ -458,9 +510,10 @@ class App extends Component {
          this.setState({evenVol: 1.0})
     }
 
-    if (event.target.name === 'voice'){ 
-      if (this.state.voice) this.setState({voice: false})
-      else this.setState({voice: true})
+    if (event.target.name === 'voice'){// c, c+v, v, rotation 
+      if (this.state.voice === 'c' ) this.setState({voice: 'v'})
+      else if (this.state.voice === 'v') this.setState({voice: 'c+v'})
+      else this.setState({voice: 'c'})
     }
 
     if (event.target.name === 'tempo_tap'){ 
@@ -502,9 +555,12 @@ class App extends Component {
     } 
 
     if (event.target.name === 'swing'){ 
-      this.setState({swingVal: parseFloat(event.target.value,10)})
-      clock.setTimeout(function(event) {
+      if (this.state.swing) {
+        this.setState({swingVal: parseFloat(event.target.value,10)})
+        clock.setTimeout(function(event) {
           this.startStop({target: {name: 'restart'}}) }.bind(this),0.02)
+      } else 
+        this.setState({swingVal: 'N/A'})
     }
 
     if (event.target.name === 'increment') 
@@ -516,6 +572,11 @@ class App extends Component {
     if (event.target.name === 'timer'){ 
         let rest = parseInt(event.target.value,10)
         this.setState({timer: rest, rest: rest})
+    }
+
+    if (event.target.name === 'barTimer'){ 
+        let rest = parseInt(event.target.value,10)
+        this.setState({barTimer: rest, restBars: rest})
     }
 
   } // end handleChange()
@@ -533,8 +594,11 @@ class App extends Component {
         numerator: preset.numerator,
         denominator: preset.denominator,
         swing: preset.swing,
-        swingVal: preset.swingVal
      })
+     if (preset.swing !== 'undefined')
+        this.setState({swingVal: preset.swingVal})
+     else
+        this.setState({swingVal: 'N/A'})
 
      if (this.state.playing) {
         clock.setTimeout(function(event) {
