@@ -8,7 +8,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017120100'
+var version = '2017120201'
 var early = 0.1
 var late = 1.0
 
@@ -181,13 +181,14 @@ class App extends Component {
          {options}
          </select>
           &nbsp; 
-          <tt><b>{voiceStr}:&nbsp;</b></tt>&nbsp;
           <span className="small-button">
           <button name="voice" onClick={this.handleChange}>
-          SND</button></span>&nbsp;
+          SND</button>
+          <tt><b> {voiceStr}</b></tt>
+          </span>&nbsp;
           <button name="startStop" onClick={this.startStop}>
           {playing ? 'Stop' : 'Start'}
-        </button>
+        </button><br />
        <span className="number">
         BPM({min_bpm}-{max_bpm}): &nbsp; 
         <input type="number" name="bpm_number"
