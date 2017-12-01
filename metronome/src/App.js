@@ -398,7 +398,7 @@ class App extends Component {
      if (this.state.barTimer > 0 && this.state.restBars <= 0) {
        console.log('barTimer ' + this.state.barTimer)
        this.startStop({target: {name: 'stop'}})
-       this.setState({restBars: 0})
+       this.setState({restBars: this.state.barTimer}) // back to initial state
        return
      }
 
