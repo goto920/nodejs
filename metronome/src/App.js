@@ -8,7 +8,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext() 
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017120201'
+var version = '2017120202'
 var early = 0.1
 var late = 1.0
 
