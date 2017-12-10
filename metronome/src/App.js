@@ -262,7 +262,7 @@ class App extends Component {
 
     return (
       <div className='metronome'>
-      KG's JS_Metronome ({version})&nbsp;
+      KG's JS_Metronome &nbsp;
           <span className='small-button'>
            <button name='language' onClick={this.handleChange}>
            {ja ? 'US' : 'JP'}
@@ -400,10 +400,9 @@ class App extends Component {
       </div>
       */}
         <hr />
-        <div>
+      (Version: {version})<br />
       Additional feature (thinking..)<br />
       Set List, Sound variation, loop with presets
-      </div>
       </div>
     )
   } // end render()
