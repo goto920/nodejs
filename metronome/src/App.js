@@ -3,13 +3,14 @@ import './Metronome.css'
 import BufferLoader from './buffer-loader'
 import WAAClock from 'waaclock'
 import messages from './language.json'
+import packageJSON from '../package.json' 
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext()
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017121003'
+var version = packageJSON.versionStr // define in package.json
 var early = 0.1
 var late = 1.0
 

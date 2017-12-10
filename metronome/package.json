@@ -1,8 +1,9 @@
 {
   "name": "metronome",
-  "version": "0.1.0",
+  "version": "0.9.0",
   "private": true,
-  "homepage": "/demos/metronome20171210",
+  "versionStr": "2017121003",
+  "homepage": "'/demos/metronome' + 'versionStr'",
   "dependencies": {
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
