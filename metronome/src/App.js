@@ -61,7 +61,8 @@ class App extends Component {
       voiceFour: null,
       voiceFive: null,
       voiceSix: null,
-      voiceSeven: null
+      voiceSeven: null,
+      newRow: {preset: 4, swingVal: 1.5, repeat: 1}
     }
 
     this.setState = this.setState.bind(this)
@@ -70,6 +71,7 @@ class App extends Component {
     this.handleSelect = this.handleSelect.bind(this)
     this.playClick = this.playClick.bind(this)
     this.nextTick = this.nextTick.bind(this)
+    this.handleTable = this.handleTable.bind(this)
     this.customPlay = this.customPlay.bind(this)
 
     this.presets = [
@@ -186,6 +188,16 @@ class App extends Component {
       msecsFirst: 0,
       msecsPrevious: 0
     }
+
+    this.loopTable = []
+/*
+    this.loopTable = [
+     {preset: this.presets[4], swingVal: 1.5, repeat: 1},
+     {preset: this.presets[4], swingVal: 2.0, repeat: 1},
+     {preset: this.presets[4], swingVal: 1.5, repeat: 1}
+    ]
+*/
+
   } // end constructor
 
   componentDidMount () {
@@ -239,12 +251,18 @@ class App extends Component {
     else if (voice === 'c+v') voiceStr = m.both
     else voiceStr = m.voice
 
-/*
-    const customLoopTable =
-      '<tr>'
-      + '<th>seq<br />del: -1</th><th>preset</th><th>rep</th><th>bpm</th>'
-      + '</tr>'
-*/
+    const loopTable = this.loopTable.map(function(e,index) {
+      return (<tr key={index}>
+         <td align="right">
+          d<input type="radio" name="loopDel" value={index} 
+          checked={false}
+            onChange={this.handleTable}/></td>
+         <td align="right">{index}</td>
+         <td align="right">{e.preset.value}</td>
+         <td align="right">{e.swingVal}</td>
+         <td align="right">{e.repeat}</td>
+         </tr>)
+    }.bind(this))
 
     return (
       <div className='metronome'>
@@ -270,11 +288,6 @@ class App extends Component {
         </button><br />
         <span className='number'>
         BPM({min_bpm}-{max_bpm}): &nbsp; {('0' + Math.floor(bpm)).slice(-3)}.
-        {/*
-        <input type='number' name='bpm_number'
-          min={0} max={9} value={bpm_frac} step='1.0'
-          onChange={this.handleChange} />
-        */}
         <select name='bpm_number' defaultValue={bpm_frac}
            onChange={this.handleChange}>
            <option value='0'>0</option>
@@ -299,7 +312,8 @@ class App extends Component {
             min={min_bpm} max={max_bpm} value={bpm} step='1.0'
             onChange={this.handleChange} />
         </span> <br />
-        {m.timer}: <span className='number'><input type='number' name='timer'
+        {m.timer}: <span className='number'>
+          <input type='number' name='timer'
           min='0' max='600' value={this.state.rest} step='1'
           onChange={this.handleChange} />({m.secs})</span> &nbsp;
         <span className='number'><input type='number' name='barTimer'
@@ -308,13 +322,6 @@ class App extends Component {
         <hr />
         <font color='blue'>{m.advanced}</font><br />
           {m.swing}: {swingVal} &nbsp; 
-{/*
-        <span>
-        <input type='range' name='swing'
-          min='0.5' max='2.5' value={swingVal} 
-          step='0.1' onChange={this.handleChange} />
-        </span>
-*/}
         <span>
            <select name='swing' value={swingVal}
            onChange={this.handleChange}>
@@ -356,7 +363,7 @@ class App extends Component {
         <span> 
            <select name='perBars' defaultValue={this.state.perBars}
            onChange={this.handleSelect}>
-           <option value='0'>0</option>
+           <option value='0'>off</option>
            <option value='1'>1</option>
            <option value='2'>2</option>
            <option value='4'>4</option>
@@ -369,7 +376,7 @@ class App extends Component {
         {m.muteBars}: &nbsp;
          <select name='muteBars'
           defaultValue={this.state.muteBars} onChange={this.handleSelect}>
-          <option value='0'>0</option>
+          <option value='0'>off</option>
           <option value='1'>1</option>
           <option value='2'>2</option>
           <option value='4'>4</option>
@@ -396,51 +403,113 @@ class App extends Component {
           <option value='1.0'>1.0</option>
           </select>
         </span>
-      {/*
-        <span>
-          <input type='range' name='muteProb'
-          min='0.0' max='1.0' value={this.state.muteProb} 
-          step='0.1' onChange={this.handleChange} />
-        </span>
-      */}
-       {/*
-        <span className='number'>
-        {m.muteProb}<input type='number' name='muteProb'
-          min='0.0' max='1.0' value={this.state.muteProb} step='0.1'
-          onChange={this.handleChange} />
-        </span>
-       */}
         <br />
         <span>
         {m.evenNotes}: {evenVol.toFixed(2)} <input type='range' name='evenVol'
           min='0.0' max='1.0' value={evenVol} step='0.01'
           onChange={this.handleChange} />
         </span>
-      {/* 
-        <hr />
-        <div>
-      Custom Loop: &nbsp;
-        <span className='small-button'>
-          <button name='addBeats' onClick={this.customPlay}>
-        Add</button></span>&nbsp;
-          <span className='small-button'>
-            <button name='clearBeats' onClick={this.customPlay}>
-        Clear</button></span>&nbsp;
-          <span className='button'>
-            <button name='startCustom' onClick={this.customPlay}>
-        Start</button></span><br />
-        (not ready)
-      </div>
-      */}
-        <hr />
+       <hr />
       (Version: {version})<br />
       Additional feature (thinking..)<br />
       Set List, Sound variation, loop with presets
+      <div>
+      <table border="3">
+      <tbody>
+      <tr><th>d/a</th><th>seq</th>
+          <th>beat</th><th>swing</th><th>repeat</th></tr>
+      {loopTable}
+      <tr><td align="right">
+     a<input type="radio" name="loopAdd" checked={false}
+        onChange={this.handleTable}/></td>
+          <td align="right">add</td>
+          <td align="right">
+             <select name="loopAddPreset" 
+              defaultValue={this.state.newRow.preset} 
+              onChange={this.handleTable}>
+               {options}</select></td>
+          <td align="right">
+           <span><select name='loopSwingVal' 
+             defaultValue={this.state.newRow.swingVal} 
+             onChange={this.handleTable}>
+           <option value='0.5'>0.5</option>
+           <option value='0.6'>0.6</option>
+           <option value='0.7'>0.7</option>
+           <option value='0.8'>0.8</option>
+           <option value='0.9'>0.9</option>
+           <option value='1.0'>1.0</option>
+           <option value='1.1'>1.1</option>
+           <option value='1.2'>1.2</option>
+           <option value='1.3'>1.3(str)</option>
+           <option value='1.4'>1.4</option>
+           <option value='1.5'>1.5(str)</option>
+           <option value='1.6'>1.6</option>
+           <option value='1.7'>1.7</option>
+           <option value='1.8'>1.8(Lt)</option>
+           <option value='1.9'>1.9</option>
+           <option value='2.0'>2.0(Swg)</option>
+           <option value='2.1'>2.1</option>
+           <option value='2.2'>2.2(Hvy)</option>
+           <option value='2.3'>2.3</option>
+           <option value='2.4'>2.4</option>
+           <option value='2.5'>2.5</option>
+          </select></span></td>
+          <td align="right"><span>
+          <select name='loopRepeat' 
+             defaultValue={this.state.newRow.repeat} 
+             onChange={this.handleTable}>
+           <option value='1'>1</option> <option value='2'>2</option>
+           <option value='3'>3</option> <option value='4'>4</option>
+           <option value='5'>5</option> <option value='6'>6</option>
+           <option value='7'>7</option> <option value='8'>8</option>
+           <option value='9'>9</option> <option value='10'>10</option>
+           <option value='11'>11</option> <option value='12'>12</option>
+           <option value='13'>13</option> <option value='14'>14</option>
+           <option value='15'>15</option> <option value='16'>16</option>
+         </select>
+          </span></td>
+          </tr>
+      </tbody>
+      </table>
+      </div>
       </div>
     )
   } // end render()
 
   customPlay () {
+  }
+
+  handleTable(event) {
+    let newRow = this.state.newRow
+
+    if (event.target.name === 'loopDel'){
+      this.loopTable.splice(event.target.value,1)
+      // console.log('DEL: ' + event.target.value)
+    }
+
+    if (event.target.name === 'loopAdd'){
+      // console.log('ADD: ' + event.target.value)
+      this.loopTable.push(
+       {preset: this.presets[newRow.preset],
+        swingVal: newRow.swingVal,
+        repeat:   newRow.repeat
+      })
+    }
+
+    if (event.target.name === 'loopAddPreset'){
+      newRow.preset = event.target.value
+    }
+
+    if (event.target.name === 'loopSwingVal'){
+      newRow.swingVal = event.target.value
+    }
+
+    if (event.target.name === 'loopRepeat'){
+      newRow.repeat = event.target.value
+    }
+
+    this.setState({newRow: newRow})
+
   }
 
   startStop (event) {
