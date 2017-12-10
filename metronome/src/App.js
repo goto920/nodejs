@@ -10,7 +10,8 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext()
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = packageJSON.versionStr // define in package.json
+var version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
+ // define in package.json
 var early = 0.1
 var late = 1.0
 
