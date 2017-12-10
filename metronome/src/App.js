@@ -9,17 +9,9 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context = new AudioContext()
 var clock = new WAAClock(context)
 var gainNode = context.createGain()
-var version = '2017121002'
+var version = '2017121003'
 var early = 0.1
 var late = 1.0
-
-/*
-var language = (window.navigator.languages && window.navigator.languages[0]) ||
-            window.navigator.language ||
-            window.navigator.userLanguage ||
-            window.navigator.browserLanguage
-console.log(language)
-*/
 
 var jaText = messages.ja
 var usText = messages.us
@@ -49,12 +41,12 @@ class App extends Component {
       muteProb: 0.0,
       muteCount: 0,
       mute: false,
-      preset: 5, // default 4/4
+      preset: 4, // default 4/4
       numerator: 4,
       denominator: 4,
       triplet: false,
       swing: false,
-      swingVal: 'N/A', // 0(min),1,1.5(straight),2(full),3(max)
+      swingVal: 1.5, // 0(min),1,1.5(straight),2(full),3(max)
       evenVol: 1.0,
       click1: null,
       click2: null,
@@ -83,20 +75,18 @@ class App extends Component {
         value: '2/2',
         triplet: false,
         numerator: 2,
-        denominator: 2,
-        swing: false},
+        denominator: 2},
       {key: 1,
         value: '3/4',
         triplet: false,
         numerator: 3,
-        denominator: 4,
-        swing: false},
+        denominator: 4},
       {key: 2,
         value: '6/8',
         triplet: false,
         numerator: 6,
-        denominator: 8,
-        swing: false},
+        denominator: 8},
+/*
       {key: 3,
         value: '6/8swing',
         triplet: false,
@@ -104,24 +94,24 @@ class App extends Component {
         denominator: 8,
         swing: true,
         swingVal: 2.0},
-      {key: 4,
+*/
+      {key: 3,
         value: '12/8',
         triplet: true,
         numerator: 12,
-        denominator: 8,
-        swing: false},
-      {key: 5,
+        denominator: 8},
+      {key: 4,
         value: '4/4',
         triplet: false,
         numerator: 4,
         denominator: 4,
         swing: false},
-      {key: 6,
+      {key: 5,
         value: '8/8',
         triplet: false,
         numerator: 8,
-        denominator: 8,
-        swing: false},
+        denominator: 8},
+/*
       {key: 7,
         value: '8/8swing',
         triplet: false,
@@ -129,12 +119,13 @@ class App extends Component {
         denominator: 8,
         swing: true,
         swingVal: 2.0},
-      {key: 8,
+*/
+      {key: 6,
         value: '16/16',
         triplet: false,
         numerator: 16,
-        denominator: 16,
-        swing: false},
+        denominator: 16},
+/*
       {key: 9,
         value: '16/16swing',
         triplet: false,
@@ -142,54 +133,47 @@ class App extends Component {
         denominator: 16,
         swing: true,
         swingVal: 2.0},
-      {key: 10,
+*/
+      {key: 7,
         value: '5/4',
         triplet: false,
         numerator: 5,
-        denominator: 4,
-        swing: false},
-      {key: 11,
+        denominator: 4},
+      {key: 8,
         value: '10/8',
         triplet: false,
         numerator: 10,
-        denominator: 8,
-        swing: false},
-      {key: 12,
+        denominator: 8},
+      {key: 9,
         value: '7/4',
         triplet: false,
         numerator: 7,
-        denominator: 4,
-        swing: false},
-      {key: 13,
+        denominator: 4},
+      {key: 10,
         value: '14/8',
         triplet: false,
         numerator: 14,
-        denominator: 8,
-        swing: false},
-      {key: 14,
+        denominator: 8},
+      {key: 11,
         value: '7/8',
         triplet: false,
         numerator: 7,
-        denominator: 8,
-        swing: false},
-      {key: 15,
+        denominator: 8},
+      {key: 12,
         value: '14/16',
         triplet: false,
         numerator: 14,
-        denominator: 16,
-        swing: false},
-      {key: 16,
+        denominator: 16},
+      {key: 13,
         value: '15/16',
         triplet: false,
         numerator: 15,
-        denominator: 16,
-        swing: false},
-      {key: 17,
+        denominator: 16},
+      {key: 14,
         value: '17/16',
         triplet: false,
         numerator: 17,
-        denominator: 16,
-        swing: false}
+        denominator: 16}
     ]
 
     this.tickEvents = []
@@ -242,7 +226,7 @@ class App extends Component {
 
   render () {
     const {ja, voice, playing, bpm, bpm_frac, min_bpm, max_bpm, 
-         swingVal, evenVol} = this.state
+           swingVal, evenVol} = this.state
 
     const options = this.presets.map(e => {
       return (<option value={e.key} key={e.value}>{e.value}</option>)
@@ -321,22 +305,50 @@ class App extends Component {
           onChange={this.handleChange} />({m.bars})</span>
         <hr />
         <font color='blue'>{m.advanced}</font><br />
+          {m.swing}: {swingVal} &nbsp; 
+{/*
         <span>
-          {m.swing}: {swingVal} 
         <input type='range' name='swing'
           min='0.5' max='2.5' value={swingVal} 
-          step='0.01' onChange={this.handleChange} />
+          step='0.1' onChange={this.handleChange} />
+        </span>
+*/}
+        <span>
+           <select name='swing' value={swingVal}
+           onChange={this.handleChange}>
+           <option value='0.5'>0.5</option>
+           <option value='0.6'>0.6</option>
+           <option value='0.7'>0.7</option>
+           <option value='0.8'>0.8</option>
+           <option value='0.9'>0.9</option>
+           <option value='1.0'>1.0</option>
+           <option value='1.1'>1.1</option>
+           <option value='1.2'>1.2</option>
+           <option value='1.3'>1.3(str)</option>
+           <option value='1.4'>1.4</option>
+           <option value='1.5'>1.5(str)</option>
+           <option value='1.6'>1.6</option>
+           <option value='1.7'>1.7</option>
+           <option value='1.8'>1.8(Lt)</option>
+           <option value='1.9'>1.9</option>
+           <option value='2.0'>2.0(Swg)</option>
+           <option value='2.1'>2.1</option>
+           <option value='2.2'>2.2(Hvy)</option>
+           <option value='2.3'>2.3</option>
+           <option value='2.4'>2.4</option>
+           <option value='2.5'>2.5</option>
+           </select>
+       </span>
        {/* <input type='number' name='swing'
             min='0.0' max='3.0' value={this.state.swingVal} step='0.1'
             onChange={this.handleChange} />
        */}
-        </span><br />
-        -- {m.swingStr}
+        &nbsp; {m.swingStr}
         <br />
         <span className='number'>
         {m.increment}: <input type='number' name='increment'
           min='-10' max='10' value={this.state.increment}
-          onChange={this.handleChange} /> bpm &nbsp;
+          onChange={this.handleChange} /> bpm
         </span>
          / 
         <span> 
@@ -362,14 +374,33 @@ class App extends Component {
           <option value='8'>8</option>
           <option value='12'>12</option>
           <option value='16'>16</option>
-        </select>{m.muteProb1}<br />
+        </select>
         </span>
+        {m.muteProb1}
+        &nbsp; {m.muteProb2}
         <span>
-        -- &nbsp; {m.muteProb2}: {(this.state.muteProb).toFixed(1)}
+          <select name='muteProb' 
+           defaultValue={this.state.muteProb} onChange={this.handleChange}>
+          <option value='0.0'>0.0</option>
+          <option value='0.1'>0.1</option>
+          <option value='0.2'>0.2</option>
+          <option value='0.3'>0.3</option>
+          <option value='0.4'>0.4</option>
+          <option value='0.5'>0.5</option>
+          <option value='0.6'>0.6</option>
+          <option value='0.7'>0.7</option>
+          <option value='0.8'>0.8</option>
+          <option value='0.9'>0.9</option>
+          <option value='1.0'>1.0</option>
+          </select>
+        </span>
+      {/*
+        <span>
           <input type='range' name='muteProb'
           min='0.0' max='1.0' value={this.state.muteProb} 
           step='0.1' onChange={this.handleChange} />
         </span>
+      */}
        {/*
         <span className='number'>
         {m.muteProb}<input type='number' name='muteProb'
@@ -619,6 +650,7 @@ class App extends Component {
   } // end playClick
 
   handleChange (event) {
+
     if (event.target.name === 'language'){
      if (this.state.ja === true){
       m = usText
@@ -683,12 +715,14 @@ class App extends Component {
     }
 
     if (event.target.name === 'swing') {
-      if (this.state.swing) {
-        this.setState({swingVal: parseFloat(event.target.value, 10)})
-        clock.setTimeout(function (event) {
+      let swingVal = parseFloat(event.target.value, 10).toFixed(1)
+      if (swingVal <= 1.4 || swingVal >= 1.6)
+        this.setState({swing: true, swingVal: swingVal}) 
+      else this.setState({swing: false, swingVal: 1.5}) 
+
+      clock.setTimeout(function (event) {
           this.startStop({target: {name: 'restart'}})
-        }.bind(this), 0.02)
-      } else { this.setState({swingVal: 'N/A'}) }
+      }.bind(this), 0.02)
     }
 
     if (event.target.name === 'increment') { this.setState({increment: parseInt(event.target.value, 10)}) }
@@ -716,9 +750,12 @@ class App extends Component {
         triplet: preset.triplet,
         numerator: preset.numerator,
         denominator: preset.denominator,
-        swing: preset.swing
+        swingVal: 1.5
       })
+
+/*
       if (preset.swing !== 'undefined') { this.setState({swingVal: preset.swingVal}) } else { this.setState({swingVal: 'N/A'}) }
+*/
 
       if (this.state.playing) {
         clock.setTimeout(function (event) {
