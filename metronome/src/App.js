@@ -7,200 +7,95 @@ import packageJSON from '../package.json'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
-var context = new AudioContext()
-var clock = new WAAClock(context)
-var gainNode = context.createGain()
-var version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
- // define in package.json
-var early = 0.1
-var late = 1.0
+const context = new window.AudioContext()
+const clock = new WAAClock(context)
+const timerClock = new WAAClock(context)
+const gainNode = context.createGain()
 
-var jaText = messages.ja
-var usText = messages.us
+const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
+ // define in package.json
+const early = 0.1
+const late = 1.0
+
+const jaText = messages.ja
+const usText = messages.us
 var m = usText
 
 clock.start()
+timerClock.start()
 
 class App extends Component {
   constructor (props) {
     super(props)
-    this.state = {
-      ja: false,
-      timer: 0,
-      rest: 0,
-      barTimer: 0,
-      restBars: 0,
-      playing: false,
-      voice: 'c', // c(owbell) only, c+v, v(oice) only
-      count: 0,
+
+    this.params = {
       min_bpm: 30.0,
       max_bpm: 360.0,
-      bpm: '100.0',
-      bpm_frac: 0,
-      increment: 0,
-      perBars: 0,
-      muteBars: 0,
-      muteProb: 0.0,
-      muteCount: 0,
-      mute: false,
-      preset: 4, // default 4/4
-      numerator: 4,
-      denominator: 4,
-      triplet: false,
+      timer: 0, barTimer: 0,
+      increment: 0, perBars: 0,
+      muteBars: 0, muteProb: 0.0,
+      muteCount: 0, muteStat: false,
+      numerator: 4, denominator: 4, triplet: false,
+      cowbell: [], maleVoice: [],
       swing: false,
-      swingVal: 1.5, // 0(min),1,1.5(straight),2(full),3(max)
-      evenVol: 1.0,
-      click1: null,
-      click2: null,
-      click3: null,
-      click4: null,
-      click5: null,
-      voiceOne: null,
-      voiceTwo: null,
-      voiceThree: null,
-      voiceFour: null,
-      voiceFive: null,
-      voiceSix: null,
-      voiceSeven: null,
-      newRow: {preset: 4, swingVal: 1.5, repeat: 1}
+      count: 0, barCount: 0,
+      startTime: 0
+    }
+
+    this.timerEvent = 0
+    this.timeOutEvent = 0
+
+    this.state = {
+      ja: false,
+      voice: 'c', // c(owbell) only, c+v, v(oice) only
+      rest: 0, restBars: 0, playing: false,
+      bpm: '100.0', bpm_frac: 0, preset: 4, // default 4/4
+      swingVal: 1.5, evenVol: 1.0,
+      loopTable : [],
+      newRow: {preset: 4, swingVal: 1.5, repeat: 1},
+      loopStat: {playing: false, seq: 0, repeat: 0, bar: 0}
     }
 
     this.setState = this.setState.bind(this)
     this.startStop = this.startStop.bind(this)
+    this.customPlay = this.customPlay.bind(this)
     this.handleChange = this.handleChange.bind(this)
-    this.handleSelect = this.handleSelect.bind(this)
+    this.handleTable = this.handleTable.bind(this)
     this.playClick = this.playClick.bind(this)
     this.nextTick = this.nextTick.bind(this)
-    this.handleTable = this.handleTable.bind(this)
-    this.customPlay = this.customPlay.bind(this)
+    this.handleWindowClose = this.handleWindowClose.bind(this)
 
     this.presets = [
-      {key: 0,
-        value: '2/2',
-        triplet: false,
-        numerator: 2,
-        denominator: 2},
-      {key: 1,
-        value: '3/4',
-        triplet: false,
-        numerator: 3,
-        denominator: 4},
-      {key: 2,
-        value: '6/8',
-        triplet: false,
-        numerator: 6,
-        denominator: 8},
-/*
-      {key: 3,
-        value: '6/8swing',
-        triplet: false,
-        numerator: 6,
-        denominator: 8,
-        swing: true,
-        swingVal: 2.0},
-*/
-      {key: 3,
-        value: '12/8',
-        triplet: true,
-        numerator: 12,
-        denominator: 8},
-      {key: 4,
-        value: '4/4',
-        triplet: false,
-        numerator: 4,
-        denominator: 4,
-        swing: false},
-      {key: 5,
-        value: '8/8',
-        triplet: false,
-        numerator: 8,
-        denominator: 8},
-/*
-      {key: 7,
-        value: '8/8swing',
-        triplet: false,
-        numerator: 8,
-        denominator: 8,
-        swing: true,
-        swingVal: 2.0},
-*/
-      {key: 6,
-        value: '16/16',
-        triplet: false,
-        numerator: 16,
-        denominator: 16},
-/*
-      {key: 9,
-        value: '16/16swing',
-        triplet: false,
-        numerator: 16,
-        denominator: 16,
-        swing: true,
-        swingVal: 2.0},
-*/
-      {key: 7,
-        value: '5/4',
-        triplet: false,
-        numerator: 5,
-        denominator: 4},
-      {key: 8,
-        value: '10/8',
-        triplet: false,
-        numerator: 10,
-        denominator: 8},
-      {key: 9,
-        value: '7/4',
-        triplet: false,
-        numerator: 7,
-        denominator: 4},
-      {key: 10,
-        value: '14/8',
-        triplet: false,
-        numerator: 14,
-        denominator: 8},
-      {key: 11,
-        value: '7/8',
-        triplet: false,
-        numerator: 7,
-        denominator: 8},
-      {key: 12,
-        value: '14/16',
-        triplet: false,
-        numerator: 14,
-        denominator: 16},
-      {key: 13,
-        value: '15/16',
-        triplet: false,
-        numerator: 15,
-        denominator: 16},
-      {key: 14,
-        value: '17/16',
-        triplet: false,
-        numerator: 17,
-        denominator: 16}
+      { value: '2/2', numerator: 2, denominator: 2},
+      { value: '3/4', numerator: 3, denominator: 4},
+      { value: '6/8', numerator: 6, denominator: 8},
+      { value: '12/8', numerator: 12, denominator: 8, triplet: true},
+      { value: '4/4', numerator: 4, denominator: 4}, 
+      { value: '8/8', numerator: 8, denominator: 8},
+      { value: '16/16', numerator: 16, denominator: 16},
+      { value: '5/4', numerator: 5, denominator: 4},
+      { value: '10/8', numerator: 10, denominator: 8},
+      { value: '7/4', numerator: 7, denominator: 4},
+      { value: '14/8', numerator: 14, denominator: 8},
+      { value: '7/8', numerator: 7, denominator: 8},
+      { value: '14/16', numerator: 14, denominator: 16},
+      { value: '15/16', numerator: 15, denominator: 16},
+      { value: '17/16', numerator: 17, denominator: 16}
     ]
 
     this.tickEvents = []
-    this.count = 0
-    this.barCount = 0
+
     this.tap = {
       count: 0,
       msecsFirst: 0,
       msecsPrevious: 0
     }
 
-    this.loopTable = []
-/*
-    this.loopTable = [
-     {preset: this.presets[4], swingVal: 1.5, repeat: 1},
-     {preset: this.presets[4], swingVal: 2.0, repeat: 1},
-     {preset: this.presets[4], swingVal: 1.5, repeat: 1}
-    ]
-*/
-
   } // end constructor
 
+
   componentDidMount () {
+    window.addEventListener('beforeunload', this.handleWindowClose)
     let bufferLoader = new BufferLoader(
       context,
       [
@@ -218,19 +113,12 @@ class App extends Component {
         './resources/seven-6.mp3',
         './resources/eight-6.mp3'
       ],
+
       function (bufferList) {
-        this.setState({click1: bufferList[0]})
-        this.setState({click2: bufferList[1]})
-        this.setState({click3: bufferList[2]})
-        this.setState({click4: bufferList[3]})
-        this.setState({click5: bufferList[4]})
-        this.setState({voiceOne: bufferList[5]})
-        this.setState({voiceTwo: bufferList[6]})
-        this.setState({voiceThree: bufferList[7]})
-        this.setState({voiceFour: bufferList[8]})
-        this.setState({voiceFive: bufferList[9]})
-        this.setState({voiceSix: bufferList[10]})
-        this.setState({voiceSeven: bufferList[11]})
+        for (let i=0; i < 5; i++)
+            this.params.cowbell[i] = bufferList[i]
+        for (let i=5; i <= 12; i++)
+            this.params.maleVoice[i-5] = bufferList[i]
          // console.log('BufferLoader loading finished')
       }.bind(this)
     )
@@ -238,12 +126,18 @@ class App extends Component {
     bufferLoader.load()
   }
 
-  render () {
-    const {ja, voice, playing, bpm, bpm_frac, min_bpm, max_bpm, 
-           swingVal, evenVol} = this.state
+  componentWillUnMount(){
+    window.removeEventListener('beforeunload', this.handleWindowClose)
+  }
 
-    const options = this.presets.map(e => {
-      return (<option value={e.key} key={e.value}>{e.value}</option>)
+  render () {
+    const {ja, voice, loopTable, newRow, loopStat,
+           preset, playing, bpm, bpm_frac,
+           rest, restBars, swingVal, evenVol} = this.state
+    const {min_bpm, max_bpm} = this.params
+
+    const options = this.presets.map((e,index) => {
+      return (<option value={index} key={e.value}>{e.value}</option>)
     })
 
     let voiceStr
@@ -251,7 +145,7 @@ class App extends Component {
     else if (voice === 'c+v') voiceStr = m.both
     else voiceStr = m.voice
 
-    const loopTable = this.loopTable.map(function(e,index) {
+    const loopTableRows = loopTable.map(function(e,index) {
       return (<tr key={index}>
          <td align="right">
           d<input type="radio" name="loopDel" value={index} 
@@ -273,8 +167,8 @@ class App extends Component {
           </button>
           </span>
       <hr />
-        {m.beat}: <select name='preset' defaultValue={this.state.preset}
-          onChange={this.handleSelect}>
+        {m.beat}: <select name='preset' defaultValue={preset}
+          onChange={this.handleChange}>
           {options}
         </select>
           &nbsp;
@@ -312,57 +206,82 @@ class App extends Component {
             min={min_bpm} max={max_bpm} value={bpm} step='1.0'
             onChange={this.handleChange} />
         </span> <br />
-        {m.timer}: <span className='number'>
-          <input type='number' name='timer'
-          min='0' max='600' value={this.state.rest} step='1'
-          onChange={this.handleChange} />({m.secs})</span> &nbsp;
-        <span className='number'><input type='number' name='barTimer'
-          min='0' max='124' value={this.state.restBars} step='1'
-          onChange={this.handleChange} />({m.bars})</span>
+        {m.timer}: &nbsp;
+     <span>
+     {('00' + rest).slice(-3)}/
+     <select name='timer' defaultValue='0' onChange={this.handleChange}> 
+     <option value='0'>off</option>
+     <option value='30'>30</option>
+     <option value='60'>60</option>
+     <option value='90'>90</option>
+     <option value='120'>120</option>
+     <option value='180'>180</option>
+     <option value='240'>240</option>
+     <option value='300'>300</option>
+     <option value='600'>600</option>
+     </select>({m.secs}), </span>
+  <span>
+  {('00' + restBars).slice(-3)}/ 
+  <select name='barTimer' defaultValue='0' onChange={this.handleChange}>
+  <option value='0'>off</option>
+  <option value='12'>12</option>
+  <option value='16'>16</option>
+  <option value='24'>24</option>
+  <option value='32'>32</option>
+  <option value='64'>64</option>
+  <option value='128'>128</option>
+  <option value='256'>256</option>
+  </select> ({m.bars})</span>
         <hr />
         <font color='blue'>{m.advanced}</font><br />
-          {m.swing}: {swingVal} &nbsp; 
+          {m.swing}: &nbsp; 
         <span>
-           <select name='swing' value={swingVal}
+           <select name='swing' value={parseInt(swingVal*10,10)}
            onChange={this.handleChange}>
-           <option value='0.5'>0.5</option>
-           <option value='0.6'>0.6</option>
-           <option value='0.7'>0.7</option>
-           <option value='0.8'>0.8</option>
-           <option value='0.9'>0.9</option>
-           <option value='1.0'>1.0</option>
-           <option value='1.1'>1.1</option>
-           <option value='1.2'>1.2</option>
-           <option value='1.3'>1.3(str)</option>
-           <option value='1.4'>1.4</option>
-           <option value='1.5'>1.5(str)</option>
-           <option value='1.6'>1.6</option>
-           <option value='1.7'>1.7</option>
-           <option value='1.8'>1.8(Lt)</option>
-           <option value='1.9'>1.9</option>
-           <option value='2.0'>2.0(Swg)</option>
-           <option value='2.1'>2.1</option>
-           <option value='2.2'>2.2(Hvy)</option>
-           <option value='2.3'>2.3</option>
-           <option value='2.4'>2.4</option>
-           <option value='2.5'>2.5</option>
+           <option value='5'>0.5</option>
+           <option value='6'>0.6</option>
+           <option value='7'>0.7</option>
+           <option value='8'>0.8</option>
+           <option value='9'>0.9</option>
+           <option value='10'>1.0</option>
+           <option value='11'>1.1</option>
+           <option value='12'>1.2</option>
+           <option value='13'>1.3(str)</option>
+           <option value='14'>1.4</option>
+           <option value='15'>1.5(str)</option>
+           <option value='16'>1.6</option>
+           <option value='17'>1.7</option>
+           <option value='18'>1.8(Lt)</option>
+           <option value='19'>1.9</option>
+           <option value='20'>2.0(Swg)</option>
+           <option value='21'>2.1</option>
+           <option value='22'>2.2(Hvy)</option>
+           <option value='23'>2.3</option>
+           <option value='24'>2.4</option>
+           <option value='25'>2.5</option>
            </select>
        </span>
-       {/* <input type='number' name='swing'
-            min='0.0' max='3.0' value={this.state.swingVal} step='0.1'
-            onChange={this.handleChange} />
-       */}
         &nbsp; {m.swingStr}
         <br />
         <span className='number'>
-        {m.increment}: <input type='number' name='increment'
-          min='-10' max='10' value={this.state.increment}
-          onChange={this.handleChange} /> bpm
+        {m.increment}: 
+       <select name='increment' defaultValue='0' onChange={this.handleChange}> 
+         <option value='-10'>-10</option> <option value='-9'>-9</option>
+         <option value='-8'>-8</option> <option value='-7'>-7</option>
+         <option value='-6'>-6</option> <option value='-5'>-5</option>
+         <option value='-4'>-4</option> <option value='-3'>-3</option>
+         <option value='-2'>-2</option> <option value='-1'>-1</option>
+         <option value='0'>off</option>
+         <option value='1'>1</option> <option value='2'>2</option>
+         <option value='3'>3</option> <option value='4'>4</option>
+         <option value='5'>5</option> <option value='6'>6</option>
+         <option value='7'>7</option> <option value='8'>8</option>
+         <option value='9'>9</option> <option value='10'>10</option>
+         </select> bpm
         </span>
          / 
         <span> 
-           <select name='perBars' defaultValue={this.state.perBars}
-           onChange={this.handleSelect}>
+           <select name='perBars' defaultValue='0' onChange={this.handleChange}>
            <option value='0'>off</option>
            <option value='1'>1</option>
            <option value='2'>2</option>
@@ -374,8 +293,7 @@ class App extends Component {
          &nbsp; {m.perBars}</span><br />
         <span>
         {m.muteBars}: &nbsp;
-         <select name='muteBars'
-          defaultValue={this.state.muteBars} onChange={this.handleSelect}>
+         <select name='muteBars' defaultValue='0' onChange={this.handleChange}>
           <option value='0'>off</option>
           <option value='1'>1</option>
           <option value='2'>2</option>
@@ -388,8 +306,7 @@ class App extends Component {
         {m.muteProb1}
         &nbsp; {m.muteProb2}
         <span>
-          <select name='muteProb' 
-           defaultValue={this.state.muteProb} onChange={this.handleChange}>
+          <select name='muteProb' defaultValue='0' onChange={this.handleChange}>
           <option value='0.0'>0.0</option>
           <option value='0.1'>0.1</option>
           <option value='0.2'>0.2</option>
@@ -411,26 +328,37 @@ class App extends Component {
         </span>
        <hr />
       (Version: {version})<br />
-      Additional feature (thinking..)<br />
-      Set List, Sound variation, loop with presets
+      Additional feature is coming<br />
+      PresetLoop(60% done), Set List, Sound variation
+      <hr /> 
+{/*
+      <b>Edit Loop and &nbsp;</b>
+      <span className="loopButton">
+        <button name="startLoop" onClick={this.customPlay}>
+        {loopStat.playing ? 'Stop' : 'Start'}</button>
+      </span>&nbsp; rewind &nbsp;
+      <span className="loopButton">
+        <button name="rewindLoop" onClick={this.customPlay}>
+        &lt;&lt;&lt;</button>
+      </span>
       <div>
       <table border="3">
       <tbody>
       <tr><th>d/a</th><th>seq</th>
           <th>beat</th><th>swing</th><th>repeat</th></tr>
-      {loopTable}
+      {loopTableRows}
       <tr><td align="right">
      a<input type="radio" name="loopAdd" checked={false}
         onChange={this.handleTable}/></td>
           <td align="right">add</td>
           <td align="right">
              <select name="loopAddPreset" 
-              defaultValue={this.state.newRow.preset} 
+              defaultValue={newRow.preset} 
               onChange={this.handleTable}>
                {options}</select></td>
           <td align="right">
            <span><select name='loopSwingVal' 
-             defaultValue={this.state.newRow.swingVal} 
+             defaultValue='1.5'
              onChange={this.handleTable}>
            <option value='0.5'>0.5</option>
            <option value='0.6'>0.6</option>
@@ -471,59 +399,129 @@ class App extends Component {
           </tr>
       </tbody>
       </table>
-      </div>
+      </div> 
+*/}
       </div>
     )
   } // end render()
 
-  customPlay () {
+  customPlay (event) {
+
+    let {loopTable,loopStat} = this.state 
+    if (loopTable.length <= 0) return 
+
+
+    if (event.target.name === 'startLoop'){
+
+      if(loopStat.playing) {
+        console.log('startLoop stop')
+        this.startStop({target: {name: 'stop'}})
+        loopStat.playing = false
+      } else {
+        console.log('stopLoop start')
+        this.customPlay({target: {name: 'start'}})
+        loopStat.playing = true
+      }
+      this.setState({loopStat: loopStat}) 
+         
+      return
+    } 
+
+    if (event.target.name === 'rewindLoop'){
+      console.log('rewindLoop')
+      this.customPlay({target: {name: 'restart'}})
+      return
+    }
+
+ // Are recursive calls OK?
+    if (event.target.name === 'stop'){ return }
+    if (event.target.name === 'start'){ 
+
+      this.params.startTime = context.currentTime
+      this.params.count = 0
+      let beat = 0
+      for(let i = 0; i < loopTable.length; i++){
+
+        let {preset,swingVal,repeat} = loopTable[i]
+        this.params.numerator = preset.numerator
+        this.params.denominator = preset.denominator
+        this.params.triplet = preset.triplet
+        if (parseInt(swingVal*10,10) !== 15) {
+          this.params.swing = true
+          this.params.swingVal = preset.swingVal
+        }
+
+        for (let beatId = beat; 
+            beatId < beat + this.params.numerator*repeat; 
+            beatId++, beat++) {
+          let event = clock.callbackAtTime(
+            function (event) { this.playClick(event.deadline) }.bind(this),
+            this.nextTick(beatId)
+          ).tolerance({early: early, late: late})
+          this.tickEvents[beat] = event
+        } // end for
+      }
+      return 
+    }
+    if (event.target.name === 'restart'){ return }
+
   }
 
   handleTable(event) {
-    let newRow = this.state.newRow
+    const {newRow, loopTable} = this.state
 
     if (event.target.name === 'loopDel'){
-      this.loopTable.splice(event.target.value,1)
-      // console.log('DEL: ' + event.target.value)
+      let tmp = loopTable
+      tmp.splice(event.target.value,1)
+      this.setState({loopTable: tmp})
+      return
     }
 
     if (event.target.name === 'loopAdd'){
-      // console.log('ADD: ' + event.target.value)
-      this.loopTable.push(
+      let tmp = loopTable
+      tmp.push(
        {preset: this.presets[newRow.preset],
         swingVal: newRow.swingVal,
         repeat:   newRow.repeat
       })
+      this.setState({loopTable: tmp})
+      return
     }
 
     if (event.target.name === 'loopAddPreset'){
-      newRow.preset = event.target.value
+      let tmp=newRow
+      tmp.preset = event.target.value
+      this.setState({newRow: tmp})
+      return
     }
 
     if (event.target.name === 'loopSwingVal'){
-      newRow.swingVal = event.target.value
+      let tmp=newRow
+      tmp.swingVal = event.target.value
+      this.setState({newRow: tmp})
+      return
     }
 
     if (event.target.name === 'loopRepeat'){
-      newRow.repeat = event.target.value
+      let tmp=newRow
+      tmp.repeat = event.target.value
+      this.setState({newRow: tmp})
+      return
     }
 
-    this.setState({newRow: newRow})
-
-  }
+  } // end handleTable
 
   startStop (event) {
-//    console.log('event target name: ' + event.target.name)
 
     if (event.target.name === 'stop') {
       if (this.state.playing) {
         this.setState({playing: false})
         for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
       }
-      this.count = 0
-      if (this.timer) {
-        this.timer.clear()
-        this.timeout.clear()
+      this.params.count = 0
+      if (this.timerEvent) {
+        this.timerEvent.clear()
+        this.timeoutEvent.clear()
       }
       return
     } // stop
@@ -531,15 +529,15 @@ class App extends Component {
     if (event.target.name === 'restart' && this.state.playing) {
       for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
 
-      this.count = 0
-      this.startTime = context.currentTime
-      let clickPmin = this.state.bpm * (this.state.denominator / 4)
+      this.params.count = 0
+      this.params.startTime = context.currentTime
+      let clickPmin = this.state.bpm * (this.params.denominator / 4)
 
-      for (let beat = 0; beat < this.state.numerator; beat++) {
+      for (let beat = 0; beat < this.params.numerator; beat++) {
         let event = clock.callbackAtTime(
             function (event) { this.playClick(event.deadline) }.bind(this),
             this.nextTick(beat)
-          ).repeat((this.state.numerator * 60.0) / clickPmin) // parBar
+          ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
            .tolerance({early: early, late: late})
         this.tickEvents[beat] = event
       } // end for
@@ -548,44 +546,47 @@ class App extends Component {
     } // end restart
 
     if (event.target.name === 'startStop') {
+
       if (this.state.playing) {
+        console.log('stopping')
         this.setState({playing: false})
         for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
-        this.count = 0
-        if (this.timer) {
-          this.timer.clear()
-          this.timeout.clear()
+        this.params.count = 0
+        if (this.timerEvent) {
+          this.timerEvent.clear()
+          this.timeoutEvent.clear()
         }
 //        console.log('stop by startStop')
         return
       } // stop
 
       // start
-      let clickPmin = this.state.bpm * (this.state.denominator / 4)
+      console.log('starting')
+      let clickPmin = this.state.bpm * (this.params.denominator / 4)
       this.setState({playing: true})
 
-      this.count = 0
-      this.startTime = context.currentTime
-      for (let beat = 0; beat < this.state.numerator; beat++) {
+      this.params.count = 0
+      this.params.startTime = context.currentTime
+      for (let beat = 0; beat < this.params.numerator; beat++) {
         let event = clock.callbackAtTime(
             function (event) { this.playClick(event.deadline) }.bind(this),
             this.nextTick(beat)
-        ).repeat((this.state.numerator * 60.0) / clickPmin) // parBar
+        ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
          .tolerance({early: early, late: late})
 
         this.tickEvents[beat] = event
       } // end for
 
-      if (this.state.timer > 0) {
-        this.timer = clock.callbackAtTime(function (event) {
+      if (this.params.timer > 0) {
+        this.timerEvent = timerClock.callbackAtTime(function (event) {
           let rest = this.state.rest - 1
           this.setState({rest: rest})
         }.bind(this), 1).repeat(1)
 
-        this.timeout = clock.setTimeout(function (event) {
-          if (this.timer) this.timer.clear()
+        this.timeoutEvent = timerClock.setTimeout(function (event) {
+          if (this.timerEvent) this.timerEvent.clear()
           this.startStop({target: {name: 'stop'}})
-          this.setState({rest: this.state.timer})
+          this.setState({rest: this.params.timer})
         }.bind(this), this.state.rest)
       } // end if timer
 
@@ -595,18 +596,15 @@ class App extends Component {
 
 // https://github.com/sebpiq/WAAClock/blob/master/demos/beatSequence.js
   nextTick (beatInd) {
-    const beatDur = 60.0 / (this.state.bpm * this.state.denominator / 4)
-    const barDur = beatDur * this.state.numerator
+    const beatDur = 60.0 / (this.state.bpm * this.params.denominator / 4)
+    const barDur = beatDur * this.params.numerator
 
     const currentTime = context.currentTime
-    const relativeTime = currentTime - this.startTime
+    const relativeTime = currentTime - this.params.startTime
     var currentBar = Math.floor(relativeTime / barDur)
 
-   //  const currentBeat = Math.round((relativeTime % barDur) % beatDur)
-   //  if (currentBeat > beatInd) currentBar++
-
     let offset = 0
-    if (this.state.swing && (beatInd % 2) === 1) {
+    if (this.params.swing && (beatInd % 2) === 1) {
       offset = (this.state.swingVal - 1.5) / 1.5 * beatDur
         // console.log(beatInd + ' offset ' + offset)
     }
@@ -615,96 +613,100 @@ class App extends Component {
   }
 
   playClick (deadline) {
-  // console.log('deadline = ' + deadline)
-    const {triplet, denominator, numerator, bpm, increment, perBars} = this.state
 
-    if (this.state.barTimer > 0 && this.state.restBars <= 0) {
-      console.log('barTimer ' + this.state.barTimer)
+    const {bpm, restBars} = this.state
+    const {max_bpm, min_bpm, numerator, denominator, triplet,
+          increment, barTimer, perBars, muteBars, muteProb, 
+          cowbell, maleVoice} = this.params
+    let {muteCount, muteStat, count, barCount} = this.params
+
+//    console.log('count: ' + count) 
+
+    // Timer in bars
+    if (barTimer > 0 && restBars <= 0) {
+      console.log('barTimer ' + barTimer)
       this.startStop({target: {name: 'stop'}})
-      this.setState({restBars: this.state.barTimer}) // back to initial state
+      this.setState({restBars: barTimer}) // back to initial value
       return
     }
 
-     // automatic bpm increment
-    if (perBars > 0 && this.count === 0 && this.barCount > 0 &&
-       (this.barCount % perBars) === 0) {
+    // automatic bpm increment
+    if (perBars > 0 && count === 0 && barCount > 0 &&
+       (barCount % perBars) === 0) {
       let newBpm = parseFloat(bpm) + parseFloat(increment)
-      if (newBpm > this.state.max_bpm) newBpm = this.state.max_bpm
-      if (newBpm < this.state.min_bpm) newBpm = this.state.min_bpm
+      if (newBpm > max_bpm) newBpm = max_bpm
+      if (newBpm < min_bpm) newBpm = min_bpm
       this.setState({bpm: newBpm})
       clock.timeStretch(context.currentTime, this.tickEvents, bpm / newBpm)
     } // end automatic bpm increment
 
-    let volume = 1.0
-    let mute
-
-     // random mute
-    if (this.state.muteBars > 0 &&
-        this.state.muteProb > 0 && this.count === 0) {
-      if (this.state.muteCount === this.state.muteBars) {
+    // random mute
+    if (muteBars > 0 && muteProb > 0 && count === 0) {
+      if (muteCount === muteBars) {
          // console.log('mute off')
-        this.setState({mute: false, muteCount: 0})
+        muteStat = false
+        muteCount = 0
+        // this.setState({mute: false, muteCount: 0})
       } else {
-        if (this.state.mute) {
-          this.setState({muteCount: this.state.muteCount + 1})
-          console.log('mute cont' + this.state.muteCount)
-        } else if (Math.random() < parseFloat(this.state.muteProb)) {
+        if (muteStat) {
+          // this.setState({muteCount: this.state.muteCount + 1})
+          muteCount++
+          console.log('mute cont' + muteCount)
+        } else if (Math.random() < parseFloat(muteProb)) {
            // console.log('mute on')
-          this.setState({mute: true, muteCount: 1})
+          muteStat = true
+          muteCount++
+          // this.setState({mute: true, muteCount: 1})
         }
       }
     } // end random mute
 
-    if (this.state.mute) mute = 0.0
+    let volume = 1.0
+    let mute
+    if (muteStat) mute = 0.0
     else mute = 1.0
 
     let source = context.createBufferSource()
     let voice = context.createBufferSource()
 
     let voiceCount
-    if (triplet) voiceCount = (this.count * 4 * 2) / (denominator * 3)
-    else voiceCount = (this.count * 4) / denominator
+    if (triplet) voiceCount = (count * 4 * 2) / (denominator * 3)
+    else voiceCount = (count * 4) / denominator
      // console.log('voiceCount: ' + voiceCount)
     let deadlineVoice = deadline
 
-    if (voiceCount === 0) {
-      voice.buffer = this.state.voiceOne
-    } else if (voiceCount === 1) {
-      voice.buffer = this.state.voiceTwo
+     voice.buffer = maleVoice[voiceCount]
+     if (voiceCount === 1) {
       deadlineVoice -= 0.02
     } else if (voiceCount === 2) {
-      voice.buffer = this.state.voiceThree
       deadlineVoice -= 0.02
     } else if (voiceCount === 3) {
-      voice.buffer = this.state.voiceFour
       deadlineVoice -= 0.01
     } else if (voiceCount === 4) {
-      voice.buffer = this.state.voiceFive
       deadlineVoice -= 0.01
     } else if (voiceCount === 5) {
-      voice.buffer = this.state.voiceSix
       deadlineVoice -= 0.01
     } else if (voiceCount === 6) {
-      voice.buffer = this.state.voiceSeven
       deadlineVoice -= 0.01
     }
 
-    if (this.count === 0) {
-      source.buffer = this.state.click2
+    if (count === 0) {
+      source.buffer = cowbell[1]
       volume = 1.0 * mute
     } else {
-      source.buffer = this.state.click3
+      source.buffer = cowbell[2]
       volume = 0.7 * mute
-      if ((this.count + 1) % numerator === 0) {
-        this.barCount++
-        if (this.state.restBars > 0) { this.setState({restBars: this.state.restBars - 1}) }
+      if ((count + 1) % numerator === 0) {
+        barCount++
+        if (this.state.restBars > 0) 
+         this.setState({restBars: this.state.restBars - 1})
       }
     }
 
     if (triplet) {
-      if (this.count % 3 !== 2) volume *= this.state.evenVol
+      if (count % 3 !== 2) volume *= this.state.evenVol
     } else {
-      if (this.count % 2 === 0) volume *= this.state.evenVol
+      if (count % 2 === 0) volume *= this.state.evenVol
     }
 
     if (this.state.voice === 'c') { source.connect(gainNode) } else if (this.state.voice === 'v') { voice.connect(gainNode) } else if (this.state.voice === 'c+v') {
@@ -717,7 +719,12 @@ class App extends Component {
     source.start(deadline)
     if (this.state.voice) voice.start(deadlineVoice)
 
-    this.count = (this.count + 1) % numerator
+    count = (count + 1) % numerator
+    this.params.muteCount = muteCount
+    this.params.muteStat = muteStat
+    this.params.count = count
+    this.params.barCount = barCount
+
   } // end playClick
 
   handleChange (event) {
@@ -730,24 +737,27 @@ class App extends Component {
       m = jaText
       this.setState({ja: true})
      }
+     return
     }
 
     if (event.target.name === 'evenVol') {
-      if (this.state.evenVol) { this.setState({evenVol: parseFloat(event.target.value)}) } else { this.setState({evenVol: 1.0}) }
+      if (this.state.evenVol) 
+        this.setState({evenVol: parseFloat(event.target.value)}) 
+      else this.setState({evenVol: 1.0}) 
+      return
     }
 
     if (event.target.name === 'voice') { // c, c+v, v, rotation
       if (this.state.voice === 'c') this.setState({voice: 'v'})
       else if (this.state.voice === 'v') this.setState({voice: 'c+v'})
       else this.setState({voice: 'c'})
+      return
     }
 
+//  Temp tap: https://www.all8.com/tools/bpm.htm
     if (event.target.name === 'tempo_tap') {
-// https://www.all8.com/tools/bpm.htm
       let timeSeconds = new Date()
       let msecs = timeSeconds.getTime()
-
-     // console.log('TAP msec ' + msecs)
 
       if ((msecs - this.tap.msecsPrevious) > 3000) { // timeout 3 sec
         this.tap.count = 0
@@ -759,12 +769,14 @@ class App extends Component {
       } else {
         let newBpm = 60000 * this.tap.count / (msecs - this.tap.msecsFirst)
         this.setState({bpm: newBpm.toFixed(1)})
-        clock.setTimeout(function (event) {
-          this.startStop({target: {name: 'restart'}})
-        }.bind(this), 0.02)
+        if(this.state.playing)
+          clock.timeStretch(context.currentTime, this.tickEvents, 
+          this.state.bpm / newBpm)
+
         this.tap.count++
       }
       this.tap.msecsPrevious = msecs
+      return
     }
 
     if (event.target.name === 'bpm_number') {
@@ -772,61 +784,83 @@ class App extends Component {
       let bpm_frac = parseFloat(event.target.value, 10)
       let newBpm =  Math.floor(this.state.bpm) + 0.1*bpm_frac
       this.setState({bpm: newBpm, bpm_frac: bpm_frac})
-      clock.setTimeout(function (event) {
-        this.startStop({target: {name: 'restart'}})
-      }.bind(this), 0.02)
+
+      if (this.state.playing)
+       clock.timeStretch(context.currentTime, this.tickEvents, 
+            this.state.bpm / newBpm)
+
+      return
     }
 
     if (event.target.name === 'bpm_slider') {
       let newBpm = parseFloat(event.target.value, 10)
       this.setState({bpm: newBpm.toFixed(1), bpm_frac: 0.0})
-      clock.setTimeout(function (event) {
-        this.startStop({target: {name: 'restart'}})
-      }.bind(this), 0.02)
+      if (this.state.playing)
+        clock.timeStretch(context.currentTime, this.tickEvents, 
+        this.state.bpm / newBpm)
+      return
     }
 
     if (event.target.name === 'swing') {
-      let swingVal = parseFloat(event.target.value, 10).toFixed(1)
-      if (swingVal <= 1.4 || swingVal >= 1.6)
-        this.setState({swing: true, swingVal: swingVal}) 
-      else this.setState({swing: false, swingVal: 1.5}) 
+      if (event.target.value !== 15){
+        let swingVal = parseFloat(event.target.value/10, 10)
+        this.params.swing = true
+        this.setState({swingVal: swingVal}) 
+      } else {
+        this.params.swing = false
+        this.setState({swingVal: 1.5}) 
+      }
 
       clock.setTimeout(function (event) {
           this.startStop({target: {name: 'restart'}})
       }.bind(this), 0.02)
+      return
     }
 
-    if (event.target.name === 'increment') { this.setState({increment: parseInt(event.target.value, 10)}) }
+    if (event.target.name === 'increment') { 
+      // this.setState({increment: parseInt(event.target.value, 10)}) 
+      this.params.increment = parseInt(event.target.value, 10)
+      return
+    }
 
-    if (event.target.name === 'muteProb') { this.setState({muteProb: parseFloat(event.target.value, 10)}) }
+    if (event.target.name === 'muteProb') { 
+      // this.setState({muteProb: parseFloat(event.target.value, 10)}) 
+      this.params.muteProb = parseFloat(event.target.value, 10)
+      return
+    }
 
     if (event.target.name === 'timer') {
-      let rest = parseInt(event.target.value, 10)
-      this.setState({timer: rest, rest: rest})
+      this.params.timer = parseInt(event.target.value, 10)
+      this.setState({rest: this.params.timer})
+      return
     }
 
     if (event.target.name === 'barTimer') {
-      let rest = parseInt(event.target.value, 10)
-      this.setState({barTimer: rest, restBars: rest})
+      this.params.barTimer = parseInt(event.target.value, 10)
+      this.setState({restBars: this.params.barTimer})
+      return
     }
-  } // end handleChange()
 
-  handleSelect (event) {
+    if (event.target.name === 'perBars') { 
+      this.setState({perBars: parseInt(event.target.value, 10)}) 
+      return
+    }
+
+    if (event.target.name === 'muteBars') { 
+      this.setState({muteBars: parseInt(event.target.value, 10)}) 
+      return
+    }
+
     if (event.target.name === 'preset') {
-     // console.log('preset changed')
       const preset = this.presets[event.target.value]
       this.setState({
         count: 0,
         preset: preset.value,
-        triplet: preset.triplet,
-        numerator: preset.numerator,
-        denominator: preset.denominator,
         swingVal: 1.5
       })
-
-/*
-      if (preset.swing !== 'undefined') { this.setState({swingVal: preset.swingVal}) } else { this.setState({swingVal: 'N/A'}) }
-*/
+      this.params.numerator = preset.numerator
+      this.params.denominator = preset.denominator
+      this.params.triplet =  preset.triplet
 
       if (this.state.playing) {
         clock.setTimeout(function (event) {
@@ -834,12 +868,23 @@ class App extends Component {
           this.startStop({target: {name: 'restart'}})
         }.bind(this), 0.02)
       }
-    }
+      return
+    } // end preset
 
-    if (event.target.name === 'perBars') { this.setState({perBars: parseInt(event.target.value, 10)}) }
+  } // end handleChange()
 
-    if (event.target.name === 'muteBars') { this.setState({muteBars: parseInt(event.target.value, 10)}) }
-  } // end func
+  handleWindowClose(event) { // finishing clean up
+    this.startStop({target: {name: 'stop'}})
+    clock.stop()
+    timerClock.stop()
+/*
+    context = null
+    clock = null
+    timerClock = null
+    gainNode = null
+*/
+  }
+
 } // end App
 
 export default App
