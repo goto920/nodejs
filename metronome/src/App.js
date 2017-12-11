@@ -49,10 +49,10 @@ class App extends Component {
       ja: false,
       voice: 'c', // c(owbell) only, c+v, v(oice) only
       rest: 0, restBars: 0, playing: false,
-      bpm: '100.0', bpm_frac: 0, preset: 4, // default 4/4
+      bpm: 100, bpm_frac: 0, preset: 5, // default 4/4
       swingVal: 1.5, evenVol: 1.0,
       loopTable : [],
-      newRow: {preset: 4, swingVal: 1.5, repeat: 1},
+      newRow: {preset: 5, swingVal: 1.5, repeat: 1},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0}
     }
 
@@ -68,11 +68,14 @@ class App extends Component {
     this.presets = [
       { value: '2/2', numerator: 2, denominator: 2},
       { value: '3/4', numerator: 3, denominator: 4},
-      { value: '6/8', numerator: 6, denominator: 8},
-      { value: '12/8', numerator: 12, denominator: 8, triplet: true},
-      { value: '4/4', numerator: 4, denominator: 4}, 
+      { value: '6/8(2x3)', numerator: 6, denominator: 8},
+      { value: '12/8(2x6)', numerator: 12, denominator: 8},
+      { value: '12/8(3x4)', numerator: 12, denominator: 8, triplet: true},
+      { value: '4/4', numerator: 4, denominator: 4}, // default 
       { value: '8/8', numerator: 8, denominator: 8},
+      { value: '8/8swing', numerator: 8, denominator: 8, swingVal: 2.0},
       { value: '16/16', numerator: 16, denominator: 16},
+      { value: '16/16swing', numerator: 16, denominator: 16, swingVal: 2.0},
       { value: '5/4', numerator: 5, denominator: 4},
       { value: '10/8', numerator: 10, denominator: 8},
       { value: '7/4', numerator: 7, denominator: 4},
@@ -327,7 +330,7 @@ class App extends Component {
           onChange={this.handleChange} />
         </span>
        <hr />
-      (Version: {version})<br />
+      (Version: {version}) <a href={m.url}>{m.guide}</a><br />
       Additional feature is coming<br />
       PresetLoop(60% done), Set List, Sound variation
       <hr /> 
@@ -853,11 +856,11 @@ class App extends Component {
 
     if (event.target.name === 'preset') {
       const preset = this.presets[event.target.value]
-      this.setState({
-        count: 0,
-        preset: preset.value,
-        swingVal: 1.5
-      })
+
+      if(preset.swingVal !== undefined) this.params.swing = true
+      else this.params.swing = false
+
+      this.setState({preset: preset.value, swingVal: preset.swingVal})
       this.params.numerator = preset.numerator
       this.params.denominator = preset.denominator
       this.params.triplet =  preset.triplet
