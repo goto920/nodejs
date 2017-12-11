@@ -16,7 +16,8 @@
      "muteBars": "Random mute",
      "muteProb1": "bars",
      "muteProb2": "at prob",
-     "evenNotes": "Even notes vol"
+     "evenNotes": "Even notes vol",
+     "url": "https://goto920.github.io/guide.html"
       },
   "ja": {
      "beat": "ビート",
@@ -36,6 +37,7 @@
      "muteBars": "ランダムミュート",
      "muteProb1": "小節",
      "muteProb2": "確率",
-     "evenNotes": "偶数音Vol"
+     "evenNotes": "偶数音Vol",
+     "url": "https://goto920.github.io/guide-jp.html"
       }
 }
