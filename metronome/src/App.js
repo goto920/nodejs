@@ -9,7 +9,8 @@ import packageJSON from '../package.json'
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 const context = new window.AudioContext()
 const clock = new WAAClock(context)
-const timerClock = new WAAClock(context)
+// const timerClock = new WAAClock(context)
+const timerClock = clock
 const gainNode = context.createGain()
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
@@ -879,7 +880,7 @@ class App extends Component {
   handleWindowClose(event) { // finishing clean up
     this.startStop({target: {name: 'stop'}})
     clock.stop()
-    timerClock.stop()
+    // timerClock.stop() // now: timerClock = clock
 /*
     context = null
     clock = null
