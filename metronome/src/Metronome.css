@@ -10,6 +10,11 @@
   width: 100%;
   // margin: 10px;
   margin: auto;
+  cursor: pointer;
+}
+
+.slider input {
+  cursor: pointer;
 }
 
 .metronome button {
@@ -21,11 +26,13 @@
   width: 60px;
   color: #fff;
   font-size: 18px;
+  cursor: pointer;
 }
 
 .number input {
   width: 15%;
   margin: 10px;
+  cursor: pointer;
 }
 
 .small-button button {
@@ -36,6 +43,7 @@
   width: 50px;
   color: #fff;
   font-size: 15px;
+  cursor: pointer;
 }
 
 .loopButton button {
@@ -49,4 +57,13 @@
   height: 40px;
   color: #fff;
   font-size: 18px;
+  cursor: pointer;
+}
+
+.radioButton input {
+  cursor: pointer;
+}
+
+.selector select {
+  cursor: pointer;
 }

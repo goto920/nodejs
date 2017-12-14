@@ -155,8 +155,7 @@ class App extends Component {
       return (<tr key={index}>
          <td align="right">
           d<input type="radio" name="loopDel" value={index} 
-          checked={false}
-            onChange={this.handleTable}/></td>
+          checked={false} onChange={this.handleTable}/></td>
          <td align="right">{index}</td>
          <td align="right">{e.preset.value}</td>
          <td align="right">{e.swingVal.toFixed(1)}</td>
@@ -179,7 +178,7 @@ class App extends Component {
       / <button name="rewindLoop" onClick={customPlay}>
         {m.rewind}</button>
       </span><br />
-      <div>
+      <div className="radioButton">
       <table border="3">
       <tbody>
       <tr><th>d/a</th><th>seq</th>
@@ -189,12 +188,12 @@ class App extends Component {
      a<input type="radio" name="loopAdd" checked={false}
         onChange={handleTable}/></td>
           <td align="right">add</td>
-          <td align="right">
+          <td align="right" className='selector'>
              <select name="loopAddPreset" 
               defaultValue={newRow.preset} 
               onChange={handleTable}>
                {options}</select></td>
-          <td align="right">
+          <td align="right" className='selector'>
            <span><select name='loopSwingVal' 
              value={parseInt(newRow.swingVal*10,10)}
              onChange={handleTable}>
@@ -220,7 +219,7 @@ class App extends Component {
            <option value='24'>2.4</option>
            <option value='25'>2.5</option>
           </select></span></td>
-          <td align="right"><span>
+          <td align="right" className='selector'><span>
           <select name='loopRepeat' 
              defaultValue={newRow.repeat} 
              onChange={handleTable}>
@@ -251,10 +250,11 @@ class App extends Component {
           </button>
           </span>
       <hr />
+        <span className='selector'>
         {m.beat}: <select name='preset' defaultValue={preset}
           onChange={this.handleChange}>
           {options}
-        </select>
+        </select></span>
           &nbsp;
         <span className='small-button'>
           <button name='voice' onClick={this.handleChange}>
@@ -266,6 +266,7 @@ class App extends Component {
         </button><br />
         <span className='number'>
         BPM({min_bpm}-{max_bpm}): &nbsp; {('0' + Math.floor(bpm)).slice(-3)}.
+        <span className='selector'>
         <select name='bpm_number' defaultValue={bpm_frac}
            onChange={this.handleChange}>
            <option value='0'>0</option>
@@ -278,7 +279,7 @@ class App extends Component {
            <option value='7'>7</option>
            <option value='8'>8</option>
            <option value='9'>9</option>
-         </select>
+         </select></span>
         &nbsp; &nbsp; &nbsp; &nbsp;
         </span>
         <span className='small-button'>
@@ -291,7 +292,7 @@ class App extends Component {
             onChange={this.handleChange} />
         </span> <br />
         {m.timer}: &nbsp;
-     <span>
+     <span className='selector'>
      {('00' + rest).slice(-3)}/
      <select name='timer' defaultValue='0' onChange={this.handleChange}> 
      <option value='0'>off</option>
@@ -304,7 +305,7 @@ class App extends Component {
      <option value='300'>300</option>
      <option value='600'>600</option>
      </select>({m.secs}), </span>
-  <span>
+  <span className='selector'>
   {('00' + restBars).slice(-3)}/ 
   <select name='barTimer' defaultValue='0' onChange={this.handleChange}>
   <option value='0'>off</option>
@@ -319,7 +320,7 @@ class App extends Component {
         <hr />
         <font color='blue'>{m.advanced}</font><br />
           {m.swing}: &nbsp; 
-        <span>
+        <span className='selector'>
            <select name='swing' value={parseInt(swingVal*10,10)}
            onChange={this.handleChange}>
            <option value='5'>0.5</option>
@@ -347,7 +348,7 @@ class App extends Component {
        </span>
         &nbsp; {m.swingStr}
         <br />
-        <span className='number'>
+        <span className='selector'>
         {m.increment}: 
        <select name='increment' defaultValue='0' onChange={this.handleChange}> 
          <option value='-10'>-10</option> <option value='-9'>-9</option>
@@ -364,7 +365,7 @@ class App extends Component {
          </select> bpm
         </span>
          / 
-        <span> 
+        <span className='selector'> 
            <select name='perBars' defaultValue='0' onChange={this.handleChange}>
            <option value='0'>off</option>
            <option value='1'>1</option>
@@ -375,7 +376,7 @@ class App extends Component {
            <option value='16'>16</option>
          </select> 
          &nbsp; {m.perBars}</span><br />
-        <span>
+        <span className='selector'>
         {m.muteBars}: &nbsp;
          <select name='muteBars' defaultValue='0' onChange={this.handleChange}>
           <option value='0'>off</option>
@@ -389,7 +390,7 @@ class App extends Component {
         </span>
         {m.muteProb1}
         &nbsp; {m.muteProb2}
-        <span>
+        <span className='selector'>
           <select name='muteProb' defaultValue='0' onChange={this.handleChange}>
           <option value='0.0'>0.0</option>
           <option value='0.1'>0.1</option>
@@ -405,7 +406,7 @@ class App extends Component {
           </select>
         </span>
         <br />
-        <span>
+        <span className='slider'>
         {m.evenNotes}: {evenVol.toFixed(2)} <input type='range' name='evenVol'
           min='0.0' max='1.0' value={evenVol} step='0.01'
           onChange={this.handleChange} />
