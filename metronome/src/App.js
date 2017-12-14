@@ -955,6 +955,8 @@ class App extends Component {
   handleWindowClose(event) { // finishing clean up
     this.startStop({target: {name: 'stop'}})
     clock.stop()
+    clock.close()
+    context.close()
     // timerClock.stop() // now: timerClock = clock
   }
 
