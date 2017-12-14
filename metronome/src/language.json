@@ -17,6 +17,12 @@
      "muteProb1": "bars",
      "muteProb2": "at prob",
      "evenNotes": "Even notes vol",
+     "custom": "Custom Loop",
+     "hide": "hide",
+     "show": "show",
+     "customTable": "Custom Loop Table",
+     "d_a": "delete/add(@end)",
+     "rewind": "rewind",
      "url": "https://goto920.github.io/guide.html",
      "guide": "User guide and updates"
       },
@@ -39,6 +45,12 @@
      "muteProb1": "小節",
      "muteProb2": "確率",
      "evenNotes": "偶数音Vol",
+     "custom": "カスタムループ",
+     "hide": "隠す",
+     "show": "表示",
+     "customTable": "カスタムループ表",
+     "d_a": "消去/(最後に)追加",
+     "rewind": "巻き戻し",
      "url": "https://goto920.github.io/guide-jp.html",
      "guide": "ユーザガイドと更新"
       }

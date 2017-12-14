@@ -15,15 +15,15 @@ const gainNode = context.createGain()
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
  // define in package.json
-const early = 0.1
-const late = 1.0
+// const early = 0.1
+const early = 0.1, late = 1.0
 
 const jaText = messages.ja
 const usText = messages.us
 var m = usText
 
 clock.start()
-timerClock.start()
+// timerClock.start()
 
 class App extends Component {
   constructor (props) {
@@ -40,7 +40,8 @@ class App extends Component {
       cowbell: [], maleVoice: [],
       swing: false,
       count: 0, barCount: 0,
-      startTime: 0
+      startTime: 0,
+      nextTick: 0
     }
 
     this.timerEvent = 0
@@ -53,8 +54,9 @@ class App extends Component {
       bpm: 100, bpm_frac: 0, preset: 5, // default 4/4
       swingVal: 1.5, evenVol: 1.0,
       loopTable : [],
-      newRow: {preset: 5, swingVal: 1.5, repeat: 1},
-      loopStat: {playing: false, seq: 0, repeat: 0, bar: 0}
+      newRow: {preset: 5, swingVal: 1.5, repeat: 4},
+      loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
+      customLoop: false
     }
 
     this.setState = this.setState.bind(this)
@@ -137,7 +139,7 @@ class App extends Component {
   render () {
     const {ja, voice, loopTable, newRow, loopStat,
            preset, playing, bpm, bpm_frac,
-           rest, restBars, swingVal, evenVol} = this.state
+           rest, restBars, swingVal, evenVol, customLoop} = this.state
     const {min_bpm, max_bpm} = this.params
 
     const options = this.presets.map((e,index) => {
@@ -157,11 +159,89 @@ class App extends Component {
             onChange={this.handleTable}/></td>
          <td align="right">{index}</td>
          <td align="right">{e.preset.value}</td>
-         <td align="right">{e.swingVal}</td>
+         <td align="right">{e.swingVal.toFixed(1)}</td>
          <td align="right">{e.repeat}</td>
          </tr>)
     }.bind(this))
 
+    const {customPlay,handleTable} = this
+    function CustomLoopUI(props) {
+      return (<span>
+      <font color='blue'>{m.customTable}</font>
+      &nbsp; seq/rep/bar: {('00' + loopStat.seq).slice(-2)}
+               /{('00' + loopStat.repeat).slice(-2)}
+               /{('00' + loopStat.bar).slice(-3)}
+      <br />
+      <b>{m.d_a}</b>&nbsp;
+      <span className="loopButton">
+        <button name="startLoop" onClick={customPlay}>
+        {loopStat.playing ? 'Stop' : 'Start'}</button>
+      / <button name="rewindLoop" onClick={customPlay}>
+        {m.rewind}</button>
+      </span><br />
+      <div>
+      <table border="3">
+      <tbody>
+      <tr><th>d/a</th><th>seq</th>
+          <th>beat</th><th>swing</th><th>repeat</th></tr>
+      {loopTableRows}
+      <tr><td align="right">
+     a<input type="radio" name="loopAdd" checked={false}
+        onChange={handleTable}/></td>
+          <td align="right">add</td>
+          <td align="right">
+             <select name="loopAddPreset" 
+              defaultValue={newRow.preset} 
+              onChange={handleTable}>
+               {options}</select></td>
+          <td align="right">
+           <span><select name='loopSwingVal' 
+             value={parseInt(newRow.swingVal*10,10)}
+             onChange={handleTable}>
+           <option value='5'>0.5</option>
+           <option value='6'>0.6</option>
+           <option value='7'>0.7</option>
+           <option value='8'>0.8</option>
+           <option value='9'>0.9</option>
+           <option value='10'>1.0</option>
+           <option value='11'>1.1</option>
+           <option value='12'>1.2</option>
+           <option value='13'>1.3(str)</option>
+           <option value='14'>1.4</option>
+           <option value='15'>1.5(str)</option>
+           <option value='16'>1.6</option>
+           <option value='17'>1.7</option>
+           <option value='18'>1.8(Lt)</option>
+           <option value='19'>1.9</option>
+           <option value='20'>2.0(Swg)</option>
+           <option value='21'>2.1</option>
+           <option value='22'>2.2(Hvy)</option>
+           <option value='23'>2.3</option>
+           <option value='24'>2.4</option>
+           <option value='25'>2.5</option>
+          </select></span></td>
+          <td align="right"><span>
+          <select name='loopRepeat' 
+             defaultValue={newRow.repeat} 
+             onChange={handleTable}>
+           <option value='1'>1</option> <option value='2'>2</option>
+           <option value='3'>3</option> <option value='4'>4</option>
+           <option value='5'>5</option> <option value='6'>6</option>
+           <option value='7'>7</option> <option value='8'>8</option>
+           <option value='9'>9</option> <option value='10'>10</option>
+           <option value='11'>11</option> <option value='12'>12</option>
+           <option value='13'>13</option> <option value='14'>14</option>
+           <option value='15'>15</option> <option value='16'>16</option>
+         </select>
+          </span></td>
+          </tr>
+       </tbody>
+       </table>
+     </div>
+    </span>)
+  }
+
+/////////////// UI menus
     return (
       <div className='metronome'>
       KG's JS_Metronome &nbsp;
@@ -329,100 +409,40 @@ class App extends Component {
         {m.evenNotes}: {evenVol.toFixed(2)} <input type='range' name='evenVol'
           min='0.0' max='1.0' value={evenVol} step='0.01'
           onChange={this.handleChange} />
+        </span><br />
+        <span className="loopButton">
+        {m.custom}: <button name="customLoopUI" onClick={this.handleChange}>
+        {customLoop ? m.hide : m.show} {/* no {} for m.hide,show */}
+        </button>
         </span>
        <hr />
       (Version: {version}) <a href={m.url}>{m.guide}</a><br />
-      Additional feature is coming<br />
-      PresetLoop(60% done), Set List, Sound variation
+      Additional feature coming<br />
+      PresetLoop(80% done), Set List, Sound variation
       <hr /> 
-{/*
-      <b>Edit Loop and &nbsp;</b>
-      <span className="loopButton">
-        <button name="startLoop" onClick={this.customPlay}>
-        {loopStat.playing ? 'Stop' : 'Start'}</button>
-      </span>&nbsp; rewind &nbsp;
-      <span className="loopButton">
-        <button name="rewindLoop" onClick={this.customPlay}>
-        &lt;&lt;&lt;</button>
-      </span>
-      <div>
-      <table border="3">
-      <tbody>
-      <tr><th>d/a</th><th>seq</th>
-          <th>beat</th><th>swing</th><th>repeat</th></tr>
-      {loopTableRows}
-      <tr><td align="right">
-     a<input type="radio" name="loopAdd" checked={false}
-        onChange={this.handleTable}/></td>
-          <td align="right">add</td>
-          <td align="right">
-             <select name="loopAddPreset" 
-              defaultValue={newRow.preset} 
-              onChange={this.handleTable}>
-               {options}</select></td>
-          <td align="right">
-           <span><select name='loopSwingVal' 
-             defaultValue='1.5'
-             onChange={this.handleTable}>
-           <option value='0.5'>0.5</option>
-           <option value='0.6'>0.6</option>
-           <option value='0.7'>0.7</option>
-           <option value='0.8'>0.8</option>
-           <option value='0.9'>0.9</option>
-           <option value='1.0'>1.0</option>
-           <option value='1.1'>1.1</option>
-           <option value='1.2'>1.2</option>
-           <option value='1.3'>1.3(str)</option>
-           <option value='1.4'>1.4</option>
-           <option value='1.5'>1.5(str)</option>
-           <option value='1.6'>1.6</option>
-           <option value='1.7'>1.7</option>
-           <option value='1.8'>1.8(Lt)</option>
-           <option value='1.9'>1.9</option>
-           <option value='2.0'>2.0(Swg)</option>
-           <option value='2.1'>2.1</option>
-           <option value='2.2'>2.2(Hvy)</option>
-           <option value='2.3'>2.3</option>
-           <option value='2.4'>2.4</option>
-           <option value='2.5'>2.5</option>
-          </select></span></td>
-          <td align="right"><span>
-          <select name='loopRepeat' 
-             defaultValue={this.state.newRow.repeat} 
-             onChange={this.handleTable}>
-           <option value='1'>1</option> <option value='2'>2</option>
-           <option value='3'>3</option> <option value='4'>4</option>
-           <option value='5'>5</option> <option value='6'>6</option>
-           <option value='7'>7</option> <option value='8'>8</option>
-           <option value='9'>9</option> <option value='10'>10</option>
-           <option value='11'>11</option> <option value='12'>12</option>
-           <option value='13'>13</option> <option value='14'>14</option>
-           <option value='15'>15</option> <option value='16'>16</option>
-         </select>
-          </span></td>
-          </tr>
-      </tbody>
-      </table>
-      </div> 
-*/}
+      {customLoop ? <CustomLoopUI /> : ''}
       </div>
     )
   } // end render()
 
   customPlay (event) {
 
-    let {loopTable,loopStat} = this.state 
-    if (loopTable.length <= 0) return 
-
+    const {loopTable} = this.state 
+    let {loopStat} = this.state
+    if  (loopTable.length <= 0) return 
 
     if (event.target.name === 'startLoop'){
+      this.startStop({target: {name: 'stop'}}) // stop the metronome
 
-      if(loopStat.playing) {
-        console.log('startLoop stop')
-        this.startStop({target: {name: 'stop'}})
-        loopStat.playing = false
+      if (loopStat.playing){
+//        console.log('stopLoop')
+        this.customPlay({target: {name: 'stop'}})
       } else {
-        console.log('stopLoop start')
+//        console.log('startLoop')
+        loopStat.seq = 0
+        loopStat.bar = 0
+        loopStat.repeat = 1
+        this.setState({loopStat: loopStat})
         this.customPlay({target: {name: 'start'}})
         loopStat.playing = true
       }
@@ -432,90 +452,135 @@ class App extends Component {
     } 
 
     if (event.target.name === 'rewindLoop'){
-      console.log('rewindLoop')
-      this.customPlay({target: {name: 'restart'}})
+//      console.log('rewindLoop')
+      this.customPlay({target: {name: 'stop'}})
+      loopStat.seq = 0
+      loopStat.repeat = 0
+      loopStat.bar = 0
+      this.setState({loopStat: loopStat}) 
       return
     }
 
- // Are recursive calls OK?
-    if (event.target.name === 'stop'){ return }
+    if (event.target.name === 'stop'){ 
+      for (let beat = 0; beat < this.tickEvents.length; beat++)
+        this.tickEvents[beat].clear() 
+      loopStat.playing = false
+      this.setState({loopStat: loopStat}) 
+      return 
+    }
+
     if (event.target.name === 'start'){ 
+      this.customPlay({target: {name: 'nextBar'}})
+      return 
+    }
 
-      this.params.startTime = context.currentTime
-      this.params.count = 0
-      let beat = 0
-      for(let i = 0; i < loopTable.length; i++){
+    if (event.target.name === 'nextBar'){ 
+//      console.log('nextBar: ' + loopStat.bar)
 
-        let {preset,swingVal,repeat} = loopTable[i]
+      if (loopStat.bar === 0
+         || loopStat.repeat === loopTable[loopStat.seq].repeat) { // next seq
+
+        if(loopStat.bar > 0) loopStat.seq++
+        if (loopStat.seq === loopTable.length) loopStat.seq = 0
+
+        loopStat.repeat = 1
+        let {preset,swingVal} = loopTable[loopStat.seq]
         this.params.numerator = preset.numerator
         this.params.denominator = preset.denominator
         this.params.triplet = preset.triplet
         if (parseInt(swingVal*10,10) !== 15) {
+          this.setState({swingVal: swingVal})
           this.params.swing = true
-          this.params.swingVal = preset.swingVal
+        } else { 
+          this.setState({swingVal: 1.5})
+          this.params.swing = false
         }
 
-        for (let beatId = beat; 
-            beatId < beat + this.params.numerator*repeat; 
-            beatId++, beat++) {
-          let event = clock.callbackAtTime(
-            function (event) { this.playClick(event.deadline) }.bind(this),
-            this.nextTick(beatId)
-          ).tolerance({early: early, late: late})
-          this.tickEvents[beat] = event
-        } // end for
-      }
-      return 
-    }
-    if (event.target.name === 'restart'){ return }
+/*
+        console.log('set(a/b/sw): ' 
+          + this.params.numerator 
+          + '/' + this.params.denominator
+          + '/' + this.params.swing)
+*/
+ 
+      } else loopStat.repeat++
+
+
+      if (loopStat.bar === 0)
+        this.params.startTime = context.currentTime
+      else
+        this.params.startTime = this.params.nextTick
+
+      this.params.count = 0 
+      let event
+      for (let beat = 0; beat < this.params.numerator; beat++) {
+        event = clock.callbackAtTime(
+          function (event) { 
+          this.playClick(event.deadline) }.bind(this),
+          this.nextTick(beat)
+        ).tolerance({early: early, late: late}) // tight early tolerance
+        this.tickEvents[beat] = event
+//      console.log('beat ' + beat + ', at ' + event.deadline)
+      } // end for
+
+      this.params.nextTick = this.nextTick(this.params.numerator) // next
+/*
+      console.log('bar ' + loopStat.bar 
+                  + ', nextTick ' + this.params.nextTick)
+*/
+      loopStat.bar++
+      this.setState({loopStat: loopStat})
+
+    } // end nextBar
 
   }
 
   handleTable(event) {
-    const {newRow, loopTable} = this.state
+    let {newRow, loopTable} = this.state
 
     if (event.target.name === 'loopDel'){
-      let tmp = loopTable
-      tmp.splice(event.target.value,1)
-      this.setState({loopTable: tmp})
+      loopTable.splice(event.target.value,1)
+      this.setState({loopTable: loopTable})
       return
     }
 
     if (event.target.name === 'loopAdd'){
-      let tmp = loopTable
-      tmp.push(
+      loopTable.push(
        {preset: this.presets[newRow.preset],
         swingVal: newRow.swingVal,
         repeat:   newRow.repeat
       })
-      this.setState({loopTable: tmp})
+      this.setState({loopTable: loopTable})
       return
     }
 
     if (event.target.name === 'loopAddPreset'){
-      let tmp=newRow
-      tmp.preset = event.target.value
-      this.setState({newRow: tmp})
+      newRow.preset = parseInt(event.target.value,10)
+      if (this.presets[newRow.preset].swingVal !== undefined)
+        newRow.swingVal = this.presets[newRow.preset].swingVal
+      else 
+        newRow.swingVal = 1.5
+      this.setState({newRow: newRow})
       return
     }
 
     if (event.target.name === 'loopSwingVal'){
-      let tmp=newRow
-      tmp.swingVal = event.target.value
-      this.setState({newRow: tmp})
+      newRow.swingVal = parseFloat(event.target.value/10,10)
+      this.setState({newRow: newRow})
       return
     }
 
     if (event.target.name === 'loopRepeat'){
-      let tmp=newRow
-      tmp.repeat = event.target.value
-      this.setState({newRow: tmp})
+      newRow.repeat = parseInt(event.target.value,10)
+      this.setState({newRow: newRow})
       return
     }
 
   } // end handleTable
 
   startStop (event) {
+
+    if (this.state.loopStat.playing) return
 
     if (event.target.name === 'stop') {
       if (this.state.playing) {
@@ -545,14 +610,14 @@ class App extends Component {
            .tolerance({early: early, late: late})
         this.tickEvents[beat] = event
       } // end for
-      console.log('restart')
+//      console.log('restart')
       return
     } // end restart
 
     if (event.target.name === 'startStop') {
 
       if (this.state.playing) {
-        console.log('stopping')
+//        console.log('stopping')
         this.setState({playing: false})
         for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
         this.params.count = 0
@@ -565,7 +630,7 @@ class App extends Component {
       } // stop
 
       // start
-      console.log('starting')
+//      console.log('starting')
       let clickPmin = this.state.bpm * (this.params.denominator / 4)
       this.setState({playing: true})
 
@@ -604,16 +669,16 @@ class App extends Component {
     const barDur = beatDur * this.params.numerator
 
     const currentTime = context.currentTime
-    const relativeTime = currentTime - this.params.startTime
+    const relativeTime = Math.max(0, currentTime - this.params.startTime)
     var currentBar = Math.floor(relativeTime / barDur)
 
     let offset = 0
     if (this.params.swing && (beatInd % 2) === 1) {
       offset = (this.state.swingVal - 1.5) / 1.5 * beatDur
-        // console.log(beatInd + ' offset ' + offset)
     }
 
-    return currentTime + offset + currentBar * barDur + beatInd * beatDur
+    return this.params.startTime + offset 
+           + currentBar * barDur + beatInd * beatDur
   }
 
   playClick (deadline) {
@@ -628,7 +693,7 @@ class App extends Component {
 
     // Timer in bars
     if (barTimer > 0 && restBars <= 0) {
-      console.log('barTimer ' + barTimer)
+//      console.log('barTimer ' + barTimer)
       this.startStop({target: {name: 'stop'}})
       this.setState({restBars: barTimer}) // back to initial value
       return
@@ -655,7 +720,7 @@ class App extends Component {
         if (muteStat) {
           // this.setState({muteCount: this.state.muteCount + 1})
           muteCount++
-          console.log('mute cont' + muteCount)
+//          console.log('mute cont' + muteCount)
         } else if (Math.random() < parseFloat(muteProb)) {
            // console.log('mute on')
           muteStat = true
@@ -729,6 +794,10 @@ class App extends Component {
     this.params.count = count
     this.params.barCount = barCount
 
+    if (this.state.loopStat.playing && count === 0)
+       this.customPlay({target: {name: 'nextBar'}})
+
+    return
   } // end playClick
 
   handleChange (event) {
@@ -868,12 +937,17 @@ class App extends Component {
 
       if (this.state.playing) {
         clock.setTimeout(function (event) {
-          console.log('restarting')
+//          console.log('restarting')
           this.startStop({target: {name: 'restart'}})
         }.bind(this), 0.02)
       }
       return
     } // end preset
+
+    if (event.target.name === 'customLoopUI'){
+        this.setState({customLoop: !this.state.customLoop})
+        return
+    }
 
   } // end handleChange()
 
@@ -881,12 +955,6 @@ class App extends Component {
     this.startStop({target: {name: 'stop'}})
     clock.stop()
     // timerClock.stop() // now: timerClock = clock
-/*
-    context = null
-    clock = null
-    timerClock = null
-    gainNode = null
-*/
   }
 
 } // end App
