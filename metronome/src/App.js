@@ -36,7 +36,6 @@ class App extends Component {
       min_bpm: 30.0,
       max_bpm: 360.0,
       timer: 0, barTimer: 0,
-      increment: 0, perBars: 0,
       muteBars: 0, muteProb: 0.0,
       muteCount: 0, muteStat: false,
       numerator: 4, denominator: 4, triplet: false,
@@ -56,6 +55,7 @@ class App extends Component {
       rest: 0, restBars: 0, playing: false,
       bpm: 100, bpm_frac: 0, preset: 5, // default 4/4
       swingVal: 1.5, evenVol: 1.0,
+      increment: 0, perBars: 0,
       loopTable : [],
       newRow: {preset: 5, swingVal: 1.5, repeat: 4},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
@@ -904,13 +904,11 @@ class App extends Component {
     }
 
     if (event.target.name === 'increment') { 
-      // this.setState({increment: parseInt(event.target.value, 10)}) 
       this.params.increment = parseInt(event.target.value, 10)
       return
     }
 
     if (event.target.name === 'muteProb') { 
-      // this.setState({muteProb: parseFloat(event.target.value, 10)}) 
       this.params.muteProb = parseFloat(event.target.value, 10)
       return
     }
@@ -928,12 +926,12 @@ class App extends Component {
     }
 
     if (event.target.name === 'perBars') { 
-      this.setState({perBars: parseInt(event.target.value, 10)}) 
+      this.params.perBars = parseInt(event.target.value, 10)
       return
     }
 
     if (event.target.name === 'muteBars') { 
-      this.setState({muteBars: parseInt(event.target.value, 10)}) 
+      this.params.muteBars = parseInt(event.target.value, 10)
       return
     }
 

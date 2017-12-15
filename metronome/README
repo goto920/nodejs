@@ -8,3 +8,14 @@ http://sebpiq.github.io/WAAClock/demos/beatSequence.html
 
 Real time setState https://qiita.com/kenfdev/items/dbe10e2f0256e22945ca
 this.setState(function(state,props) {return {count: state.count + 1};});
+
+MS Edge Error
+SCRIPT5022: TypeMismatchError
+  var x=document.getElementById("stMM1");
+  Try insertBefore instead of add 
+
+SCRIPT438: Object doesnt support property or method close
+function piyo() {
+	hoge = document.getElementById("hoge"); // エラーになる
+	var hoge = document.getElementById("hoge"); // エラーにならない
+}
