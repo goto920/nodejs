@@ -84,6 +84,7 @@ class App extends Component {
       { value: '16/16swing', numerator: 16, denominator: 16, swingVal: 2.0},
       { value: '5/4', numerator: 5, denominator: 4},
       { value: '10/8', numerator: 10, denominator: 8},
+      { value: '6/4', numerator: 6, denominator: 4},
       { value: '7/4', numerator: 7, denominator: 4},
       { value: '14/8', numerator: 14, denominator: 8},
       { value: '7/8', numerator: 7, denominator: 8},
