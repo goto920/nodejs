@@ -7,11 +7,14 @@ import packageJSON from '../package.json'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
-const context = new window.AudioContext()
-const clock = new WAAClock(context)
+var context;
+// const context = new window.AudioContext()
+// const clock = new WAAClock(context)
+var clock
 // const timerClock = new WAAClock(context)
-const timerClock = clock
-const gainNode = context.createGain()
+var timerClock
+// const gainNode = context.createGain()
+var gainNode
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
  // define in package.json
@@ -22,7 +25,7 @@ const jaText = messages.ja
 const usText = messages.us
 var m = usText
 
-clock.start()
+//clock.start()
 // timerClock.start()
 
 class App extends Component {
@@ -102,6 +105,9 @@ class App extends Component {
 
   componentDidMount () {
     window.addEventListener('beforeunload', this.handleWindowClose)
+    context = new window.AudioContext()
+    gainNode = context.createGain()
+
     let bufferLoader = new BufferLoader(
       context,
       [
@@ -130,6 +136,11 @@ class App extends Component {
     )
 
     bufferLoader.load()
+
+    clock = new WAAClock(context)
+    timerClock = clock
+    clock.start()
+
   }
 
   componentWillUnMount(){
@@ -331,7 +342,7 @@ class App extends Component {
            <option value='10'>1.0</option>
            <option value='11'>1.1</option>
            <option value='12'>1.2</option>
-           <option value='13'>1.3(str)</option>
+           <option value='13'>1.3</option>
            <option value='14'>1.4</option>
            <option value='15'>1.5(str)</option>
            <option value='16'>1.6</option>
@@ -928,10 +939,16 @@ class App extends Component {
     if (event.target.name === 'preset') {
       const preset = this.presets[event.target.value]
 
-      if(preset.swingVal !== undefined) this.params.swing = true
-      else this.params.swing = false
+      let swingVal
+      if(preset.swingVal !== undefined) {
+          swingVal = preset.swingVal
+          this.params.swing = true
+      } else {
+          swingVal = 1.5
+          this.params.swing = false
+      }
 
-      this.setState({preset: preset.value, swingVal: preset.swingVal})
+      this.setState({preset: preset.value, swingVal: swingVal})
       this.params.numerator = preset.numerator
       this.params.denominator = preset.denominator
       this.params.triplet =  preset.triplet
