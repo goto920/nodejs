@@ -112,19 +112,19 @@ class App extends Component {
     let bufferLoader = new BufferLoader(
       context,
       [
-        './resources/cowbell-higher.mp3',
-        './resources/cowbell-high.mp3',
-        './resources/cowbell-mid.mp3',
-        './resources/cowbell-low.mp3',
-        './resources/cowbell-lower.mp3',
-        './resources/one-norm.mp3',
-        './resources/two-9.mp3',
-        './resources/three-6.mp3',
-        './resources/four-6.mp3',
-        './resources/five-6.mp3',
-        './resources/six-6.mp3',
-        './resources/seven-6.mp3',
-        './resources/eight-6.mp3'
+        'cowbell-higher.mp3',
+        'cowbell-high.mp3',
+        'cowbell-mid.mp3',
+        'cowbell-low.mp3',
+        'cowbell-lower.mp3',
+        'one-norm.mp3',
+        'two-9.mp3',
+        'three-6.mp3',
+        'four-6.mp3',
+        'five-6.mp3',
+        'six-6.mp3',
+        'seven-6.mp3',
+        'eight-6.mp3'
       ],
 
       function (bufferList) {
@@ -255,7 +255,7 @@ class App extends Component {
 /////////////// UI menus
     return (
       <div className='metronome'>
-      KG's JS_Metronome &nbsp;
+      KG's JS_Metronome &nbsp; <font color="blue">Language: </font>
           <span className='small-button'>
            <button name='language' onClick={this.handleChange}>
            {ja ? 'US' : 'JP'}
@@ -430,8 +430,7 @@ class App extends Component {
         </span>
        <hr />
       (Version: {version}) <a href={m.url}>{m.guide}</a><br />
-      Additional feature coming<br />
-      PresetLoop(80% done), Set List, Sound variation
+      Additional feature coming: Set List, Sound variation
       <hr /> 
       {customLoop ? <CustomLoopUI /> : ''}
       </div>
@@ -744,10 +743,8 @@ class App extends Component {
     else voiceCount = (count * 4) / denominator
 //    console.log('voiceCount: ' + voiceCount)
    
-    voiceSource.buffer = null
-    if (Number.isInteger(voiceCount) 
-     && (this.state.voice === 'v' || this.state.voice === 'c+v')) 
-      voiceSource.buffer = maleVoice[voiceCount]
+    if (Number.isInteger(voiceCount)) 
+       voiceSource.buffer = maleVoice[voiceCount]
 
      if (count === 0) {
        source.buffer = cowbell[1]
