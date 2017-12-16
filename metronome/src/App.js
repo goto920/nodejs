@@ -509,13 +509,6 @@ class App extends Component {
           this.params.swing = false
         }
 
-/*
-        console.log('set(a/b/sw): ' 
-          + this.params.numerator 
-          + '/' + this.params.denominator
-          + '/' + this.params.swing)
-*/
- 
       } else loopStat.repeat++
 
 
@@ -533,14 +526,9 @@ class App extends Component {
           this.nextTick(beat)
         ).tolerance({early: early, late: late}) // tight early tolerance
         this.tickEvents[beat] = event
-//      console.log('beat ' + beat + ', at ' + event.deadline)
       } // end for
 
       this.params.nextTick = this.nextTick(this.params.numerator) // next
-/*
-      console.log('bar ' + loopStat.bar 
-                  + ', nextTick ' + this.params.nextTick)
-*/
       loopStat.bar++
       this.setState({loopStat: loopStat})
 
@@ -655,8 +643,8 @@ class App extends Component {
             this.nextTick(beat)
         ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
          .tolerance({early: early, late: late})
-
         this.tickEvents[beat] = event
+//        console.log('Start beat ' + beat)
       } // end for
 
       if (this.params.timer > 0) {
@@ -749,32 +737,21 @@ class App extends Component {
     else mute = 1.0
 
     let source = context.createBufferSource()
-    let voice = context.createBufferSource()
+    let voiceSource = context.createBufferSource()
 
     let voiceCount
     if (triplet) voiceCount = (count * 4 * 2) / (denominator * 3)
     else voiceCount = (count * 4) / denominator
-     // console.log('voiceCount: ' + voiceCount)
-    let deadlineVoice = deadline
+//    console.log('voiceCount: ' + voiceCount)
+   
+    voiceSource.buffer = null
+    if (Number.isInteger(voiceCount) 
+     && (this.state.voice === 'v' || this.state.voice === 'c+v')) 
+      voiceSource.buffer = maleVoice[voiceCount]
 
-     voice.buffer = maleVoice[voiceCount]
-     if (voiceCount === 1) {
-      deadlineVoice -= 0.02
-    } else if (voiceCount === 2) {
-      deadlineVoice -= 0.02
-    } else if (voiceCount === 3) {
-      deadlineVoice -= 0.01
-    } else if (voiceCount === 4) {
-      deadlineVoice -= 0.01
-    } else if (voiceCount === 5) {
-      deadlineVoice -= 0.01
-    } else if (voiceCount === 6) {
-      deadlineVoice -= 0.01
-    }
-
-    if (count === 0) {
-      source.buffer = cowbell[1]
-      volume = 1.0 * mute
+     if (count === 0) {
+       source.buffer = cowbell[1]
+       volume = 1.0 * mute
     } else {
       source.buffer = cowbell[2]
       volume = 0.7 * mute
@@ -791,15 +768,18 @@ class App extends Component {
       if (count % 2 === 0) volume *= this.state.evenVol
     }
 
-    if (this.state.voice === 'c') { source.connect(gainNode) } else if (this.state.voice === 'v') { voice.connect(gainNode) } else if (this.state.voice === 'c+v') {
+    if (this.state.voice === 'c') source.connect(gainNode) 
+    else if (this.state.voice === 'v') voiceSource.connect(gainNode) 
+    else if (this.state.voice === 'c+v') {
       source.connect(gainNode)
-      voice.connect(gainNode)
+      voiceSource.connect(gainNode)
     }
 
     gainNode.connect(context.destination)
     gainNode.gain.value = volume
     source.start(deadline)
-    if (this.state.voice) voice.start(deadlineVoice)
+
+    if (voiceSource !== null ) voiceSource.start(deadline)
 
     count = (count + 1) % numerator
     this.params.muteCount = muteCount
@@ -971,7 +951,7 @@ class App extends Component {
   handleWindowClose(event) { // finishing clean up
     this.startStop({target: {name: 'stop'}})
     clock.stop()
-    clock.close()
+    // clock.close()
     context.close()
     // timerClock.stop() // now: timerClock = clock
   }
