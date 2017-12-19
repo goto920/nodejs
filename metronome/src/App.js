@@ -4,6 +4,7 @@ import BufferLoader from './buffer-loader'
 import WAAClock from 'waaclock'
 import messages from './language.json'
 import packageJSON from '../package.json' 
+import setListSample from './setListSample.json' 
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
@@ -32,9 +33,15 @@ class App extends Component {
   constructor (props) {
     super(props)
 
+/*
+    this.setLists 
+        = [{name: 'default', items: []}, setListSample ]
+*/
+
     this.params = {
       min_bpm: 30.0,
       max_bpm: 360.0,
+      default_preset: 7,
       timer: 0, barTimer: 0,
       muteBars: 0, muteProb: 0.0,
       muteCount: 0, muteStat: false,
@@ -43,7 +50,10 @@ class App extends Component {
       swing: false,
       count: 0, barCount: 0,
       startTime: 0,
-      nextTick: 0
+      setLists: [{name: 'default', items: []}, setListSample],
+      nextTick: 0,
+      newListName: '',
+      newSongName: ''
     }
 
     this.timerEvent = 0
@@ -53,47 +63,56 @@ class App extends Component {
       ja: false,
       voice: 'c', // c(owbell) only, c+v, v(oice) only
       rest: 0, restBars: 0, playing: false,
-      bpm: 100, bpm_frac: 0, preset: 5, // default 4/4
+      bpm: 100, bpm_frac: 0, preset: 7, // default 4/4
       swingVal: 1.5, evenVol: 1.0,
       increment: 0, perBars: 0,
       loopTable : [],
-      newRow: {preset: 5, swingVal: 1.5, repeat: 4},
+      newRow: {preset: this.params.default_preset, swingVal: 1.5, repeat: 4},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
-      customLoop: false
+      showSetLists: false,
+      selectedSetList: this.params.setLists[0],
+      selectedSong: {song: 'none'}, // default
+      showSongList: false,
+      showCustomLoop: false
     }
 
     this.setState = this.setState.bind(this)
     this.startStop = this.startStop.bind(this)
     this.customPlay = this.customPlay.bind(this)
     this.handleChange = this.handleChange.bind(this)
+    this.handleSetLists = this.handleSetLists.bind(this)
     this.handleTable = this.handleTable.bind(this)
     this.playClick = this.playClick.bind(this)
     this.nextTick = this.nextTick.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
 
     this.presets = [
-      { value: '2/2', numerator: 2, denominator: 2},
-      { value: '3/4', numerator: 3, denominator: 4},
-      { value: '6/8(2x3)', numerator: 6, denominator: 8},
-      { value: '12/8(2x6)', numerator: 12, denominator: 8},
-      { value: '12/8(3x4)', numerator: 12, denominator: 8, triplet: true},
-      { value: '4/4', numerator: 4, denominator: 4}, // default 
-      { value: '8/8', numerator: 8, denominator: 8},
-      { value: '8/8swing', numerator: 8, denominator: 8, swingVal: 2.0},
-      { value: '16/16', numerator: 16, denominator: 16},
-      { value: '16/16swing', numerator: 16, denominator: 16, swingVal: 2.0},
-      { value: '5/4', numerator: 5, denominator: 4},
-      { value: '10/8', numerator: 10, denominator: 8},
-      { value: '6/4', numerator: 6, denominator: 4},
-      { value: '7/4', numerator: 7, denominator: 4},
-      { value: '14/8', numerator: 14, denominator: 8},
-      { value: '7/8', numerator: 7, denominator: 8},
+      { value: '2/2', numerator: 2, denominator: 2}, // 0
+      { value: '2/4', numerator: 2, denominator: 4}, // 
+      { value: '4/8', numerator: 4, denominator: 8}, // 
+      { value: '3/4', numerator: 3, denominator: 4}, // 
+      { value: '6/8(2x3)', numerator: 6, denominator: 8}, // 
+      { value: '12/8(2x6)', numerator: 12, denominator: 8}, // 
+      { value: '12/8(3x4)', numerator: 12, denominator: 8, triplet: true}, // 6
+      { value: '4/4', numerator: 4, denominator: 4}, // default(7) 
+      { value: '8/8', numerator: 8, denominator: 8}, // 
+      { value: '8/8swing', numerator: 8, denominator: 8, swingVal: 2.0}, // 
+      { value: '16/16', numerator: 16, denominator: 16}, // 10
+   { value: '16/16swing', numerator: 16, denominator: 16, swingVal: 2.0}, //
+      { value: '5/4', numerator: 5, denominator: 4}, // 
+      { value: '10/8', numerator: 10, denominator: 8}, // 
+      { value: '6/4', numerator: 6, denominator: 4}, // 
+      { value: '7/4', numerator: 7, denominator: 4}, // 15
+      { value: '14/8', numerator: 14, denominator: 8}, // 
+      { value: '7/8', numerator: 7, denominator: 8}, 
       { value: '14/16', numerator: 14, denominator: 16},
       { value: '15/16', numerator: 15, denominator: 16},
       { value: '17/16', numerator: 17, denominator: 16}
     ]
 
     this.tickEvents = []
+
+/* Example is in sampleTable.json */
 
     this.tap = {
       count: 0,
@@ -150,36 +169,177 @@ class App extends Component {
 
   render () {
     const {ja, voice, loopTable, newRow, loopStat,
-           preset, playing, bpm, bpm_frac,
-           rest, restBars, swingVal, evenVol, customLoop} = this.state
-    const {min_bpm, max_bpm} = this.params
+      preset, playing, bpm, bpm_frac,
+      rest, restBars,swingVal,evenVol,
+      showSetLists,showSongList,
+      showCustomLoop,selectedSetList,selectedSong} = this.state
+    const {min_bpm, max_bpm,setLists} = this.params
 
-    const options = this.presets.map((e,index) => {
-      return (<option value={index} key={e.value}>{e.value}</option>)
+    const {customPlay,handleChange,
+           handleTable,handleSetLists} = this
+
+    const presetOptions = this.presets.map((e,index) => {
+      return (<option value={index} key={index}>
+       {('0' + index).slice(-2)}: {e.value}</option>)
     })
 
+/* voice selection */
     let voiceStr
     if (voice === 'c') voiceStr = m.bell
     else if (voice === 'c+v') voiceStr = m.both
     else voiceStr = m.voice
 
+/* Set swing value select options */
+    const swingValOptions = [
+      {val: 5},{val: 6}, {val: 7},{val: 8}, {val: 9},{val: 10}, 
+      {val: 15, comm: '(Str)'},
+      {val: 16},{val: 17},{val: 18, comm: '(Lt)'},
+      {val: 19},{val: 20, comm: '(Swg)'},
+      {val: 21},{val: 22, comm: '(Hvy)'},
+      {val: 23},{val: 24},{val: 25}
+    ]
+    const SwingValOptions = swingValOptions.map(function(e, index){
+      return (<option key={index} value={e.val}>{e.val/10}{e.comm}</option>)
+    })
+    /* increment options */
+    const incrementOptions = [
+      -10,-9,-8,-7,-6,-5,-4,-3,-2,-1,
+       0,1,2,3,4,5,6,7,8,9,10
+    ]
+    const IncrementOptions = incrementOptions.map(function(e,index){
+      return (<option key={index} value={e}>{e}</option>)
+    })
+
+
+    /* SetList UI (conditionally shown) */
+    let setListsOptions = []
+    for(let i=0; i < setLists.length; i++) 
+      setListsOptions.push(i)
+
+    const SetListsOptions = setListsOptions.map(function(e, index){
+       return (
+         <option key={index} value={'move:'+ e}>
+         move after {('00' + e).slice(-2)}</option>)
+    })
+
+    const setListsRows = setLists.map(function(e,index) {
+      return (<tr key={'tr:' + index}>
+        <td align="right">
+         <select name={'selectList:' + index} onChange={handleSetLists}>
+         <option key="none" value="none">(select op)</option>
+         <option key="select" value="select">select this</option>
+         <option key="top" value="top">move to top</option>
+         {SetListsOptions}
+         <option key="delete" value="delete">delete this</option>
+         </select></td>
+        <td align="right">{('00' + index).slice(-2)}</td>
+        <td align="left">{e.name}</td>
+        </tr>)
+    })
+
+    function SetListUI(props) {
+
+      return (<div className='table'>
+        <table border="3">
+        <tbody>
+        <tr><th>sel/mov/del</th><th>seq</th><th>list name</th></tr>
+        {setListsRows}
+        <tr> 
+        <td align="right" className="radioButton">add 
+          <input name="addList" type="radio" 
+            checked={false} onChange={handleSetLists} /></td>
+        <td align="right">new</td>
+        <td align="left">
+        <span className="text">
+         <input type='text' name='newList' 
+           autoFocus={false} onChange={handleSetLists} />
+        </span>
+     </td>
+      </tr>
+      </tbody>
+      </table>
+      </div>)
+
+    }
+
+   /* songList */
+
+    let songListOptions = []
+    for(let i=0; i < selectedSetList.items.length; i++) 
+       songListOptions.push(i)
+
+    const SongListOptions = songListOptions.map(function(e, index){
+       return (
+         <option key={index} value={'move:'+ e}>
+         move after {('00' + e).slice(-2)}</option>)
+    })
+
+    const SongListRows = selectedSetList.items.map(function(e,index){
+      return (<tr key={'tr:' + index}>
+        <td align="right">
+         <select name={'selectSong:' + index} onChange={handleSetLists}>
+         <option key="none" value="none">(select op)</option>
+         <option key="select" value="select">select this</option>
+         <option key="top" value="top">move to top</option>
+         {SongListOptions}
+         <option key="delete" value="delete">delete this</option>
+         </select></td>
+        <td align="right">{('00' + index).slice(-2)}</td>
+        <td align="left" width='150'>{e.song}</td>
+        <td align="right">{e.bpm}</td>
+        <td align="right">{e.type}</td>
+        </tr>)
+    })
+    
+    function SongListUI (props) {
+      return (<div className='table'>
+      <table border="3">
+      <tbody>
+      <tr><th>sel/mov/del</th><th>seq</th>
+       <th>song name</th><th>bpm</th>
+       <th>type</th></tr>
+      {SongListRows}
+      <tr> 
+      <td align="center" className="radioButton">add current<br />
+         preset<input name="addSong" 
+         type="radio" checked={false} value="preset" 
+         onChange={handleSetLists} /><br />
+         or loop<input name="addSong" type="radio" value="loop" 
+         checked={false} onChange={handleSetLists} />
+         </td>
+      <td align="right">new</td>
+      <td align="left" className='text'><input name="newSong"
+        type="text" onChange={handleSetLists}/></td>
+      <td align="right">{Math.floor(bpm) + parseFloat(0.1*bpm_frac,10)}</td>
+      <td>(choose)</td>
+      </tr>
+      </tbody>
+      </table>
+      </div>)
+    }
+
+ /* Custom Loop UI (conditinally shown) */
+
     const loopTableRows = loopTable.map(function(e,index) {
       return (<tr key={index}>
-         <td align="right">
+         <td align="right" className="radioButton">
           d<input type="radio" name="loopDel" value={index} 
-          checked={false} onChange={this.handleTable}/></td>
+          checked={false} onChange={handleTable}/></td>
          <td align="right">{index}</td>
          <td align="right">{e.preset.value}</td>
          <td align="right">{e.swingVal.toFixed(1)}</td>
          <td align="right">{e.repeat}</td>
          </tr>)
-    }.bind(this))
+    })
 
-    const {customPlay,handleTable} = this
+    const repeatOptions = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+    const RepeatOptions = repeatOptions.map(function(e,index){
+      return (<option key={index} value={e}>{e}</option>)
+    })
+
     function CustomLoopUI(props) {
-      return (<span>
-      <font color='blue'>{m.customTable}</font>
-      &nbsp; seq/rep/bar: {('00' + loopStat.seq).slice(-2)}
+      return (<div>
+      --- seq/rep/bar: {('00' + loopStat.seq).slice(-2)}
                /{('00' + loopStat.repeat).slice(-2)}
                /{('00' + loopStat.bar).slice(-3)}
       <br />
@@ -190,13 +350,13 @@ class App extends Component {
       / <button name="rewindLoop" onClick={customPlay}>
         {m.rewind}</button>
       </span><br />
-      <div className="radioButton">
+      <div className='table'>
       <table border="3">
       <tbody>
       <tr><th>d/a</th><th>seq</th>
           <th>beat</th><th>swing</th><th>repeat</th></tr>
       {loopTableRows}
-      <tr><td align="right">
+      <tr><td align="right" className="radioButton">
      a<input type="radio" name="loopAdd" checked={false}
         onChange={handleTable}/></td>
           <td align="right">add</td>
@@ -204,52 +364,23 @@ class App extends Component {
              <select name="loopAddPreset" 
               defaultValue={newRow.preset} 
               onChange={handleTable}>
-               {options}</select></td>
+              {presetOptions}</select></td>
           <td align="right" className='selector'>
            <span><select name='loopSwingVal' 
              value={parseInt(newRow.swingVal*10,10)}
              onChange={handleTable}>
-           <option value='5'>0.5</option>
-           <option value='6'>0.6</option>
-           <option value='7'>0.7</option>
-           <option value='8'>0.8</option>
-           <option value='9'>0.9</option>
-           <option value='10'>1.0</option>
-           <option value='11'>1.1</option>
-           <option value='12'>1.2</option>
-           <option value='13'>1.3(str)</option>
-           <option value='14'>1.4</option>
-           <option value='15'>1.5(str)</option>
-           <option value='16'>1.6</option>
-           <option value='17'>1.7</option>
-           <option value='18'>1.8(Lt)</option>
-           <option value='19'>1.9</option>
-           <option value='20'>2.0(Swg)</option>
-           <option value='21'>2.1</option>
-           <option value='22'>2.2(Hvy)</option>
-           <option value='23'>2.3</option>
-           <option value='24'>2.4</option>
-           <option value='25'>2.5</option>
-          </select></span></td>
+           {SwingValOptions}</select>
+          </span></td>
           <td align="right" className='selector'><span>
           <select name='loopRepeat' 
              defaultValue={newRow.repeat} 
-             onChange={handleTable}>
-           <option value='1'>1</option> <option value='2'>2</option>
-           <option value='3'>3</option> <option value='4'>4</option>
-           <option value='5'>5</option> <option value='6'>6</option>
-           <option value='7'>7</option> <option value='8'>8</option>
-           <option value='9'>9</option> <option value='10'>10</option>
-           <option value='11'>11</option> <option value='12'>12</option>
-           <option value='13'>13</option> <option value='14'>14</option>
-           <option value='15'>15</option> <option value='16'>16</option>
-         </select>
+             onChange={handleTable}>{RepeatOptions}</select>
           </span></td>
           </tr>
        </tbody>
        </table>
-     </div>
-    </span>)
+       </div>
+       </div>)
   }
 
 /////////////// UI menus
@@ -257,19 +388,19 @@ class App extends Component {
       <div className='metronome'>
       KG's JS_Metronome &nbsp; <font color="blue">Language: </font>
           <span className='small-button'>
-           <button name='language' onClick={this.handleChange}>
+           <button name='language' onClick={handleChange}>
            {ja ? 'US' : 'JP'}
           </button>
           </span>
       <hr />
         <span className='selector'>
         {m.beat}: <select name='preset' defaultValue={preset}
-          onChange={this.handleChange}>
-          {options}
+          onChange={handleChange}>
+          {presetOptions}
         </select></span>
           &nbsp;
         <span className='small-button'>
-          <button name='voice' onClick={this.handleChange}>
+          <button name='voice' onClick={handleChange}>
             {m.sound}</button>
           <tt><b> {voiceStr}</b></tt>
         </span>&nbsp;
@@ -280,140 +411,84 @@ class App extends Component {
         BPM({min_bpm}-{max_bpm}): &nbsp; {('0' + Math.floor(bpm)).slice(-3)}.
         <span className='selector'>
         <select name='bpm_number' defaultValue={bpm_frac}
-           onChange={this.handleChange}>
-           <option value='0'>0</option>
-           <option value='1'>1</option>
-           <option value='2'>2</option>
-           <option value='3'>3</option>
-           <option value='4'>4</option>
-           <option value='5'>5</option>
-           <option value='6'>6</option>
-           <option value='7'>7</option>
-           <option value='8'>8</option>
-           <option value='9'>9</option>
+           onChange={handleChange}>
+           <option value='0'>0</option> <option value='1'>1</option>
+           <option value='2'>2</option> <option value='3'>3</option>
+           <option value='4'>4</option> <option value='5'>5</option>
+           <option value='6'>6</option> <option value='7'>7</option>
+           <option value='8'>8</option> <option value='9'>9</option>
          </select></span>
         &nbsp; &nbsp; &nbsp; &nbsp;
         </span>
         <span className='small-button'>
-          <button name='tempo_tap' onClick={this.handleChange}>
+          <button name='tempo_tap' onClick={handleChange}>
             {m.tap}</button></span>&nbsp;
         <br />
         <span className='bpm-slider'>
           <input type='range' name='bpm_slider'
             min={min_bpm} max={max_bpm} value={bpm} step='1.0'
-            onChange={this.handleChange} />
+            onChange={handleChange} />
         </span> <br />
         {m.timer}: &nbsp;
      <span className='selector'>
      {('00' + rest).slice(-3)}/
-     <select name='timer' defaultValue='0' onChange={this.handleChange}> 
-     <option value='0'>off</option>
-     <option value='30'>30</option>
-     <option value='60'>60</option>
-     <option value='90'>90</option>
-     <option value='120'>120</option>
-     <option value='180'>180</option>
-     <option value='240'>240</option>
-     <option value='300'>300</option>
-     <option value='600'>600</option>
-     </select>({m.secs}), </span>
+     <select name='timer' defaultValue='0' onChange={handleChange}> 
+     <option value='0'>off</option> <option value='30'>30</option>
+     <option value='60'>60</option> <option value='90'>90</option>
+     <option value='120'>120</option> <option value='180'>180</option>
+     <option value='240'>240</option> <option value='300'>300</option>
+     <option value='600'>600</option> </select>({m.secs}), 
+     </span>
   <span className='selector'>
   {('00' + restBars).slice(-3)}/ 
-  <select name='barTimer' defaultValue='0' onChange={this.handleChange}>
-  <option value='0'>off</option>
-  <option value='12'>12</option>
-  <option value='16'>16</option>
-  <option value='24'>24</option>
-  <option value='32'>32</option>
-  <option value='64'>64</option>
-  <option value='128'>128</option>
-  <option value='256'>256</option>
+  <select name='barTimer' defaultValue='0' onChange={handleChange}>
+  <option value='0'>off</option> <option value='12'>12</option>
+  <option value='16'>16</option> <option value='24'>24</option>
+  <option value='32'>32</option> <option value='64'>64</option>
+  <option value='128'>128</option> <option value='256'>256</option>
   </select> ({m.bars})</span>
         <hr />
         <font color='blue'>{m.advanced}</font><br />
           {m.swing}: &nbsp; 
         <span className='selector'>
-           <select name='swing' value={parseInt(swingVal*10,10)}
-           onChange={this.handleChange}>
-           <option value='5'>0.5</option>
-           <option value='6'>0.6</option>
-           <option value='7'>0.7</option>
-           <option value='8'>0.8</option>
-           <option value='9'>0.9</option>
-           <option value='10'>1.0</option>
-           <option value='11'>1.1</option>
-           <option value='12'>1.2</option>
-           <option value='13'>1.3</option>
-           <option value='14'>1.4</option>
-           <option value='15'>1.5(str)</option>
-           <option value='16'>1.6</option>
-           <option value='17'>1.7</option>
-           <option value='18'>1.8(Lt)</option>
-           <option value='19'>1.9</option>
-           <option value='20'>2.0(Swg)</option>
-           <option value='21'>2.1</option>
-           <option value='22'>2.2(Hvy)</option>
-           <option value='23'>2.3</option>
-           <option value='24'>2.4</option>
-           <option value='25'>2.5</option>
-           </select>
+        <select name='swing' value={parseInt(swingVal*10,10)}
+          onChange={handleChange}>{SwingValOptions}</select>
        </span>
         &nbsp; {m.swingStr}
         <br />
         <span className='selector'>
-        {m.increment}: 
-       <select name='increment' defaultValue='0' onChange={this.handleChange}> 
-         <option value='-10'>-10</option> <option value='-9'>-9</option>
-         <option value='-8'>-8</option> <option value='-7'>-7</option>
-         <option value='-6'>-6</option> <option value='-5'>-5</option>
-         <option value='-4'>-4</option> <option value='-3'>-3</option>
-         <option value='-2'>-2</option> <option value='-1'>-1</option>
-         <option value='0'>off</option>
-         <option value='1'>1</option> <option value='2'>2</option>
-         <option value='3'>3</option> <option value='4'>4</option>
-         <option value='5'>5</option> <option value='6'>6</option>
-         <option value='7'>7</option> <option value='8'>8</option>
-         <option value='9'>9</option> <option value='10'>10</option>
-         </select> bpm
-        </span>
+        {m.increment}: &nbsp; 
+       <select name='increment' defaultValue='0'  
+          onChange={handleChange}>{IncrementOptions}
+       </select> bpm
+       </span>
          / 
         <span className='selector'> 
-           <select name='perBars' defaultValue='0' onChange={this.handleChange}>
-           <option value='0'>off</option>
-           <option value='1'>1</option>
-           <option value='2'>2</option>
-           <option value='4'>4</option>
-           <option value='8'>8</option>
-           <option value='12'>12</option>
+           <select name='perBars' defaultValue='0' onChange={handleChange}>
+           <option value='0'>off</option> <option value='1'>1</option>
+           <option value='2'>2</option> <option value='4'>4</option>
+           <option value='8'>8</option> <option value='12'>12</option>
            <option value='16'>16</option>
-         </select> 
+           </select> 
          &nbsp; {m.perBars}</span><br />
         <span className='selector'>
         {m.muteBars}: &nbsp;
-         <select name='muteBars' defaultValue='0' onChange={this.handleChange}>
-          <option value='0'>off</option>
-          <option value='1'>1</option>
-          <option value='2'>2</option>
-          <option value='4'>4</option>
-          <option value='8'>8</option>
-          <option value='12'>12</option>
+         <select name='muteBars' defaultValue='0' onChange={handleChange}>
+          <option value='0'>off</option> <option value='1'>1</option>
+          <option value='2'>2</option> <option value='4'>4</option>
+          <option value='8'>8</option> <option value='12'>12</option>
           <option value='16'>16</option>
         </select>
         </span>
         {m.muteProb1}
         &nbsp; {m.muteProb2}
         <span className='selector'>
-          <select name='muteProb' defaultValue='0' onChange={this.handleChange}>
-          <option value='0.0'>0.0</option>
-          <option value='0.1'>0.1</option>
-          <option value='0.2'>0.2</option>
-          <option value='0.3'>0.3</option>
-          <option value='0.4'>0.4</option>
-          <option value='0.5'>0.5</option>
-          <option value='0.6'>0.6</option>
-          <option value='0.7'>0.7</option>
-          <option value='0.8'>0.8</option>
-          <option value='0.9'>0.9</option>
+          <select name='muteProb' defaultValue='0' onChange={handleChange}>
+          <option value='0.0'>0.0</option> <option value='0.1'>0.1</option>
+          <option value='0.2'>0.2</option> <option value='0.3'>0.3</option>
+          <option value='0.4'>0.4</option> <option value='0.5'>0.5</option>
+          <option value='0.6'>0.6</option> <option value='0.7'>0.7</option>
+          <option value='0.8'>0.8</option> <option value='0.9'>0.9</option>
           <option value='1.0'>1.0</option>
           </select>
         </span>
@@ -421,18 +496,33 @@ class App extends Component {
         <span className='slider'>
         {m.evenNotes}: {evenVol.toFixed(2)} <input type='range' name='evenVol'
           min='0.0' max='1.0' value={evenVol} step='0.01'
-          onChange={this.handleChange} />
-        </span><br />
+          onChange={handleChange} />
+        </span>
+        <hr />
         <span className="loopButton">
-        {m.custom}: <button name="customLoopUI" onClick={this.handleChange}>
-        {customLoop ? m.hide : m.show} {/* no {} for m.hide,show */}
+        SetLists : <button name="setListsUI" onClick={handleChange}>
+        {showSetLists ? m.hide : m.show} {/* no {} for m.hide,show */}
         </button>
         </span>
+        &nbsp; <span className="loopButton">
+        SongList : <button name="songListUI" onClick={handleChange}>
+        {showSongList ? m.hide : m.show} {/* no {} for m.hide,show */}
+        </button>
+        </span><br />
+        Current: (List) {selectedSetList.name} / (Song) {selectedSong.song}
+        {showSetLists ? <SetListUI /> : ''}
+        {showSongList ? <SongListUI /> : ''} 
+        <hr />
+        <span className="loopButton">
+        {m.custom}: <button name="customLoopUI" onClick={handleChange}>
+        {showCustomLoop ? m.hide : m.show} {/* no {} for m.hide,show */}
+       </button>
+      <br />{showCustomLoop ? <CustomLoopUI /> : ''}
+       </span>
        <hr />
       (Version: {version}) <a href={m.url}>{m.guide}</a><br />
-      Additional feature coming: Set List, Sound variation
+      Additional feature coming: Sound variation
       <hr /> 
-      {customLoop ? <CustomLoopUI /> : ''}
       </div>
     )
   } // end render()
@@ -577,6 +667,133 @@ class App extends Component {
     }
 
   } // end handleTable
+
+  handleSetLists(event){ 
+
+/*
+   (ref) https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice
+*/
+    /* handle setLists */
+    if (event.target.name.match(/^selectList:/)){
+
+      let names = event.target.name.split(':')
+
+      if (event.target.value === 'select'){
+        console.log(names[1] + ' selected')
+        this.setState(
+           {selectedSetList: this.params.setLists[parseInt(names[1],10)],
+            selectedSong: {song: 'none'},
+            showSetLists: false, showSongList: true})
+        return
+      } 
+
+      if (event.target.value === 'top'){
+        console.log(names[1] + ' move to top')
+        let current = this.params.setLists[parseInt(names[1],10)]
+        this.params.setLists.splice(parseInt(names[1],10),1)
+        this.params.setLists.unshift(current)
+        return
+        this.setState({showSetLists: true})
+      } 
+
+      if (event.target.value.match(/^move/)){
+        let values = event.target.value.split(':')
+        let current = this.params.setLists[parseInt(names[1],10)]
+        console.log(names[1] + ' move after ' + values[1])
+        this.params.setLists.splice(parseInt(values[1],10)+1,0,current)
+        if (parseInt(values[1],10) < parseInt(names[1],10))
+          this.params.setLists.splice(parseInt(names[1],10)+1,1)
+        else if (parseInt(values[1],10) > parseInt(names[1],10))
+          this.params.setLists.splice(parseInt(names[1],10),1)
+        else console.log('no effect')
+
+        this.setState({showSetLists: true})
+        return
+      } 
+
+      if (event.target.value === 'delete'){
+        console.log(names[1] + ' delete')
+        this.params.setLists.splice(names[1],1)
+        this.setState({showSetLists: true})
+        return
+      }
+
+    }
+
+    if (event.target.name === 'addList'){
+      this.params.setLists.push({name: this.params.newListName, items: []})
+      this.setState({showSetLists: true})
+      return
+    }
+
+    if (event.target.name === 'newList'){
+      this.params.newListName = event.target.value
+      return
+    }
+
+    /* handle songs */
+    const songItems = this.state.selectedSetList.items
+
+    if (event.target.name.match(/^selectSong:/)){
+      let names = event.target.name.split(':')
+      if (event.target.value === 'select'){
+        console.log(names[1] + ' selected')
+        this.setState(
+          {selectedSong: songItems[parseInt(names[1],10)], 
+          showSongList: false}) 
+      } else if (event.target.value === 'top'){
+        let current = songItems[parseInt(names[1],10)]
+        songItems.splice(parseInt(names[1],10),1)
+        songItems.unshift(current)
+        console.log(names[1] + ' move to top')
+        this.setState({showSongList: true})
+      } else if (event.target.value.match(/^move/)){
+        let values = event.target.value.split(':')
+        let current = songItems[parseInt(names[1],10)]
+        songItems.splice(parseInt(values[1],10)+1,0,current)
+        if (parseInt(values[1],10) < parseInt(names[1],10))
+          songItems.splice(parseInt(names[1],10)+1,1)
+        else if (parseInt(values[1],10) > parseInt(names[1],10))
+          songItems.splice(parseInt(names[1],10),1)
+        else console.log('no effect')
+        this.setState({showSongList: true})
+      } else if (event.target.value === 'delete'){
+        console.log(names[1] + ' delete')
+        songItems.splice(parseInt(names[1],10),1)
+        this.setState({showSongList: true})
+      }
+      return
+    }
+
+    if (event.target.name === 'addSong'){
+      if (event.target.value === 'preset'){
+        console.log('addSong preset')
+        this.state.selectedSetList.items.push({
+          song: this.params.newSongName,
+          type: 'PRESET',
+          preset: this.state.preset,
+          bpm: this.state.bpm})
+      } else if (event.target.value === 'loop'){
+        console.log('addSong loop')
+        if (this.state.loopTable.length > 0) {
+        this.state.selectedSetList.items.push({
+          song: this.params.newSongName,
+          type: 'LOOP',
+          table: this.state.loopTable,
+          bpm: this.state.bpm})
+        } else console.log('addSong loop is empty')
+      } else console.log('addSong undefined value')
+
+      this.setState({showSongList: true})
+      return
+    }
+
+    if (event.target.name === 'newSong'){
+       this.params.newSongName = event.target.value
+      return
+    }
+
+  } // end handleSetLists
 
   startStop (event) {
 
@@ -939,11 +1156,22 @@ class App extends Component {
     } // end preset
 
     if (event.target.name === 'customLoopUI'){
-        this.setState({customLoop: !this.state.customLoop})
+        this.setState({showCustomLoop: !this.state.showCustomLoop})
+        return
+    }
+
+    if (event.target.name === 'setListsUI'){
+        this.setState({showSetLists: !this.state.showSetLists})
+        return
+    }
+
+    if (event.target.name === 'songListUI'){
+        this.setState({showSongList: !this.state.showSongList})
         return
     }
 
   } // end handleChange()
+
 
   handleWindowClose(event) { // finishing clean up
     this.startStop({target: {name: 'stop'}})
