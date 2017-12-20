@@ -33,15 +33,10 @@ class App extends Component {
   constructor (props) {
     super(props)
 
-/*
-    this.setLists 
-        = [{name: 'default', items: []}, setListSample ]
-*/
-
     this.params = {
       min_bpm: 30.0,
       max_bpm: 360.0,
-      default_preset: 7,
+      default_presetNo: 7,
       timer: 0, barTimer: 0,
       muteBars: 0, muteProb: 0.0,
       muteCount: 0, muteStat: false,
@@ -50,7 +45,8 @@ class App extends Component {
       swing: false,
       count: 0, barCount: 0,
       startTime: 0,
-      setLists: [{name: 'default', items: []}, setListSample],
+      savedSetLists: null,
+      setLists: [],
       nextTick: 0,
       newListName: '',
       newSongName: ''
@@ -63,15 +59,17 @@ class App extends Component {
       ja: false,
       voice: 'c', // c(owbell) only, c+v, v(oice) only
       rest: 0, restBars: 0, playing: false,
-      bpm: 100, bpm_frac: 0, preset: 7, // default 4/4
+      bpm: 100, bpm_frac: 0.0, 
+      presetNo: this.params.default_presetNo, // default 4/4
       swingVal: 1.5, evenVol: 1.0,
       increment: 0, perBars: 0,
       loopTable : [],
-      newRow: {preset: this.params.default_preset, swingVal: 1.5, repeat: 4},
+      newRow: {presetNo: this.params.default_presetNo, 
+               swingVal: 1.5, repeat: 4},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
       showSetLists: false,
-      selectedSetList: this.params.setLists[0],
-      selectedSong: {song: 'none'}, // default
+      selectedSetList: {},
+      selectedSong: {name: 'none'}, // default
       showSongList: false,
       showCustomLoop: false
     }
@@ -105,6 +103,8 @@ class App extends Component {
       { value: '7/4', numerator: 7, denominator: 4}, // 15
       { value: '14/8', numerator: 14, denominator: 8}, // 
       { value: '7/8', numerator: 7, denominator: 8}, 
+      { value: '12/16', numerator: 12, denominator: 16},
+      { value: '13/16', numerator: 13, denominator: 16},
       { value: '14/16', numerator: 14, denominator: 16},
       { value: '15/16', numerator: 15, denominator: 16},
       { value: '17/16', numerator: 17, denominator: 16}
@@ -122,6 +122,21 @@ class App extends Component {
 
   } // end constructor
 
+
+  componentWillMount(){ // before render()
+    console.log('componentWillMount()')
+    localStorage.removeItem('savedSetLists')
+    this.params.savedSetLists 
+       = JSON.parse(localStorage.getItem('savedSetLists'))
+    // console.log(this.params.savedSetLists)
+    if (this.params.savedSetLists === null){
+      console.log('savedSetLists null')
+      this.params.setLists.push({name: 'default', items: []}, setListSample)
+      this.setState({selectedSetList: this.params.setLists[0]}) // default
+    } else {
+    } // if (savedSetLists !== null)
+
+  }
 
   componentDidMount () {
     window.addEventListener('beforeunload', this.handleWindowClose)
@@ -160,19 +175,33 @@ class App extends Component {
     clock = new WAAClock(context)
     timerClock = clock
     clock.start()
-
   }
 
   componentWillUnMount(){
-    window.removeEventListener('beforeunload', this.handleWindowClose)
+
+    window.removeEventListener('beforeunload', 
+      function(event) { // finishing clean up
+      this.startStop({target: {name: 'stop'}})
+      clock.stop()
+      context.close()})
+
+    if (this.params.setLists.length > 0){
+      let saveLists = []
+      for (let i=0; i < this.params.setLists.length; i++){
+         if (this.params.setLists[i].name !== 'sample')
+           saveLists.push(this.params.setLists[i])
+      }
+      localStorage.setItem('savedSetLists', JSON.stringify(saveLists))
+    }
   }
 
   render () {
     const {ja, voice, loopTable, newRow, loopStat,
-      preset, playing, bpm, bpm_frac,
+      presetNo, playing, bpm, bpm_frac,
       rest, restBars,swingVal,evenVol,
       showSetLists,showSongList,
       showCustomLoop,selectedSetList,selectedSong} = this.state
+
     const {min_bpm, max_bpm,setLists} = this.params
 
     const {customPlay,handleChange,
@@ -259,23 +288,24 @@ class App extends Component {
       </tbody>
       </table>
       </div>)
-
     }
 
-   /* songList */
-
+    /* songList */
     let songListOptions = []
+    console.log('selectedSetList.name = ' + selectedSetList.name
+     + ' items ' + selectedSetList.items.length)
+
     for(let i=0; i < selectedSetList.items.length; i++) 
        songListOptions.push(i)
 
     const SongListOptions = songListOptions.map(function(e, index){
        return (
-         <option key={index} value={'move:'+ e}>
-         move after {('00' + e).slice(-2)}</option>)
+          <option key={index} value={'move:'+ e}>
+          move after {('00' + e).slice(-2)}</option>)
     })
 
-    const SongListRows = selectedSetList.items.map(function(e,index){
-      return (<tr key={'tr:' + index}>
+      const SongListRows = selectedSetList.items.map(function(e,index){
+        return (<tr key={'tr:' + index}>
         <td align="right">
          <select name={'selectSong:' + index} onChange={handleSetLists}>
          <option key="none" value="none">(select op)</option>
@@ -289,7 +319,7 @@ class App extends Component {
         <td align="right">{e.bpm}</td>
         <td align="right">{e.type}</td>
         </tr>)
-    })
+      })
     
     function SongListUI (props) {
       return (<div className='table'>
@@ -361,8 +391,7 @@ class App extends Component {
         onChange={handleTable}/></td>
           <td align="right">add</td>
           <td align="right" className='selector'>
-             <select name="loopAddPreset" 
-              defaultValue={newRow.preset} 
+             <select name="loopAddPreset" value={newRow.presetNo} 
               onChange={handleTable}>
               {presetOptions}</select></td>
           <td align="right" className='selector'>
@@ -394,7 +423,7 @@ class App extends Component {
           </span>
       <hr />
         <span className='selector'>
-        {m.beat}: <select name='preset' defaultValue={preset}
+        {m.beat}: <select name='preset' value={presetNo}
           onChange={handleChange}>
           {presetOptions}
         </select></span>
@@ -509,7 +538,10 @@ class App extends Component {
         {showSongList ? m.hide : m.show} {/* no {} for m.hide,show */}
         </button>
         </span><br />
-        Current: (List) {selectedSetList.name} / (Song) {selectedSong.song}
+        Current: (List) {selectedSetList.name}<br />
+        (Song) {selectedSong.song}<br />
+        (type) {selectedSong.type}/
+        (bpm)  {selectedSong.bpm}<br />
         {showSetLists ? <SetListUI /> : ''}
         {showSongList ? <SongListUI /> : ''} 
         <hr />
@@ -636,7 +668,8 @@ class App extends Component {
 
     if (event.target.name === 'loopAdd'){
       loopTable.push(
-       {preset: this.presets[newRow.preset],
+       {preset: this.presets[newRow.presetNo],
+        presetNo: newRow.presetNo,
         swingVal: newRow.swingVal,
         repeat:   newRow.repeat
       })
@@ -645,9 +678,9 @@ class App extends Component {
     }
 
     if (event.target.name === 'loopAddPreset'){
-      newRow.preset = parseInt(event.target.value,10)
-      if (this.presets[newRow.preset].swingVal !== undefined)
-        newRow.swingVal = this.presets[newRow.preset].swingVal
+      newRow.presetNo = parseInt(event.target.value,10)
+      if (this.presets[newRow.presetNo].swingVal !== undefined)
+        newRow.swingVal = this.presets[newRow.presetNo].swingVal
       else 
         newRow.swingVal = 1.5
       this.setState({newRow: newRow})
@@ -675,15 +708,16 @@ class App extends Component {
 */
     /* handle setLists */
     if (event.target.name.match(/^selectList:/)){
-
       let names = event.target.name.split(':')
-
       if (event.target.value === 'select'){
-        console.log(names[1] + ' selected')
-        this.setState(
-           {selectedSetList: this.params.setLists[parseInt(names[1],10)],
-            selectedSong: {song: 'none'},
-            showSetLists: false, showSongList: true})
+        console.log('setLists.length:' + this.params.setLists.length)
+        console.log(parseInt(names[1],10) + ' selected')
+        this.params.selectedSetList
+         = this.params.setLists[parseInt(names[1],10)]
+        this.setState({
+          selectedSetList: this.params.setLists[parseInt(names[1],10)],
+          selectedSong: {song: 'none'},
+          showSetLists: false, showSongList: true})
         return
       } 
 
@@ -692,8 +726,8 @@ class App extends Component {
         let current = this.params.setLists[parseInt(names[1],10)]
         this.params.setLists.splice(parseInt(names[1],10),1)
         this.params.setLists.unshift(current)
-        return
         this.setState({showSetLists: true})
+        return
       } 
 
       if (event.target.value.match(/^move/)){
@@ -736,18 +770,43 @@ class App extends Component {
 
     if (event.target.name.match(/^selectSong:/)){
       let names = event.target.name.split(':')
+
       if (event.target.value === 'select'){
         console.log(names[1] + ' selected')
-        this.setState(
-          {selectedSong: songItems[parseInt(names[1],10)], 
-          showSongList: false}) 
-      } else if (event.target.value === 'top'){
+        let song = songItems[parseInt(names[1],10)] 
+        this.setState({selectedSong: song, showSongList: false}) 
+
+       if(song.type === 'preset'){
+         let presetNo = 0
+         for (presetNo = 0; presetNo < this.presets.length; presetNo++){
+           if (this.presets[presetNo].value === song.presetVal) break
+         }
+         if (presetNo >= this.presets.length) return // not found
+
+         console.log('preset match:' + presetNo 
+            + 'val '+ this.presets[presetNo].value)
+
+         this.handleChange({target:{name: 'preset', value: presetNo}})
+
+         let bpm_int = Math.floor(parseFloat(song.bpm,10))
+         let bpm_frac10 = 10*(parseFloat(song.bpm,10) - bpm_int)
+         this.handleChange({target: {name: 'bpm_slider', value: bpm_int}})
+         this.handleChange({target:{name: 'bpm_frac', value: bpm_frac10}})
+       }  // end preset
+
+       if (song.type === 'loop'){
+       }
+      } 
+
+      if (event.target.value === 'top'){
         let current = songItems[parseInt(names[1],10)]
         songItems.splice(parseInt(names[1],10),1)
         songItems.unshift(current)
         console.log(names[1] + ' move to top')
         this.setState({showSongList: true})
-      } else if (event.target.value.match(/^move/)){
+      } 
+
+      if (event.target.value.match(/^move/)){
         let values = event.target.value.split(':')
         let current = songItems[parseInt(names[1],10)]
         songItems.splice(parseInt(values[1],10)+1,0,current)
@@ -757,7 +816,9 @@ class App extends Component {
           songItems.splice(parseInt(names[1],10),1)
         else console.log('no effect')
         this.setState({showSongList: true})
-      } else if (event.target.value === 'delete'){
+      } 
+
+      if (event.target.value === 'delete'){
         console.log(names[1] + ' delete')
         songItems.splice(parseInt(names[1],10),1)
         this.setState({showSongList: true})
@@ -770,15 +831,17 @@ class App extends Component {
         console.log('addSong preset')
         this.state.selectedSetList.items.push({
           song: this.params.newSongName,
-          type: 'PRESET',
-          preset: this.state.preset,
+          type: 'preset',
+          presetVal: this.state.preset.value,
           bpm: this.state.bpm})
-      } else if (event.target.value === 'loop'){
+      } 
+
+      if (event.target.value === 'loop'){
         console.log('addSong loop')
         if (this.state.loopTable.length > 0) {
         this.state.selectedSetList.items.push({
           song: this.params.newSongName,
-          type: 'LOOP',
+          type: 'loop',
           table: this.state.loopTable,
           bpm: this.state.bpm})
         } else console.log('addSong loop is empty')
@@ -1141,7 +1204,7 @@ class App extends Component {
           this.params.swing = false
       }
 
-      this.setState({preset: preset.value, swingVal: swingVal})
+      this.setState({presetNo: event.target.value, swingVal: swingVal})
       this.params.numerator = preset.numerator
       this.params.denominator = preset.denominator
       this.params.triplet =  preset.triplet
@@ -1176,9 +1239,7 @@ class App extends Component {
   handleWindowClose(event) { // finishing clean up
     this.startStop({target: {name: 'stop'}})
     clock.stop()
-    // clock.close()
     context.close()
-    // timerClock.stop() // now: timerClock = clock
   }
 
 } // end App
