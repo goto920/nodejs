@@ -191,14 +191,7 @@ class App extends Component {
   }
 
   componentWillUnMount () {
-    window.removeEventListener('beforeunload',
-      function (event) { // finishing clean up
-        this.startStop({target: {name: 'stop'}})
-        clock.stop()
-        context.close()
-      })
-
-    this.saveSetLists()
+    window.removeEventListener('beforeunload')
   }
 
   saveSetLists() {
@@ -1254,6 +1247,7 @@ class App extends Component {
 
   handleWindowClose (event) { // finishing clean up
     this.startStop({target: {name: 'stop'}})
+    this.saveSetLists()
     clock.stop()
     context.close()
   }

@@ -1,0 +1,283 @@
+プログラムの説明 (備忘録) last update 2017 Dec. 21(Th)
+
+++++++++++++++++++++++++++++
+0. はじめに
+
+経験: JavaScript、Reactはほとんど初めて使用 
+    (C, C++, Java, Perl, python等の使用経験はそこそこ)
+
+動機: Android用のプログラムを1つ書いたが面倒でこれをiOSなど
+プラットフォーム別に用意するのはさらに大変なので、
+過去は互換性に問題があったが現在は標準化されている
+JavaScriptを使うことにした。
+
+アマチュアドラマーなので、メトロノームには興味がある。
+市販アプリケーションは安いが、色々な機能が全部そろっているものは
+少ない。音を出す仕組み、時間管理がうまくいくか試したかった。
+
+目標
+  基本機能: タイミングが正確 (実験は1回だけだが大丈夫でしょう)
+     応用1: タイマ、自動テンポアップ、ときどき音なし小節
+     応用2: ちょいハネなどシャッフルのハネ調整
+     応用3: 表ビートのミュート (裏の強調)
+
+ 追加機能1: 複数のプリセットをつないだループ 
+     (変拍子曲対応、一部の市販メトロノームにある)
+ 追加機能2: セットリスト (当然市販メトロノームにはある)
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++;
+1. プログラム等のファイル構成 (ディレクトリ構成はcreate-react-appで自動)
+
+package.json -- 自動生成、ただし homepage, subversionは
+  バージョン番号管理を兼ねて手動更新
+  /demos/metronomeyyyymmdd (goto920.github.io/ の文書ディレクトリに置く)
+
+ "dependencies": {
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-scripts": "1.0.14", 
+       -- この3つは自動で入る
+    "waaclock": "^0.5.3" -- これだけはnpmで追加
+  },
+
+public/ (追加変更の説明だけ)
+  manifest.json -- 名前の変更、
+   iconsの指定ファイル変更
+   短い音声サンプルの mp3 ファイル (カウベル、音声でone, two....)
+  (サブディレクトリにまとめてもよいが、キャッシュされにくいので、
+   public/ 直下に変更した)
+
+favicon.ico:      MS Windows icon resource - 1 icon
+favicon.ico-dist: MS Windows icon resource - 4 icons, 16x16, 256-colors
+-- 入れ替えたものにはiconが1つ。これが間違いなのか?
+
+src/Description-jp-utf8.txt (この説明)
+src/
+変更なし index.js  
+変更なし registerServiceWorker.js  (index.jsで使用)
+  (キャッシュ促進の仕組みらしいがまだ十分理解していない)
+追加 buffer-loader.js (ローカルファイルをgetする関数。サンプルを利用)
+メインプログラム App.js 
+  wc App.js
+  1262  3826 43493 App.js
+  line  word bytes
+-- UIを追加しているうちに長くなってしまった
+
+スタイルシート
+  初期状態のまま App.css (icon設定だが理解していない
+                 index.css
+  カスタマイズ   Metronome.css
+
+-rw-r--r-- 1 goto goto  1406 12月 14 12:31 logo.ico
+自分で作成したファイルに入れ替えてみたがうまくいかない(logo.svgでもだめ)
+
+追加データ
+  language.json (日本語と英語メッセージを入れて切り替えられるようにした)  
+  setListSample.json (セットリストのサンプル、テストに必要、
+     また利用者に提供する例)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2. App.js の説明
+
+依存パッケージ
+ import React, { Component } from 'react'
+ import WAAClock from 'waaclock'
+-- オーディオ入出力を利用したタイマで、内部的に色々工夫がある
+   指定時刻に実行、指定間隔で繰り返し
+
+window.AudioContext = window.AudioContext || window.webkitAudioContext
+-- Web Audio APIのリソース (Webブラウザに若干依存するので、上記の処理が必要)
+
+プログラムはオブジェクト指向で書ける
+
+class App extends Component {
+  constructor (props) { 
+    super(props)
+
+   // propsは呼び出したときに与えられるがここでは使っていない
+    インスタンス変数にあたるものを this.で定義
+    this.state は予約されていて、描画更新に関わる変数を指定
+    this.stateは最低限にして、それ以外はthis.paramsに
+
+    this.setState = this.setState.bind(this)
+      -- this.stateのメンバの値はこれでセットする。セットすると
+         自動的に必要箇所(だけ?)が再描画される。
+
+    this.presets = {
+    } // プリセットビート (JSONファイルでプログラムの外に出すつもり)
+
+    自分で定義する関数もこうしておかないと、中でthisが認識できない
+    this.startStop = this.startStop.bind(this)
+     -- メトロノームのStart/Stopイベント処理
+    this.customPlay = this.customPlay.bind(this)
+     -- カスタムループのStart/Stopイベント処理
+    this.handleChange = this.handleChange.bind(this)
+     -- 基本UIのイベント処理
+    this.handleSetLists = this.handleSetLists.bind(this)
+     -- セットリストUIのイベント処理
+    this.handleTable = this.handleTable.bind(this)
+     -- カスタムループ表のUIのイベント処理
+    // イベント処理はevent.target.nameとevent.target.valueの
+    // 組みで振り分けて処理できるので、1つにまとめるてもよいが、
+    // UIグループ別の関数とした
+
+    this.playClick = this.playClick.bind(this)
+     -- 音を1つだけ鳴らす
+    this.nextTick = this.nextTick.bind(this)
+     -- 次の音の時刻を計算する
+    this.saveSetLists = this.saveSetLists.bind(this)
+     -- セットリストをlocalStorageに保存する(sampleSetListの分は除く) 
+        (loadは一回だけなので他に埋め込み)
+    this.handleWindowClose = this.handleWindowClose.bind(this)
+     -- プログラム終了時にリソースを開放する手順(有効か確信なし)
+  }
+
+  componentWillMount() { // constructor()の後、
+    初回の描画 (render()) の前に実行される 
+    localStorageからセットリストを読み込んでthis.params.setListsに代入
+    (sampleSetListの内容を追加)
+    -- 初回のrender()で使う値はここまでに代入する
+  } 
+
+  componentDidMount() { // 初回render()の後に実行したいこと
+     window.addEventListener('beforeunload', this.handleWindowClose)
+     // リソース開放用関数の登録
+    context = new window.AudioContext() // グローバル変数(正解?)
+    gainNode = context.createGain() // グローバル変数
+
+    オーディオサンプルをload 
+
+    clock = new WAAClock(context)
+    timerClock = clock
+    clock.start()
+    // waaclockを起動 (複数動かせるようだが、1つで十分)
+  }
+
+  componentWillUnMount () {
+    window.removeEventListener('beforeunload', this.handleWindowClose)
+  } // 必要かわからないが、関数の登録解除
+
+  saveSetLists(){ // イベント処理ではないので引数なし
+    localStorage.setItem('savedSetLists', JSON.stringify(saveLists))
+    // window.localStorageのwindowが省略できるのだろう。
+    // 保存は文字列らしいのでJSON文字列にして保存
+  } // 関数の順はどこでもよいはず。たまたまここに入れただけ
+
+  render() { // Line 211: UIの描画処理。これが長い。詳細は後で
+    // returnで使う値の計算や文字列処理 
+    // 1例 (<select >の選択肢(オプション)
+     /* increment options */
+    const incrementOptions = [
+      -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+    const IncrementOptions = incrementOptions.map(function (e, index) {
+      return (<option key={index} value={e}>{e}</option>)
+    }) // 直接文字列で作るのが結構難しい。配列を定義してから、map機能で
+    // 配列定義自体は関数の外の方がよいかも
+    
+    return ( // Line 423
+    // コメントは {/*   */} で追加可能
+    // 1例として上記と対応する部分
+    <span className='selector'> // スタイルシートの適用
+      {m.increment}: &nbsp; 
+      // 変数名を{}でくくるm.incrementはlanguage.jsonで定義した文字列
+      // を言語mで切り替えて表示
+    <select name='increment' defaultValue='0'
+       onChange={handleChange}> // handleChange()でevent処理
+     {IncrementOptions} // 上で定義した複数の<option></option>
+    </select> bpm
+    </span> // スタイルシート適用範囲の終わり (divだと改行される)
+    // 略
+    )
+  } // Line 567
+
+  customPlay (event) { // Line 569 ループ再生/停止等
+   // event.target.nameとevent.target.valueで場合分け処理
+   // 上記のselectの場合、nameが'increment' valueがoption内のvalue
+   // (この関数でなく、handleChangeで処理される)
+  } // Line 656
+
+  handleTable (event) { // Line 658
+    // 表の操作、この時点では順番入れ替えは考えていなかった
+  } // Line 696
+
+  handleSetLists(event){ // 698
+    // setlistとsonglistの処理 
+  } // 863 (ちょっと長い。もう少し簡潔にしたい)
+
+  startStop (event) { // 865
+   // UIイベントでなくても、引数として {target:{name: 文字列, value: 任意}}
+   // を渡せば一般の関数としても使える。
+
+   // startのときはタイマを使って再生時刻を指定
+   // 例えば8/8のときは、clickPminは4分音符の60秒間の数(bpm)*2、
+   // 分子(numerator)が8なので、8個の音のplayClick実行を
+   // callbackAtTimeで予約し、それを1小節の時間間隔で繰り返す(repeat)
+   // event.deadlineはnextTick(beat)で設定される。
+   for (let beat = 0; beat < this.params.numerator; beat++) {
+        let event = clock.callbackAtTime(
+            function (event) { this.playClick(event.deadline) }.bind(this),
+            this.nextTick(beat)
+        ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
+         .tolerance({early: early, late: late})
+        this.tickEvents[beat] = event 
+       // stop時にイベントをキャンセルできるように保存
+       // toleranceは適切に調整 (earlyは小さめで、lateは大きめ?)
+       // 小さすぎると音が飛ぶ
+    } // end for
+
+      // 停止タイマ(クロック利用)もここで設定、stopした解除
+    } // 948
+
+    nextTick(beatInd){ // 951
+        // 短いが重要。スイング調整もこの中で記述
+    } //966
+
+    playClick (deadline) { // Line 968
+      // deadlineはAudioContext開始を起点とする絶対時刻
+      // どの拍か、小節の終わりかなどをインスタンス変数で計算
+      // 改善すべき点が多い
+      // また、preset beatの記述形式を工夫して、
+      // ドラム・ビート再生に変更できる。
+      // 以下、部分説明
+
+      // 再生しながらbpm変更
+      let newBpm = parseFloat(bpm) + parseFloat(increment)
+      this.setState({bpm: newBpm}) // UIの表示が変わる
+      clock.timeStretch(context.currentTime, this.tickEvents, bpm / newBpm)
+      // 時間スケール変更
+      // clock自体でなく、this.tickEventsに登録された1小節分の繰り返しが対象
+      // 終了タイマには影響なし(当初誤解していた)
+  
+      let source = context.createBufferSource() // カウベル音
+      let voiceSource = context.createBufferSource() // one,two音声
+      // 音声バッファは使い捨てなので毎回作る
+
+      source.connect(gainNode)
+      voiceSource.connect(gainNode)
+      // 2つを同時再生する。gainNodeは音量調整(仮想) ノード
+      // 音量調整の必要がなければ、context.destinationにconnectする
+
+      gainNode.connect(context.destination) // 初回だけでよいかも
+      gainNode.gain.value = volume // 拍によって音量を変えるための処理
+      source.start(deadline)
+      voiceSource.start(deadline)
+      // 両方同時に再生される
+
+    } // Line 1069 (だらだら長い)
+
+    handleChange(event) { // Line 1071 基本UIのイベント処理
+      // テンポタップ処理はなかなか難しいので、例を利用
+
+
+    } // Line 1246 (そこそこ長い 
+
+   handleWindowClose (event) { // finishing clean up
+     this.startStop({target: {name: 'stop'}})
+     this.saveSetLists()
+     clock.stop()
+     context.close()
+   } // 場所はどこでもよいはず。eventは使わず。使うとよりよい処理が可能?
+
+}
+
+export default App // index.jsで使用する名前)

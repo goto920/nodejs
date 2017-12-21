@@ -1,0 +1,27 @@
+{"name": "sample",
+ "items": [
+   {"song": "Sweet Home Chicago", "type": "preset", 
+            "presetVal": "8/8swing" , "bpm": 105.2},  
+   {"song": "Crossroads/Cream", "type": "preset",
+            "presetVal": "4/4", "bpm": 135.3}, 
+   {"song": "A New Beginning(verse)/Dream Theater", "type": "loop",
+     "table": [
+      {"presetVal": "7/8", "swingVal": 1.5, "repeat": 1},
+      {"presetVal": "4/4", "swingVal": 1.5, "repeat": 1},
+      {"presetVal": "7/8", "swingVal": 1.5, "repeat": 1},
+      {"presetVal": "2/4", "swingVal": 1.5, "repeat": 1},
+      {"presetVal": "4/4", "swingVal": 1.5, "repeat": 1},
+      {"presetVal": "7/8", "swingVal": 1.5, "repeat": 1},
+      {"presetVal": "4/4", "swingVal": 1.5, "repeat": 1},
+      {"presetVal": "7/8", "swingVal": 1.5, "repeat": 1},
+      {"presetVal": "2/4", "swingVal": 1.5, "repeat": 1},
+      {"presetVal": "12/16", "swingVal": 1.5, "repeat": 1}
+      ], "bpm": 113.1}, 
+   {"song": "Subdivisions(verse)/Rush", "type": "loop",
+     "table": [
+      {"presetVal": "4/4", "swingVal": 1.5, "repeat": 4},
+      {"presetVal": "7/8", "swingVal": 1.5, "repeat": 6},
+      {"presetVal": "4/4", "swingVal": 1.5, "repeat": 3}
+      ], "bpm": 134.5}
+  ] 
+}
