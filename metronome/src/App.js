@@ -4,7 +4,8 @@ import BufferLoader from './buffer-loader'
 import WAAClock from 'waaclock'
 import messages from './language.json'
 import packageJSON from '../package.json'
-import setListSample from './setListSample.json'
+import loadedSetListSample from './setListSample.json'
+import loadedPresets from './presets.json'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
@@ -97,31 +98,7 @@ class App extends Component {
     this.handleWindowClose = this.handleWindowClose.bind(this)
     this.saveSetLists = this.saveSetLists.bind(this)
 
-    this.presets = [
-      {value: '2/2', numerator: 2, denominator: 2}, // 0
-      {value: '2/4', numerator: 2, denominator: 4}, //
-      {value: '4/8', numerator: 4, denominator: 8}, //
-      {value: '3/4', numerator: 3, denominator: 4}, //
-      {value: '6/8(2x3)', numerator: 6, denominator: 8}, //
-      {value: '12/8(2x6)', numerator: 12, denominator: 8}, //
-      {value: '12/8(3x4)', numerator: 12, denominator: 8, triplet: true}, // 6
-      {value: '4/4', numerator: 4, denominator: 4}, // default(7)
-      {value: '8/8', numerator: 8, denominator: 8}, //
-      {value: '8/8swing', numerator: 8, denominator: 8, swingVal: 2.0}, //
-      {value: '16/16', numerator: 16, denominator: 16}, // 10
-      {value: '16/16swing', numerator: 16, denominator: 16, swingVal: 2.0}, //
-      {value: '5/4', numerator: 5, denominator: 4}, //
-      {value: '10/8', numerator: 10, denominator: 8}, //
-      {value: '6/4', numerator: 6, denominator: 4}, //
-      {value: '7/4', numerator: 7, denominator: 4}, // 15
-      {value: '14/8', numerator: 14, denominator: 8}, //
-      {value: '7/8', numerator: 7, denominator: 8},
-      {value: '12/16', numerator: 12, denominator: 16},
-      {value: '13/16', numerator: 13, denominator: 16},
-      {value: '14/16', numerator: 14, denominator: 16},
-      {value: '15/16', numerator: 15, denominator: 16},
-      {value: '17/16', numerator: 17, denominator: 16}
-    ]
+    this.presets = loadedPresets 
 
     this.tickEvents = []
 
@@ -141,12 +118,12 @@ class App extends Component {
 
     if (savedSetLists === null) {
       // console.log('savedSetLists null')
-      this.params.setLists.push({name: 'default', items: []}, setListSample)
+      this.params.setLists.push({name: 'default', items: []}, loadedSetListSample)
     } else {
       // console.log('savedSetLists loaded items = ' + savedSetLists.length)
       for (let i=0; i < savedSetLists.length; i++)
         this.params.setLists.push(savedSetLists[i])
-        this.params.setLists.push(setListSample)
+        this.params.setLists.push(loadedSetListSample)
 //    console.log(JSON.stringify(this.params.setLists))
     }
 //    console.log(JSON.stringify(this.params.setLists[0]))
