@@ -566,7 +566,7 @@ class App extends Component {
           <br />{showCustomLoop ? <CustomLoopUI /> : ''}
         </span>
         <hr />
-      (Version: {version}) <a href={m.url}>{m.guide}</a><br />
+      (Version: {version}) <a href={m.url} target="_blank">{m.guide}</a><br />
       Additional feature coming: Sound variation
       <hr />
       </div>
