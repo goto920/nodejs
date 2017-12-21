@@ -29,6 +29,19 @@
   cursor: pointer;
 }
 
+.redButton {
+  background: #C94D46;
+  padding: 10px;
+  border: 1px solid #832420;
+  border-radius: 2px;
+//  width: 80px;
+  width: 50px;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+
 .number input {
   width: 15%;
   margin: 10px;

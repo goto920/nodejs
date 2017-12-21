@@ -80,6 +80,9 @@ class App extends Component {
         swingVal: 1.5,
         repeat: 4},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
+      showMore: false,
+      showAdvanced: false,
+      showDrums: false,
       showSetLists: false,
       selectedSetList: {},
       selectedSong: {name: 'none'}, // default
@@ -98,7 +101,7 @@ class App extends Component {
     this.handleWindowClose = this.handleWindowClose.bind(this)
     this.saveSetLists = this.saveSetLists.bind(this)
 
-    this.presets = loadedPresets 
+    this.presets = loadedPresets
 
     this.tickEvents = []
 
@@ -121,9 +124,8 @@ class App extends Component {
       this.params.setLists.push({name: 'default', items: []}, loadedSetListSample)
     } else {
       // console.log('savedSetLists loaded items = ' + savedSetLists.length)
-      for (let i=0; i < savedSetLists.length; i++)
-        this.params.setLists.push(savedSetLists[i])
-        this.params.setLists.push(loadedSetListSample)
+      for (let i = 0; i < savedSetLists.length; i++) { this.params.setLists.push(savedSetLists[i]) }
+      this.params.setLists.push(loadedSetListSample)
 //    console.log(JSON.stringify(this.params.setLists))
     }
 //    console.log(JSON.stringify(this.params.setLists[0]))
@@ -171,16 +173,15 @@ class App extends Component {
     window.removeEventListener('beforeunload')
   }
 
-  saveSetLists() {
-
+  saveSetLists () {
     if (this.params.setLists.length > 0) {
       let saveLists = []
       for (let i = 0; i < this.params.setLists.length; i++) {
-        if (this.params.setLists[i].name !== 'sample') {saveLists.push(this.params.setLists[i]) }
+        if (this.params.setLists[i].name !== 'sample') { saveLists.push(this.params.setLists[i]) }
       }
       // console.log('save ' + saveLists.length + ' items')
       if (saveLists.length > 0) {
-        localStorage.setItem('savedSetLists', JSON.stringify(saveLists)) 
+        localStorage.setItem('savedSetLists', JSON.stringify(saveLists))
       }
     }
   }
@@ -188,8 +189,8 @@ class App extends Component {
   render () {
     const {ja, voice, loopTable, newRow, loopStat,
       presetNo, playing, bpm, bpmFrac,
-      rest, restBars, swingVal, evenVol,
-      showSetLists, showSongList,
+      rest, restBars, swingVal, evenVol, showMore,
+      showAdvanced, showDrums, showSetLists, showSongList,
       showCustomLoop, selectedSetList, selectedSong} = this.state
 
     const {minBpm, maxBpm, setLists} = this.params
@@ -332,6 +333,64 @@ class App extends Component {
       </div>)
     }
 
+    function AdvancedUI (prop) {
+      return (<span>
+        {m.swing}: &nbsp;
+        <span className='selector'>
+          <select name='swing' value={parseInt(swingVal * 10, 10)}
+            onChange={handleChange}>{SwingValOptions}</select>
+        </span>
+        {m.swingStr}
+        <br />
+        <span className='selector'>
+          {m.increment}: &nbsp;
+       <select name='increment' defaultValue='0'
+         onChange={handleChange}>{IncrementOptions}
+       </select> bpm
+       </span>
+         /
+        <span className='selector'>
+          <select name='perBars' defaultValue='0' onChange={handleChange}>
+            <option value='0'>off</option> <option value='1'>1</option>
+            <option value='2'>2</option> <option value='4'>4</option>
+            <option value='8'>8</option> <option value='12'>12</option>
+            <option value='16'>16</option>
+          </select>
+          {m.perBars}</span><br />
+        <span className='selector'>
+          {m.muteBars}: &nbsp;
+         <select name='muteBars' defaultValue='0' onChange={handleChange}>
+           <option value='0'>off</option> <option value='1'>1</option>
+           <option value='2'>2</option> <option value='4'>4</option>
+           <option value='8'>8</option> <option value='12'>12</option>
+           <option value='16'>16</option>
+         </select>
+        </span>
+        {m.muteProb1}
+        {m.muteProb2}
+        <span className='selector'>
+          <select name='muteProb' defaultValue='0' onChange={handleChange}>
+            <option value='0.0'>0.0</option> <option value='0.1'>0.1</option>
+            <option value='0.2'>0.2</option> <option value='0.3'>0.3</option>
+            <option value='0.4'>0.4</option> <option value='0.5'>0.5</option>
+            <option value='0.6'>0.6</option> <option value='0.7'>0.7</option>
+            <option value='0.8'>0.8</option> <option value='0.9'>0.9</option>
+            <option value='1.0'>1.0</option>
+          </select>
+        </span>
+        <br />
+        <span className='slider'>
+          {m.evenNotes}: {evenVol.toFixed(2)} <input type='range' name='evenVol'
+            min='0.0' max='1.0' value={evenVol} step='0.01'
+            onChange={handleChange} />
+        </span>
+      </span>)
+    } // end AdvancedUI
+
+    function DrumsUI(props){
+      return(<span>Not implemented yet</span>)
+    }
+
  /* Custom Loop UI (conditinally shown) */
 
     const loopTableRows = loopTable.map(function (e, index) {
@@ -358,12 +417,14 @@ class App extends Component {
                /{('00' + loopStat.bar).slice(-3)}
         <br />
         <b>{m.d_a}</b>&nbsp;
-        <span className='loopButton'>
+        <span>
           <button name='startLoop' onClick={customPlay}>
-            {loopStat.playing ? 'Stop' : 'Start'}</button>
-      / <button name='rewindLoop' onClick={customPlay}>
-        {m.rewind}</button>
-        </span><br />
+            {loopStat.playing ? 'Stop' : 'Start'}</button></span>
+        / <span className='loopButton'>
+          <button name='rewindLoop' onClick={customPlay}>
+            {m.rewind}</button>
+        </span>
+        <br />
         <div className='table'>
           <table border='3'>
             <tbody>
@@ -459,66 +520,30 @@ class App extends Component {
     <option value='16'>16</option> <option value='24'>24</option>
     <option value='32'>32</option> <option value='64'>64</option>
     <option value='128'>128</option> <option value='256'>256</option>
-  </select> ({m.bars})</span>
-        <hr />
-        <font color='blue'>{m.advanced}</font><br />
-        {m.swing}: &nbsp;
-        <span className='selector'>
-          <select name='swing' value={parseInt(swingVal * 10, 10)}
-            onChange={handleChange}>{SwingValOptions}</select>
-        </span>
-        &nbsp; {m.swingStr}
-        <br />
-        <span className='selector'>
-          {m.increment}: &nbsp;
-       <select name='increment' defaultValue='0'
-         onChange={handleChange}>{IncrementOptions}
-       </select> bpm
-       </span>
-         /
-        <span className='selector'>
-          <select name='perBars' defaultValue='0' onChange={handleChange}>
-            <option value='0'>off</option> <option value='1'>1</option>
-            <option value='2'>2</option> <option value='4'>4</option>
-            <option value='8'>8</option> <option value='12'>12</option>
-            <option value='16'>16</option>
-          </select>
-          {m.perBars}</span><br />
-        <span className='selector'>
-          {m.muteBars}: &nbsp;
-         <select name='muteBars' defaultValue='0' onChange={handleChange}>
-           <option value='0'>off</option> <option value='1'>1</option>
-           <option value='2'>2</option> <option value='4'>4</option>
-           <option value='8'>8</option> <option value='12'>12</option>
-           <option value='16'>16</option>
-         </select>
-        </span>
-        {m.muteProb1}
-        &nbsp; {m.muteProb2}
-        <span className='selector'>
-          <select name='muteProb' defaultValue='0' onChange={handleChange}>
-            <option value='0.0'>0.0</option> <option value='0.1'>0.1</option>
-            <option value='0.2'>0.2</option> <option value='0.3'>0.3</option>
-            <option value='0.4'>0.4</option> <option value='0.5'>0.5</option>
-            <option value='0.6'>0.6</option> <option value='0.7'>0.7</option>
-            <option value='0.8'>0.8</option> <option value='0.9'>0.9</option>
-            <option value='1.0'>1.0</option>
-          </select>
-        </span>
-        <br />
-        <span className='slider'>
-          {m.evenNotes}: {evenVol.toFixed(2)} <input type='range' name='evenVol'
-            min='0.0' max='1.0' value={evenVol} step='0.01'
-            onChange={handleChange} />
-        </span>
-        <hr />
-        <span className='loopButton'>
-          {m.SetLists}: <button name='setListsUI' onClick={handleChange}>
+  </select> ({m.bars})</span><hr />
+    {m.moreFeatures}: <span className='loopButton'>
+       <button name='showMore' onClick={handleChange}>
+       {showMore ? m.hide : m.show} {/* no {} for m.hide,show */}
+       </button></span>
+
+        {showMore ? (<span><hr />
+        {m.advanced}: <span className='loopButton'>
+         <button name='advancedUI' onClick={handleChange}>
+         {showAdvanced ? m.hide : m.show} {/* no {} for m.hide,show */}
+         </button></span>
+         {showAdvanced ? (<span><AdvancedUI /></span>) : ''}
+         <hr />{m.drums}: <span className='loopButton'>
+         <button name='drumsUI' onClick={handleChange}>
+         {showDrums ? m.hide : m.show} {/* no {} for m.hide,show */}
+         </button></span>
+        {showDrums ? <DrumsUI /> : ''}
+
+        <hr /><span className='loopButton'>
+        {m.SetLists}: <button name='setListsUI' onClick={handleChange}>
             {showSetLists ? m.hide : m.show} {/* no {} for m.hide,show */}
-          </button>
-        </span>
+          </button></span>
         &nbsp; <span className='loopButton'>
-          {m.SongList}: <button name='songListUI' onClick={handleChange}>
+        {m.SongList}: <button name='songListUI' onClick={handleChange}>
             {showSongList ? m.hide : m.show} {/* no {} for m.hide,show */}
           </button>
         </span><br />
@@ -532,11 +557,13 @@ class App extends Component {
         <span className='loopButton'>
           {m.custom}: <button name='customLoopUI' onClick={handleChange}>
             {showCustomLoop ? m.hide : m.show} {/* no {} for m.hide,show */}
-          </button>
-          <br />{showCustomLoop ? <CustomLoopUI /> : ''}
-        </span>
-        <hr />
-      (Version: {version}) <a href={m.url} target="_blank">{m.guide}</a><br />
+          </button></span>
+        <br />{showCustomLoop ? <CustomLoopUI /> : ''}
+
+      </span>) : ''}
+     
+      <hr />
+      (Version: {version}) <a href={m.url} target='_blank'>{m.guide}</a><br />
       Additional feature coming: Sound variation
       <hr />
       </div>
@@ -708,7 +735,7 @@ class App extends Component {
         this.params.setLists.splice(parseInt(values[1], 10) + 1, 0, current)
         if (parseInt(values[1], 10) < parseInt(names[1], 10)) { this.params.setLists.splice(parseInt(names[1], 10) + 1, 1) } else if (parseInt(values[1], 10) > parseInt(names[1], 10)) { this.params.setLists.splice(parseInt(names[1], 10), 1) } else {}// console.log('no effect')
 
-      this.saveSetLists()
+        this.saveSetLists()
         this.setState({showSetLists: true})
         return
       }
@@ -808,14 +835,13 @@ class App extends Component {
     }
 
     if (event.target.name === 'addSong') {
-
       if (event.target.value === 'preset') {
         // console.log('addSong preset')
         this.state.selectedSetList.items.push({
           song: this.params.newSongName,
           type: 'preset',
           presetVal: this.presets[this.state.presetNo].value,
-          bpm: parseFloat(this.state.bpm,10).toFixed(1)})
+          bpm: parseFloat(this.state.bpm, 10).toFixed(1)})
       }
 
       if (event.target.value === 'loop') {
@@ -825,9 +851,9 @@ class App extends Component {
             song: this.params.newSongName,
             type: 'loop',
             table: this.state.loopTable,
-            bpm: parseFloat(this.state.bpm,10).toFixed(1)})
+            bpm: parseFloat(this.state.bpm, 10).toFixed(1)})
         } else {} // console.log('addSong loop is empty')
-      } 
+      }
 
       this.saveSetLists()
       this.setState({showSongList: true})
@@ -1206,6 +1232,21 @@ class App extends Component {
       }
       return
     } // end preset
+
+    if (event.target.name === 'showMore') {
+      this.setState({showMore: !this.state.showMore})
+      return
+    }
+
+    if (event.target.name === 'advancedUI') {
+      this.setState({showAdvanced: !this.state.showAdvanced})
+      return
+    }
+
+    if (event.target.name === 'drumsUI') {
+      this.setState({showDrums: !this.state.showDrums})
+      return
+    }
 
     if (event.target.name === 'customLoopUI') {
       this.setState({showCustomLoop: !this.state.showCustomLoop})
