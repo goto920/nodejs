@@ -784,6 +784,8 @@ class App extends Component {
         }  // end preset
 
         if (song.type === 'loop') {
+          this.state.loopTable.splice(0,this.state.loopTable.length) // clear
+
           this.handleChange(
            {target: {name: 'bpm_set', value: parseFloat(song.bpm, 10)}})
 
@@ -794,6 +796,7 @@ class App extends Component {
             }
             if (presetNo >= this.presets.length) { presetNo = this.params.default_presetNo }
              // if not found
+
 
             this.handleTable({target: {name: 'loopAddPreset', value: presetNo}})
             this.handleTable({target:
