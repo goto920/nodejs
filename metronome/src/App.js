@@ -235,9 +235,14 @@ class App extends Component {
     for (let i = 0; i < setLists.length; i++) { setListsOptions.push(i) }
 
     const SetListsOptions = setListsOptions.map(function (e, index) {
+      if (ja === true)
+       return (
+          <option key={index} value={'move:' + e}>
+          {('00' + e).slice(-2)} {m.moveAfter}</option>)
+      else 
       return (
-        <option key={index} value={'move:' + e}>
-         move after {('00' + e).slice(-2)}</option>)
+          <option key={index} value={'move:' + e}>
+          {m.moveAfter} {('00' + e).slice(-2)}</option>)
     })
 
     const setListsRows = setLists.map(function (e, index) {
@@ -245,10 +250,10 @@ class App extends Component {
         <td align='right'>
           <select name={'selectList:' + index} onChange={handleSetLists}>
             <option key='none' value='none'>({m.selectOp})</option>
-            <option key='select' value='select'>select this</option>
-            <option key='top' value='top'>move to top</option>
+            <option key='select' value='select'>{m.selectThis}</option>
+            <option key='top' value='top'>{m.moveToTop}</option>
             {SetListsOptions}
-            <option key='delete' value='delete'>delete this</option>
+            <option key='delete' value='delete'>{m.deleteThis}</option>
           </select></td>
         <td align='right'>{('00' + index).slice(-2)}</td>
         <td align='left'>{e.name}</td>
@@ -262,13 +267,13 @@ class App extends Component {
             <tr><th>sel/mov/del</th><th>seq</th><th>list name</th></tr>
             {setListsRows}
             <tr>
-              <td align='right' className='radioButton'>add
+              <td align='right' className='radioButton'>{m.add}
           <input name='addList' type='radio'
             checked={false} onChange={handleSetLists} /></td>
               <td align='right'>new</td>
               <td align='left'>
                 <span className='text'>
-                  <input type='text' name='newList'
+                  <input type='text' name='newList' defaultValue={m.newName}
                     autoFocus={false} onChange={handleSetLists} />
                 </span>
               </td>
@@ -284,25 +289,35 @@ class App extends Component {
     for (let i = 0; i < selectedSetList.items.length; i++) { songListOptions.push(i) }
 
     const SongListOptions = songListOptions.map(function (e, index) {
+      if (ja === true)
       return (
         <option key={index} value={'move:' + e}>
-          move after {('00' + e).slice(-2)}</option>)
+          {('00' + e).slice(-2)} {m.moveAfter}</option>)
+      else
+      return (
+        <option key={index} value={'move:' + e}>
+          {m.moveAfter} {('00' + e).slice(-2)}</option>)
     })
 
     const SongListRows = selectedSetList.items.map(function (e, index) {
+
+      let type
+      if (e.type === 'preset') type = m.beat 
+      if (e.type === 'loop') type = m.loop 
+
       return (<tr key={'tr:' + index}>
         <td align='right'>
           <select name={'selectSong:' + index} onChange={handleSetLists}>
             <option key='none' value='none'>({m.selectOp})</option>
-            <option key='select' value='select'>select this</option>
-            <option key='top' value='top'>move to top</option>
+            <option key='select' value='select'>{m.selectThis}</option>
+            <option key='top' value='top'>{m.moveToTop}</option>
             {SongListOptions}
-            <option key='delete' value='delete'>delete this</option>
+            <option key='delete' value='delete'>{m.deleteThis}</option>
           </select></td>
         <td align='right'>{('00' + index).slice(-2)}</td>
         <td align='left' width='150'>{e.song}</td>
         <td align='right'>{e.bpm}</td>
-        <td align='right'>{e.type}</td>
+        <td align='right'>{type}</td>
       </tr>)
     })
 
@@ -315,18 +330,18 @@ class App extends Component {
               <th>type</th></tr>
             {SongListRows}
             <tr>
-              <td align='center' className='radioButton'>add current<br />
-         preset<input name='addSong'
+              <td align='center' className='radioButton'>{m.addCurrent}<br />
+         {m.beat}<input name='addSong'
            type='radio' checked={false} value='preset'
            onChange={handleSetLists} /><br />
-         or loop<input name='addSong' type='radio' value='loop'
+           {m.loop}<input name='addSong' type='radio' value='loop'
            checked={false} onChange={handleSetLists} />
               </td>
               <td align='right'>new</td>
               <td align='left' className='text'><input name='newSong'
-                type='text' onChange={handleSetLists} /></td>
+                type='text' defaultValue={m.newName} onChange={handleSetLists} /></td>
               <td align='right'>{Math.floor(bpm) + parseFloat(0.1 * bpmFrac, 10)}</td>
-              <td>(choose)</td>
+              <td></td>
             </tr>
           </tbody>
         </table>
@@ -388,7 +403,7 @@ class App extends Component {
     } // end AdvancedUI
 
     function DrumsUI(props){
-      return(<span>Not implemented yet</span>)
+      return(<span> {m.notYet}</span>)
     }
 
  /* Custom Loop UI (conditinally shown) */
@@ -434,7 +449,7 @@ class App extends Component {
               <tr><td align='right' className='radioButton'>
      a<input type='radio' name='loopAdd' checked={false}
        onChange={handleTable} /></td>
-                <td align='right'>add</td>
+                <td align='right'>{m.add}</td>
                 <td align='right' className='selector'>
                   <select name='loopAddPreset' value={newRow.presetNo}
                     onChange={handleTable}>
