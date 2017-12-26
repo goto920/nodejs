@@ -6,6 +6,7 @@ import messages from './language.json'
 import packageJSON from '../package.json'
 import loadedSetListSample from './setListSample.json'
 import loadedPresets from './presets.json'
+import drumPatterns from './drumPatterns.json'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
@@ -47,6 +48,8 @@ class App extends Component {
       numerator: 4,
       denominator: 4,
       triplet: false,
+      drumPattern: {},
+      notesInPattern: [],
       cowbell: [],
       maleVoice: [],
       swing: false,
@@ -97,6 +100,8 @@ class App extends Component {
     this.handleSetLists = this.handleSetLists.bind(this)
     this.handleTable = this.handleTable.bind(this)
     this.playClick = this.playClick.bind(this)
+    this.playPattern = this.playPattern.bind(this)
+    this.findSampleByName = this.findSampleByName.bind(this)
     this.nextTick = this.nextTick.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
     this.saveSetLists = this.saveSetLists.bind(this)
@@ -112,6 +117,49 @@ class App extends Component {
       msecsFirst: 0,
       msecsPrevious: 0
     }
+
+    this.notes = [
+        {name: 'hihat', sample: null}, // filename is hihat.mp3
+        {name: 'openHihat', sample: null},
+        {name: 'snare', sample: null},
+        {name: 'snareRim', sample: null},
+        {name: 'bass', sample: null},
+        {name: 'highTom', sample: null},
+        {name: 'midTom', sample: null},
+        {name: 'lowTom', sample: null},
+        {name: 'crash', sample: null},
+        {name: 'ride', sample: null},
+        {name: 'highConga', sample: null},
+        {name: 'midConga', sample: null},
+        {name: 'lowConga', sample: null},
+        {name: 'cowbell-tr808', sample: null},
+        {name: 'clave', sample: null},
+        {name: 'handClap', sample: null},
+        {name: 'maracas', sample: null},
+        {name: 'cowbell-higher', sample: null},
+        {name: 'cowbell-high', sample: null},
+        {name: 'cowbell-mid', sample: null},
+        {name: 'cowbell-low', sample: null},
+        {name: 'cowbell-lower', sample: null},
+        {name: 'male-one', sample: null},
+        {name: 'male-two', sample: null},
+        {name: 'male-three', sample: null},
+        {name: 'male-four', sample: null},
+        {name: 'male-five', sample: null},
+        {name: 'male-six', sample: null},
+        {name: 'male-seven', sample: null},
+        {name: 'male-eight', sample: null},
+        {name: 'female-one', sample: null},
+        {name: 'female-two', sample: null},
+        {name: 'female-three', sample: null},
+        {name: 'female-four', sample: null},
+        {name: 'female-five', sample: null},
+        {name: 'female-six', sample: null},
+        {name: 'female-seven', sample: null},
+        {name: 'female-eight', sample: null}
+    ]
+
+
   } // end constructor
 
   componentWillMount () { // before render()
@@ -137,32 +185,28 @@ class App extends Component {
     context = new window.AudioContext()
     gainNode = context.createGain()
 
-    let bufferLoader = new BufferLoader(
-      context,
-      [
-        'cowbell-higher.mp3',
-        'cowbell-high.mp3',
-        'cowbell-mid.mp3',
-        'cowbell-low.mp3',
-        'cowbell-lower.mp3',
-        'one-norm.mp3',
-        'two-9.mp3',
-        'three-6.mp3',
-        'four-6.mp3',
-        'five-6.mp3',
-        'six-6.mp3',
-        'seven-6.mp3',
-        'eight-6.mp3'
-      ],
 
+    let inputFiles = []
+    for (let i=0; i < this.notes.length; i++){
+      inputFiles[i] = this.notes[i].name + '.mp3'
+      // console.log(inputFiles[i])
+    }
+
+    let bufferLoader = new BufferLoader(
+      context, inputFiles,
       function (bufferList) {
-        for (let i = 0; i < 5; i++) { this.params.cowbell[i] = bufferList[i] }
-        for (let i = 5; i <= 12; i++) { this.params.maleVoice[i - 5] = bufferList[i] }
-         // console.log('BufferLoader loading finished')
+        for (let i=0; i < this.notes.length; i++)
+          this.notes[i].sample = bufferList[i]
       }.bind(this)
     )
 
     bufferLoader.load()
+
+    this.params.drumPattern = drumPatterns[0] // temporary
+    this.params.numerator = this.params.drumPattern.numerator
+    this.params.denominator = this.params.drumPattern.denominator
+    this.params.bpm = 100
+    this.findSampleByName() // temporary
 
     clock = new WAAClock(context)
     timerClock = clock
@@ -646,7 +690,8 @@ class App extends Component {
       for (let beat = 0; beat < this.params.numerator; beat++) {
         event = clock.callbackAtTime(
           function (event) {
-            this.playClick(event.deadline)
+            // this.playClick(event.deadline)
+            this.playPattern(event.deadline)
           }.bind(this),
           this.nextTick(beat)
         ).tolerance({early: early, late: late}) // tight early tolerance
@@ -895,7 +940,9 @@ class App extends Component {
 
       for (let beat = 0; beat < this.params.numerator; beat++) {
         let event = clock.callbackAtTime(
-            function (event) { this.playClick(event.deadline) }.bind(this),
+            function (event) { 
+            // this.playClick(event.deadline) }.bind(this),
+            this.playPattern(event.deadline) }.bind(this),
             this.nextTick(beat)
           ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
            .tolerance({early: early, late: late})
@@ -928,7 +975,9 @@ class App extends Component {
       this.params.startTime = context.currentTime
       for (let beat = 0; beat < this.params.numerator; beat++) {
         let event = clock.callbackAtTime(
-            function (event) { this.playClick(event.deadline) }.bind(this),
+            function (event) { 
+            // this.playClick(event.deadline) }.bind(this),
+            this.playPattern(event.deadline) }.bind(this),
             this.nextTick(beat)
         ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
          .tolerance({early: early, late: late})
@@ -969,6 +1018,46 @@ class App extends Component {
 
     return this.params.startTime + offset +
            currentBar * barDur + beatInd * beatDur
+  }
+
+  findSampleByName (){
+    const {drumPattern} = this.params
+    // console.log('findSampleByName()')
+    // console.log(JSON.stringify(drumPattern))
+
+    for (let i = 0; i < drumPattern.pattern.length; i++){
+      let j = 0
+      // console.log(drumPattern.pattern[i].note)
+      for (j = 0; j < this.notes.length; j++){
+      //  console.log(this.notes[j].name)
+        if (this.notes[j].name === drumPattern.pattern[i].note) break
+      }
+
+      if (j < this.notes.length) 
+        this.params.notesInPattern[i] = this.notes[j]
+      else 
+        this.params.notesInPattern[i] = null
+
+      console.log('note ' + i + ': ' + this.params.notesInPattern[i].name)
+    }
+  }
+
+  playPattern(deadline){
+    const {numerator, notesInPattern, drumPattern} = this.params
+    let {count} = this.params
+    console.log('playPattern at: ' + deadline)
+    
+    for(let i=0; i < notesInPattern.length; i++){
+      let source = context.createBufferSource() 
+      console.log(notesInPattern[i].name)
+      source.buffer = notesInPattern[i].sample
+      source.connect(gainNode)
+      gainNode.connect(context.destination)
+      gainNode.gain.value = 0.9*drumPattern.pattern[i].values[count]
+      source.start(deadline)
+    }  
+
+    count = (count + 1) % numerator
   }
 
   playClick (deadline) {
