@@ -1142,8 +1142,8 @@ class App extends Component {
       // console.log('bpm change')
       let bpmFrac = parseInt(event.target.value, 10)
       let newBpm = Math.floor(this.state.bpm) + 0.1 * bpmFrac
-      console.log('newBpm(bpmFrac)' + newBpm)
-      this.setState({bpm: newBpm.toFixed(1)})
+      // console.log('newBpm(bpmFrac)' + newBpm)
+      this.setState({bpm: newBpm.toFixed(1), bpmFrac: bpmFrac})
       if (this.state.playing) {
         clock.timeStretch(context.currentTime, this.tickEvents,
             this.state.bpm / newBpm)
