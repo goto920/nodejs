@@ -381,8 +381,7 @@ class App extends Component {
            <option value='16'>16</option>
          </select>
         </span>
-        {m.muteProb1}
-        {m.muteProb2}
+        {m.muteProb1}, {m.muteProb2}
         <span className='selector'>
           <select name='muteProb' defaultValue='0' onChange={handleChange}>
             <option value='0.0'>0.0</option> <option value='0.1'>0.1</option>
@@ -545,7 +544,7 @@ class App extends Component {
         {m.advanced}: <span className='loopButton'>
          <button name='advancedUI' onClick={handleChange}>
          {showAdvanced ? m.hide : m.show} {/* no {} for m.hide,show */}
-         </button></span>
+         </button><br /></span>
          {showAdvanced ? (<span><AdvancedUI /></span>) : ''}
          <hr />{m.drums}: <span className='loopButton'>
          <button name='drumsUI' onClick={handleChange}>
