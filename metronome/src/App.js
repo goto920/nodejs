@@ -512,11 +512,18 @@ class App extends Component {
           <button name='tempo_tap' onClick={handleChange}>
             {m.tap}</button></span>&nbsp;
         <br />
-        <span className='bpm-slider'>
+        <span className='tinyButton'>
+         <button name='bpmStep' 
+           value='-1' onClick={handleChange}>-</button></span>
+        &nbsp;<span className='bpm-slider'>
           <input type='range' name='bpm_slider'
             min={minBpm} max={maxBpm} value={bpm} step='1.0'
             onChange={handleChange} />
-        </span> <br />
+        </span>&nbsp; 
+        <span className='tinyButton'>
+        <button name='bpmStep' 
+          value='1' onClick={handleChange}>+</button></span>
+        <br />
         {m.timer}: &nbsp;
      <span className='selector'>
        {('00' + rest).slice(-3)}/
@@ -1149,6 +1156,13 @@ class App extends Component {
             this.state.bpm / newBpm)
       }
 
+      return
+    }
+
+    if (event.target.name === 'bpmStep') {
+      let newBpm = parseFloat(this.state.bpm,10) 
+        + parseInt(event.target.value, 10)
+      this.setState({bpm: newBpm.toFixed(1)})
       return
     }
 
