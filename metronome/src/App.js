@@ -474,12 +474,14 @@ class App extends Component {
 /// //////////// UI menus
     return (
       <div className='metronome'>
-      KG's JS_Metronome &nbsp; <font color='blue'>Language: </font>
+      KG's JS_Metronome &nbsp; <font color='blue'>Lang:&nbsp;</font>
         <span className='small-button'>
           <button name='language' onClick={handleChange}>
             {ja ? 'US' : 'JP'}
-          </button>
-        </span>
+          </button></span>&nbsp; Play:&nbsp; 
+        <span><button name='startStop' onClick={this.startStop}>
+          {playing ? 'Stop' : 'Start'}
+        </button></span>
         <hr />
         <span className='selector'>
           {m.beat}: <select name='preset' value={presetNo}
@@ -492,10 +494,8 @@ class App extends Component {
             {m.sound}</button>
           <tt><b> {voiceStr}</b></tt>
         </span>&nbsp;
-        <button name='startStop' onClick={this.startStop}>
-          {playing ? 'Stop' : 'Start'}
-        </button><br />
-        <span className='number'>
+        <hr />
+        <span>
         BPM({minBpm}-{maxBpm}): &nbsp; {('0' + Math.floor(bpm)).slice(-3)}.
         <span className='selector'>
           <select name='bpmFrac' value={bpmFrac}
@@ -523,7 +523,7 @@ class App extends Component {
         <span className='tinyButton'>
         <button name='bpmStep' 
           value='1' onClick={handleChange}>+</button></span>
-        <br />
+        <hr />
         {m.timer}: &nbsp;
      <span className='selector'>
        {('00' + rest).slice(-3)}/
@@ -553,12 +553,6 @@ class App extends Component {
          {showAdvanced ? m.hide : m.show} {/* no {} for m.hide,show */}
          </button><br /></span>
          {showAdvanced ? (<span><AdvancedUI /></span>) : ''}
-         <hr />{m.drums}: <span className='loopButton'>
-         <button name='drumsUI' onClick={handleChange}>
-         {showDrums ? m.hide : m.show} {/* no {} for m.hide,show */}
-         </button></span>
-        {showDrums ? <DrumsUI /> : ''}
-
         <hr /><span className='loopButton'>
         {m.SetLists}: <button name='setListsUI' onClick={handleChange}>
             {showSetLists ? m.hide : m.show} {/* no {} for m.hide,show */}
