@@ -123,8 +123,9 @@ class App extends Component {
 
     this.notes = [
 /* drumkit samples */
-/*00*/  {name: 'hihat', sample: null}, // filename is hihat.mp3
-        {name: 'openHihat', sample: null},
+/*00*/  {name: 'hihatClose', sample: null}, // filename is hihat.mp3
+        {name: 'hihatHalfOpen', sample: null},
+        {name: 'hihatFullOpen', sample: null},
         {name: 'snare', sample: null},
         {name: 'snareRim', sample: null},
         {name: 'bass', sample: null},
@@ -132,8 +133,8 @@ class App extends Component {
         {name: 'midTom', sample: null},
         {name: 'lowTom', sample: null},
         {name: 'crash', sample: null},
-        {name: 'ride', sample: null},
-/*10*/  {name: 'highConga', sample: null},
+/*10 */ {name: 'ride', sample: null},
+        {name: 'highConga', sample: null},
         {name: 'midConga', sample: null},
         {name: 'lowConga', sample: null},
         {name: 'cowbell-tr808', sample: null},
@@ -1112,7 +1113,7 @@ class App extends Component {
       source[i].connect(gainNode[i])
       gainNode[i].connect(context.destination)
       gainNode[i].gain.value 
-          = 0.9*drumPattern.pattern[i].values[count]
+          = drumPattern.pattern[i].values[count]/9.0
       source[i].start(deadline)
     }  
 

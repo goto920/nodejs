@@ -2,10 +2,9 @@
   { "name": "rock",
     "numerator": 8, "denominator": 8,
     "pattern": [ 
-      {"note":"crash","values": [3,0,0,0,0,0,0,0]},
-      {"note":"hihat","values": [3,3,3,3,3,3,3,3]},
-      {"note":"snare","values": [0,0,9,0,0,0,9,0]},
-      {"note":"bass" ,"values": [2,0,0,0,2,0,0,0]}
+      {"note":"hihatClose","values": [3,3,3,3,3,3,3,3]},
+      {"note":"snare","values": [0,0,8,0,0,0,8,0]},
+      {"note":"bass" ,"values": [7,0,0,0,7,0,0,0]}
     ] 
   },
   { "name": "rock2",
