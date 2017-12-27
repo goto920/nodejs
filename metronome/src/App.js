@@ -17,7 +17,7 @@ var clock
 // const timerClock = new WAAClock(context)
 var timerClock
 // const gainNode = context.createGain()
-var gainNode
+var gainNode = []
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
  // define in package.json
@@ -52,6 +52,7 @@ class App extends Component {
       notesInPattern: [],
       cowbell: [],
       maleVoice: [],
+      femaleVoice: [],
       swing: false,
       count: 0,
       barCount: 0,
@@ -95,13 +96,15 @@ class App extends Component {
 
     this.setState = this.setState.bind(this)
     this.startStop = this.startStop.bind(this)
+    this.startStopDrums = this.startStopDrums.bind(this)
     this.customPlay = this.customPlay.bind(this)
     this.handleChange = this.handleChange.bind(this)
     this.handleSetLists = this.handleSetLists.bind(this)
     this.handleTable = this.handleTable.bind(this)
     this.playClick = this.playClick.bind(this)
     this.playPattern = this.playPattern.bind(this)
-    this.findSampleByName = this.findSampleByName.bind(this)
+    this.findSamplesByName = this.findSamplesByName.bind(this)
+    this.findCountSamples = this.findCountSamples.bind(this)
     this.nextTick = this.nextTick.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
     this.saveSetLists = this.saveSetLists.bind(this)
@@ -119,7 +122,8 @@ class App extends Component {
     }
 
     this.notes = [
-        {name: 'hihat', sample: null}, // filename is hihat.mp3
+/* drumkit samples */
+/*00*/  {name: 'hihat', sample: null}, // filename is hihat.mp3
         {name: 'openHihat', sample: null},
         {name: 'snare', sample: null},
         {name: 'snareRim', sample: null},
@@ -129,17 +133,18 @@ class App extends Component {
         {name: 'lowTom', sample: null},
         {name: 'crash', sample: null},
         {name: 'ride', sample: null},
-        {name: 'highConga', sample: null},
+/*10*/  {name: 'highConga', sample: null},
         {name: 'midConga', sample: null},
         {name: 'lowConga', sample: null},
         {name: 'cowbell-tr808', sample: null},
         {name: 'clave', sample: null},
         {name: 'handClap', sample: null},
         {name: 'maracas', sample: null},
+/* metronome samples */
         {name: 'cowbell-higher', sample: null},
         {name: 'cowbell-high', sample: null},
         {name: 'cowbell-mid', sample: null},
-        {name: 'cowbell-low', sample: null},
+/*20*/  {name: 'cowbell-low', sample: null},
         {name: 'cowbell-lower', sample: null},
         {name: 'male-one', sample: null},
         {name: 'male-two', sample: null},
@@ -183,8 +188,9 @@ class App extends Component {
   componentDidMount () {
     window.addEventListener('beforeunload', this.handleWindowClose)
     context = new window.AudioContext()
-    gainNode = context.createGain()
 
+    for (let i=0; i < 8; i++)
+      gainNode[i] = context.createGain()
 
     let inputFiles = []
     for (let i=0; i < this.notes.length; i++){
@@ -197,16 +203,11 @@ class App extends Component {
       function (bufferList) {
         for (let i=0; i < this.notes.length; i++)
           this.notes[i].sample = bufferList[i]
+        this.findCountSamples()
       }.bind(this)
     )
 
     bufferLoader.load()
-
-    this.params.drumPattern = drumPatterns[0] // temporary
-    this.params.numerator = this.params.drumPattern.numerator
-    this.params.denominator = this.params.drumPattern.denominator
-    this.params.bpm = 100
-    this.findSampleByName() // temporary
 
     clock = new WAAClock(context)
     timerClock = clock
@@ -239,7 +240,7 @@ class App extends Component {
 
     const {minBpm, maxBpm, setLists} = this.params
 
-    const {customPlay, handleChange,
+    const {startStop,startStopDrums,customPlay, handleChange,
            handleTable, handleSetLists} = this
 
     const presetOptions = this.presets.map((e, index) => {
@@ -522,7 +523,7 @@ class App extends Component {
             {m.sound}</button>
           <tt><b> {voiceStr}</b></tt>
         </span>&nbsp;
-        <button name='startStop' onClick={this.startStop}>
+        <button name='startStop' onClick={startStopDrums}>
           {playing ? 'Stop' : 'Start'}
         </button><br />
         <span className='number'>
@@ -690,8 +691,8 @@ class App extends Component {
       for (let beat = 0; beat < this.params.numerator; beat++) {
         event = clock.callbackAtTime(
           function (event) {
-            // this.playClick(event.deadline)
-            this.playPattern(event.deadline)
+            this.playClick(event.deadline)
+            // this.playPattern(event.deadline)
           }.bind(this),
           this.nextTick(beat)
         ).tolerance({early: early, late: late}) // tight early tolerance
@@ -913,6 +914,49 @@ class App extends Component {
     }
   } // end handleSetLists
 
+  startStopDrums (event) {
+
+    if (event.target.name === 'stop') {
+      for (let beat = 0; beat < this.tickEvents.length; beat++) 
+         this.tickEvents[beat].clear()
+      if (this.state.playing) this.setState({playing: false})
+      return
+    }
+
+    if (event.target.name === 'start') {
+      let drumPattern = drumPatterns[0]
+      this.params.drumPattern = drumPattern
+      this.params.numerator   = drumPattern.numerator
+      this.params.denominator   = drumPattern.denominator
+      let clickPmin = this.state.bpm * (this.params.denominator / 4)
+      this.findSamplesByName()
+
+      for (let beat = 0; beat < this.params.numerator; beat++) {
+        event = clock.callbackAtTime(
+           function (event) {
+             this.playPattern(event.deadline)
+           }.bind(this),
+          this.nextTick(beat)
+        ).repeat((this.params.numerator * 60.0) / clickPmin)
+         .tolerance({early: early, late: late}) // tight early tolerance
+        this.tickEvents[beat] = event
+      } // end for
+
+      this.setState({playing: true})
+      return
+    }
+
+    if (event.target.name === 'startStop'){
+      if (this.state.playing) {
+         this.startStopDrums({target: {name: 'stop'}})
+      } else {
+         this.startStopDrums({target: {name: 'start'}})
+      }
+      return
+    }
+
+  }
+
   startStop (event) {
     if (this.state.loopStat.playing) return
 
@@ -941,8 +985,8 @@ class App extends Component {
       for (let beat = 0; beat < this.params.numerator; beat++) {
         let event = clock.callbackAtTime(
             function (event) { 
-            // this.playClick(event.deadline) }.bind(this),
-            this.playPattern(event.deadline) }.bind(this),
+            this.playClick(event.deadline) }.bind(this),
+            // this.playPattern(event.deadline) }.bind(this),
             this.nextTick(beat)
           ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
            .tolerance({early: early, late: late})
@@ -976,13 +1020,13 @@ class App extends Component {
       for (let beat = 0; beat < this.params.numerator; beat++) {
         let event = clock.callbackAtTime(
             function (event) { 
-            // this.playClick(event.deadline) }.bind(this),
-            this.playPattern(event.deadline) }.bind(this),
+            this.playClick(event.deadline) }.bind(this),
+            // this.playPattern(event.deadline) }.bind(this),
             this.nextTick(beat)
         ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
          .tolerance({early: early, late: late})
         this.tickEvents[beat] = event
-//        console.log('Start beat ' + beat)
+        console.log('Schedule beat ' + beat)
       } // end for
 
       if (this.params.timer > 0) {
@@ -1020,16 +1064,29 @@ class App extends Component {
            currentBar * barDur + beatInd * beatDur
   }
 
-  findSampleByName (){
+  findCountSamples(){
+    let cowbell = 0
+    let male = 1
+    let female = 1
+    for (let i = 0; i < this.notes.length; i++){
+      if (this.notes[i].name.match(/^cowbell/)) 
+        this.params.cowbell[cowbell++] = this.notes[i].sample 
+      if (this.notes[i].name.match(/^female/)) 
+        this.params.femaleVoice[female++] = this.notes[i].sample 
+      if (this.notes[i].name.match(/^male/)) 
+        this.params.maleVoice[male++] = this.notes[i].sample 
+    }
+  }
+
+  findSamplesByName (){
     const {drumPattern} = this.params
-    // console.log('findSampleByName()')
-    // console.log(JSON.stringify(drumPattern))
+     console.log(JSON.stringify(drumPattern))
 
     for (let i = 0; i < drumPattern.pattern.length; i++){
-      let j = 0
       // console.log(drumPattern.pattern[i].note)
+      let j = 0
       for (j = 0; j < this.notes.length; j++){
-      //  console.log(this.notes[j].name)
+        // console.log(this.notes[j].name)
         if (this.notes[j].name === drumPattern.pattern[i].note) break
       }
 
@@ -1037,27 +1094,29 @@ class App extends Component {
         this.params.notesInPattern[i] = this.notes[j]
       else 
         this.params.notesInPattern[i] = null
-
       console.log('note ' + i + ': ' + this.params.notesInPattern[i].name)
     }
+
+
   }
 
   playPattern(deadline){
     const {numerator, notesInPattern, drumPattern} = this.params
     let {count} = this.params
-    console.log('playPattern at: ' + deadline)
-    
+
+    let source = []
     for(let i=0; i < notesInPattern.length; i++){
-      let source = context.createBufferSource() 
-      console.log(notesInPattern[i].name)
-      source.buffer = notesInPattern[i].sample
-      source.connect(gainNode)
-      gainNode.connect(context.destination)
-      gainNode.gain.value = 0.9*drumPattern.pattern[i].values[count]
-      source.start(deadline)
+      if (drumPattern.pattern[i].values[count] === 0) continue
+      source[i] = context.createBufferSource() 
+      source[i].buffer = notesInPattern[i].sample
+      source[i].connect(gainNode[i])
+      gainNode[i].connect(context.destination)
+      gainNode[i].gain.value 
+          = 0.9*drumPattern.pattern[i].values[count]
+      source[i].start(deadline)
     }  
 
-    count = (count + 1) % numerator
+    this.params.count = (count + 1) % numerator
   }
 
   playClick (deadline) {
@@ -1067,7 +1126,7 @@ class App extends Component {
           cowbell, maleVoice} = this.params
     let {muteCount, muteStat, count, barCount} = this.params
 
-//    console.log('count: ' + count)
+    console.log('count: ' + count)
 
     // Timer in bars
     if (barTimer > 0 && restBars <= 0) {
@@ -1124,10 +1183,10 @@ class App extends Component {
     if (Number.isInteger(voiceCount)) { voiceSource.buffer = maleVoice[voiceCount] }
 
     if (count === 0) {
-      source.buffer = cowbell[1]
+      source.buffer = cowbell[2]
       volume = 1.0 * mute
     } else {
-      source.buffer = cowbell[2]
+      source.buffer = cowbell[3]
       volume = 0.7 * mute
       if ((count + 1) % numerator === 0) {
         barCount++
