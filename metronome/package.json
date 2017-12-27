@@ -3,7 +3,7 @@
   "version": "0.9.0",
   "private": true,
   "homepage": "/demos/metronome20171227",
-  "subversion": "01",
+  "subversion": "02",
   "dependencies": {
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
