@@ -5,8 +5,8 @@ import WAAClock from 'waaclock'
 import messages from './language.json'
 import packageJSON from '../package.json'
 import loadedSetListSample from './setListSample.json'
-import loadedPresets from './presets.json'
 import drumPatterns from './drumPatterns.json'
+import loadedPresets from './presets.json'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
@@ -108,8 +108,6 @@ class App extends Component {
     this.nextTick = this.nextTick.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
     this.saveSetLists = this.saveSetLists.bind(this)
-
-    this.presets = loadedPresets
 
     this.tickEvents = []
 
@@ -244,9 +242,14 @@ class App extends Component {
     const {startStop,startStopDrums,customPlay, handleChange,
            handleTable, handleSetLists} = this
 
-    const presetOptions = this.presets.map((e, index) => {
+    const presetOptions = loadedPresets.map((e, index) => {
       return (<option value={index} key={index}>
-        {('0' + index).slice(-2)}: {e.value}</option>)
+        {('0' + index).slice(-2)}: {e.name}</option>)
+    })
+
+    const drumPatternOptions = drumPatterns.map((e, index) => {
+      return (<option value={index} key={index}>
+        {('0' + index).slice(-2)}: {e.name}</option>)
     })
 
 /* voice selection */
@@ -717,9 +720,9 @@ class App extends Component {
 
     if (event.target.name === 'loopAdd') {
       loopTable.push(
-        {preset: this.presets[newRow.presetNo],
+        {preset: loadedPresets[newRow.presetNo],
           presetNo: newRow.presetNo,
-          presetVal: this.presets[newRow.presetNo].value,
+          presetVal: loadedPresets[newRow.presetNo].value,
           swingVal: newRow.swingVal,
           repeat: newRow.repeat
         })
@@ -729,7 +732,7 @@ class App extends Component {
 
     if (event.target.name === 'loopAddPreset') {
       newRow.presetNo = parseInt(event.target.value, 10)
-      if (this.presets[newRow.presetNo].swingVal !== undefined) { newRow.swingVal = this.presets[newRow.presetNo].swingVal } else { newRow.swingVal = 1.5 }
+      if (loadedPresets[newRow.presetNo].swingVal !== undefined) { newRow.swingVal = loadedPresets[newRow.presetNo].swingVal } else { newRow.swingVal = 1.5 }
       this.setState({newRow: newRow})
       return
     }
@@ -821,8 +824,8 @@ class App extends Component {
 
         if (song.type === 'preset') {
           let presetNo = 0
-          for (presetNo = 0; presetNo < this.presets.length; presetNo++) { if (this.presets[presetNo].value === song.presetVal) break }
-          if (presetNo >= this.presets.length) { presetNo = this.params.default_presetNo } // not found
+          for (presetNo = 0; presetNo < loadedPresets.length; presetNo++) { if (loadedPresets[presetNo].value === song.presetVal) break }
+          if (presetNo >= loadedPresets.length) { presetNo = this.params.default_presetNo } // not found
 
           this.handleChange({target: {name: 'preset', value: presetNo}})
           this.handleChange({target: {name: 'bpm_set', value: song.bpm}})
@@ -838,10 +841,10 @@ class App extends Component {
 
           for (let i = 0; i < song.table.length; i++) { // search presetNo
             let presetNo = 0
-            for (presetNo = 0; presetNo < this.presets.length; presetNo++) {
-              if (this.presets[presetNo].value === song.table[i].presetVal) { break }
+            for (presetNo = 0; presetNo < loadedPresets.length; presetNo++) {
+              if (loadedPresets[presetNo].value === song.table[i].presetVal) { break }
             }
-            if (presetNo >= this.presets.length) { presetNo = this.params.default_presetNo }
+            if (presetNo >= loadedPresets.length) { presetNo = this.params.default_presetNo }
              // if not found
 
 
@@ -890,7 +893,7 @@ class App extends Component {
         this.state.selectedSetList.items.push({
           song: this.params.newSongName,
           type: 'preset',
-          presetVal: this.presets[this.state.presetNo].value,
+          presetVal: loadedPresets[this.state.presetNo].value,
           bpm: parseFloat(this.state.bpm, 10).toFixed(1)})
       }
 
@@ -1361,7 +1364,7 @@ class App extends Component {
     }
 
     if (event.target.name === 'preset') {
-      const preset = this.presets[event.target.value]
+      const preset = loadedPresets[event.target.value]
 
       let swingVal
       if (preset.swingVal !== undefined) {
