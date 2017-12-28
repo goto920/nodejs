@@ -39,6 +39,7 @@ class App extends Component {
       minBpm: 30.0,
       maxBpm: 360.0,
       default_presetNo: 7,
+      default_drumPatternNo: 0,
       timer: 0,
       barTimer: 0,
       muteBars: 0,
@@ -75,6 +76,7 @@ class App extends Component {
       bpm: 100,
       bpmFrac: 0.0,
       presetNo: this.params.default_presetNo, // default 4/4
+      drumPatternNo: this.params.default_drumPatternNo,
       swingVal: 1.5,
       evenVol: 1.0,
       increment: 0,
@@ -163,7 +165,6 @@ class App extends Component {
         {name: 'female-eight', sample: null}
     ]
 
-
   } // end constructor
 
   componentWillMount () { // before render()
@@ -232,7 +233,7 @@ class App extends Component {
 
   render () {
     const {ja, voice, loopTable, newRow, loopStat,
-      presetNo, playing, bpm, bpmFrac,
+      presetNo, drumPatternNo,playing, bpm, bpmFrac,
       rest, restBars, swingVal, evenVol, showMore,
       showAdvanced, showDrums, showSetLists, showSongList,
       showCustomLoop, selectedSetList, selectedSong} = this.state
@@ -517,19 +518,39 @@ class App extends Component {
         </span>
         <hr />
         <span className='selector'>
-          {m.beat}: <select name='preset' value={presetNo}
+          {m.metronome}: <select name='preset' value={presetNo}
             onChange={handleChange}>
             {presetOptions}
-          </select></span>
-          &nbsp;
-        <span className='small-button'>
-          <button name='voice' onClick={handleChange}>
-            {m.sound}</button>
-          <tt><b> {voiceStr}</b></tt>
-        </span>&nbsp;
-        <button name='startStop' onClick={startStopDrums}>
+          </select>
+        </span> &nbsp;
+        {m.sound}:&nbsp;
+        <span className='selector'>
+          <select name='click' onClick={handleChange}>
+            <option>very high </option>
+            <option>high</option>
+            <option>mid</option>
+            <option>low</option>
+          </select>
+        </span>
+        <br />
+        <span className='selector'>
+          {m.drums}: <select name='drumPattern' value={drumPatternNo}
+            onChange={handleChange}>
+            {drumPatternOptions}
+          </select>
+        </span> &nbsp;
+        {m.voice}: <select name='voice' onClick={handleChange}>
+            <option>male</option>
+            <option>female</option>
+          </select>
+        <hr />
+        <input type='radio' name='metro' />{m.metronome}/
+        <input type='radio' name='drums' />{m.drums}/
+        <input type='radio' name='voice' />{m.voice}&nbsp;
+        Play: <button name='startStop' onClick={startStopDrums}>
           {playing ? 'Stop' : 'Start'}
-        </button><br />
+        </button>
+        <hr />
         <span className='number'>
         BPM({minBpm}-{maxBpm}): &nbsp; {('0' + Math.floor(bpm)).slice(-3)}.
         <span className='selector'>
@@ -551,7 +572,7 @@ class App extends Component {
           <input type='range' name='bpm_slider'
             min={minBpm} max={maxBpm} value={bpm} step='1.0'
             onChange={handleChange} />
-        </span> <br />
+        </span> <hr />
         {m.timer}: &nbsp;
      <span className='selector'>
        {('00' + rest).slice(-3)}/
@@ -581,12 +602,6 @@ class App extends Component {
          {showAdvanced ? m.hide : m.show} {/* no {} for m.hide,show */}
          </button></span>
          {showAdvanced ? (<span><AdvancedUI /></span>) : ''}
-         <hr />{m.drums}: <span className='loopButton'>
-         <button name='drumsUI' onClick={handleChange}>
-         {showDrums ? m.hide : m.show} {/* no {} for m.hide,show */}
-         </button></span>
-        {showDrums ? <DrumsUI /> : ''}
-
         <hr /><span className='loopButton'>
         {m.SetLists}: <button name='setListsUI' onClick={handleChange}>
             {showSetLists ? m.hide : m.show} {/* no {} for m.hide,show */}
