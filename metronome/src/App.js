@@ -46,20 +46,18 @@ class App extends Component {
       muteProb: 0.0,
       muteCount: 0,
       muteStat: false,
-      numerator: 4,
-      denominator: 4,
-      triplet: false,
+      metro: {numerator: 4, denominator: 4, 
+              triplet: false, pattern: [], notes: [], count: 0,voice: false},
+      drums: {numerator: 4, denominator: 4, 
+              triplet: false, pattern: {}, notes: [], count: 0,voice: false},
       drumPattern: {},
       notesInPattern: [],
-      cowbell: [],
       maleVoice: [],
       femaleVoice: [],
       swing: false,
       count: 0,
       barCount: 0,
       startTime: 0,
-      setLists: [],
-      nextTick: 0,
       newListName: '',
       newSongName: ''
     }
@@ -69,32 +67,42 @@ class App extends Component {
 
     this.state = {
       ja: false,
-      voice: 'c', // c(owbell) only, c+v, v(oice) only
       rest: 0,
       restBars: 0,
       playing: false,
+      cowbell: [],
+      maleVoice: [],
+      femaleVoice: [],
+
       bpm: 100,
       bpmFrac: 0.0,
+      metroOn: true,
       presetNo: this.params.default_presetNo, // default 4/4
+      metroSound: 'cb3',
+      drumsOn: false,
       drumPatternNo: this.params.default_drumPatternNo,
+      voiceOn: false,
+      voice: 'male',
       swingVal: 1.5,
       evenVol: 1.0,
       increment: 0,
       perBars: 0,
-      loopTable: [],
-      newRow: {presetNo: this.params.default_presetNo,
-        swingVal: 1.5,
-        repeat: 4},
-      loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
+
+
       showMore: false,
       showAdvanced: false,
-      showDrums: false,
       showSetLists: false,
-      selectedSetList: {},
-      selectedSong: {name: 'none'}, // default
+      showCustomLoop: false,
       showSongList: false,
-      showCustomLoop: false
-    }
+
+      loopTable: [],
+      newRow: {presetNo: this.params.default_presetNo,
+        swingVal: 1.5, repeat: 4},
+      loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
+      setLists: [],
+      selectedSetList: {},
+      selectedSong: {name: 'none'} // default
+    } // end params
 
     this.setState = this.setState.bind(this)
     this.startStop = this.startStop.bind(this)
@@ -176,8 +184,9 @@ class App extends Component {
       // console.log('savedSetLists null')
       this.params.setLists.push({name: 'default', items: []}, loadedSetListSample)
     } else {
-      // console.log('savedSetLists loaded items = ' + savedSetLists.length)
-      for (let i = 0; i < savedSetLists.length; i++) { this.params.setLists.push(savedSetLists[i]) }
+      console.log('savedSetLists loaded items = ' + savedSetLists.length)
+      for (let i = 0; i < savedSetLists.length; i++) { 
+         this.params.setLists.push(savedSetLists[i]) }
       this.params.setLists.push(loadedSetListSample)
 //    console.log(JSON.stringify(this.params.setLists))
     }
@@ -232,10 +241,12 @@ class App extends Component {
   }
 
   render () {
-    const {ja, voice, loopTable, newRow, loopStat,
-      presetNo, drumPatternNo,playing, bpm, bpmFrac,
+    const {ja, loopTable, newRow, loopStat,
+      metroOn,presetNo,metroSound,drumsOn,drumPatternNo,
+      voiceOn, voice,
+      playing, bpm, bpmFrac,
       rest, restBars, swingVal, evenVol, showMore,
-      showAdvanced, showDrums, showSetLists, showSongList,
+      showAdvanced, showSetLists, showSongList,
       showCustomLoop, selectedSetList, selectedSong} = this.state
 
     const {minBpm, maxBpm, setLists} = this.params
@@ -252,12 +263,6 @@ class App extends Component {
       return (<option value={index} key={index}>
         {('0' + index).slice(-2)}: {e.name}</option>)
     })
-
-/* voice selection */
-    let voiceStr
-    if (voice === 'c') voiceStr = m.bell
-    else if (voice === 'c+v') voiceStr = m.both
-    else voiceStr = m.voice
 
 /* Set swing value select options */
     const swingValOptions = [
@@ -437,12 +442,13 @@ class App extends Component {
       </span>)
     } // end AdvancedUI
 
+/*
     function DrumsUI(props){
       return(<span>Not implemented yet</span>)
     }
+*/
 
  /* Custom Loop UI (conditinally shown) */
-
     const loopTableRows = loopTable.map(function (e, index) {
       return (<tr key={index}>
         <td align='right' className='radioButton'>
@@ -510,14 +516,17 @@ class App extends Component {
 /// //////////// UI menus
     return (
       <div className='metronome'>
-      KG's JS_Metronome &nbsp; <font color='blue'>Language: </font>
+      KG's JS_Metronome &nbsp; <font color='blue'>Lang: </font>
         <span className='small-button'>
           <button name='language' onClick={handleChange}>
-            {ja ? 'US' : 'JP'}
-          </button>
+            {ja ? 'US' : 'JP'} </button>&nbsp;
         </span>
+        Play: <button name='startStop' onClick={startStopDrums}>
+        {playing ? 'Stop' : 'Start'}</button>
         <hr />
         <span className='selector'>
+          <input name='metroOn' type='checkbox'
+          checked={metroOn} onChange={handleChange} />
           {m.metronome}: <select name='preset' value={presetNo}
             onChange={handleChange}>
             {presetOptions}
@@ -525,31 +534,31 @@ class App extends Component {
         </span> &nbsp;
         {m.sound}:&nbsp;
         <span className='selector'>
-          <select name='click' onClick={handleChange}>
-            <option>very high </option>
-            <option>high</option>
-            <option>mid</option>
-            <option>low</option>
+          <select name='metroSound' value={metroSound} onChange={handleChange}>
+            <option value='cb1'>cowbell1</option>
+            <option value='cb2'>cowbell2</option>
+            <option value='cb3'>cowbell3</option>
+            <option value='cb4'>cowbell4</option>
+            <option value='cg'>conga</option>
+            <option value='cv'>clave</option>
+            <option value='hc'>handClap</option>
           </select>
         </span>
         <br />
         <span className='selector'>
+          <input type='checkbox' name='drumsOn' 
+          checked={drumsOn} onChange={handleChange} />
           {m.drums}: <select name='drumPattern' value={drumPatternNo}
             onChange={handleChange}>
             {drumPatternOptions}
           </select>
-        </span> &nbsp;
-        {m.voice}: <select name='voice' onClick={handleChange}>
-            <option>male</option>
-            <option>female</option>
+        </span>&nbsp;
+        <input type='checkbox' name='voiceOn' 
+           checked={voiceOn} onChange={handleChange} />
+        {m.voice}: <select name='voice' value={voice} onChange={handleChange}>
+            <option value='male' >male</option>
+            <option value='female'>female</option>
           </select>
-        <hr />
-        <input type='radio' name='metro' />{m.metronome}/
-        <input type='radio' name='drums' />{m.drums}/
-        <input type='radio' name='voice' />{m.voice}&nbsp;
-        Play: <button name='startStop' onClick={startStopDrums}>
-          {playing ? 'Stop' : 'Start'}
-        </button>
         <hr />
         <span className='number'>
         BPM({minBpm}-{maxBpm}): &nbsp; {('0' + Math.floor(bpm)).slice(-3)}.
@@ -1242,6 +1251,31 @@ class App extends Component {
   } // end playClick
 
   handleChange (event) {
+
+
+    if (event.target.name === 'metroOn') {
+      this.setState({metroOn: !this.state.metroOn})
+      return
+    }
+
+    if (event.target.name === 'metroSound') {
+      console.log(event.target.name)
+      this.setState({metroSound: event.target.value})
+      return
+    }
+
+
+    if (event.target.name === 'drumsOn') {
+      this.setState({drumsOn: !this.state.drumsOn})
+      return
+    }
+
+    if (event.target.name === 'voiceOn') {
+      this.setState({voiceOn: !this.state.voiceOn})
+      return
+    }
+   
+
     if (event.target.name === 'language') {
       if (this.state.ja === true) {
         m = usText
@@ -1258,10 +1292,8 @@ class App extends Component {
       return
     }
 
-    if (event.target.name === 'voice') { // c, c+v, v, rotation
-      if (this.state.voice === 'c') this.setState({voice: 'v'})
-      else if (this.state.voice === 'v') this.setState({voice: 'c+v'})
-      else this.setState({voice: 'c'})
+    if (event.target.name === 'voice') {
+      this.setState({voice: event.target.value})
       return
     }
 
@@ -1375,6 +1407,11 @@ class App extends Component {
 
     if (event.target.name === 'muteBars') {
       this.params.muteBars = parseInt(event.target.value, 10)
+      return
+    }
+
+    if (event.target.name === 'drumPattern') {
+      this.setState({drumPatternNo: parseInt(event.target.value,10)})
       return
     }
 
