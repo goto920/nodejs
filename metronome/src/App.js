@@ -46,18 +46,28 @@ class App extends Component {
       muteProb: 0.0,
       muteCount: 0,
       muteStat: false,
-      metro: {numerator: 4, denominator: 4, 
-              triplet: false, pattern: [], notes: [], count: 0,voice: false},
-      drums: {numerator: 4, denominator: 4, 
-              triplet: false, pattern: {}, notes: [], count: 0,voice: false},
-      drumPattern: {},
-      notesInPattern: [],
+      metro: {numerator: 4,
+        denominator: 4,
+        triplet: false,
+        pattern: [],
+        notes: [],
+        count: 0,
+        voice: false},
+      cowbell: [],
       maleVoice: [],
       femaleVoice: [],
+      drums: {numerator: 4,
+        denominator: 4,
+        triplet: false,
+        pattern: {},
+        count: 0,
+        voice: false},
+      drumPattern: {},
       swing: false,
       count: 0,
       barCount: 0,
       startTime: 0,
+      setLists: [],
       newListName: '',
       newSongName: ''
     }
@@ -70,15 +80,12 @@ class App extends Component {
       rest: 0,
       restBars: 0,
       playing: false,
-      cowbell: [],
-      maleVoice: [],
-      femaleVoice: [],
 
       bpm: 100,
       bpmFrac: 0.0,
       metroOn: true,
       presetNo: this.params.default_presetNo, // default 4/4
-      metroSound: 'cb3',
+      metroSound: '2cb3',
       drumsOn: false,
       drumPatternNo: this.params.default_drumPatternNo,
       voiceOn: false,
@@ -88,7 +95,6 @@ class App extends Component {
       increment: 0,
       perBars: 0,
 
-
       showMore: false,
       showAdvanced: false,
       showSetLists: false,
@@ -97,9 +103,9 @@ class App extends Component {
 
       loopTable: [],
       newRow: {presetNo: this.params.default_presetNo,
-        swingVal: 1.5, repeat: 4},
+        swingVal: 1.5,
+        repeat: 4},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
-      setLists: [],
       selectedSetList: {},
       selectedSong: {name: 'none'} // default
     } // end params
@@ -108,7 +114,12 @@ class App extends Component {
     this.startStop = this.startStop.bind(this)
     this.startStopDrums = this.startStopDrums.bind(this)
     this.customPlay = this.customPlay.bind(this)
-    this.handleChange = this.handleChange.bind(this)
+    this.handleMenu = this.handleMenu.bind(this)
+    this.handlePattern = this.handlePattern.bind(this)
+    this.handleBpm = this.handleBpm.bind(this)
+    this.handleTimer = this.handleTimer.bind(this)
+    this.handleAdvanced = this.handleAdvanced.bind(this)
+//    this.handleChange = this.handleChange.bind(this)
     this.handleSetLists = this.handleSetLists.bind(this)
     this.handleTable = this.handleTable.bind(this)
     this.playClick = this.playClick.bind(this)
@@ -129,9 +140,7 @@ class App extends Component {
       msecsPrevious: 0
     }
 
-    this.notes = [
-/* drumkit samples */
-/*00*/  {name: 'hihatClose', sample: null}, // filename is hihat.mp3
+    this.notes = [ {name: 'hihatClose', sample: null}, // filename is hihat.mp3
         {name: 'hihatHalfOpen', sample: null},
         {name: 'hihatFullOpen', sample: null},
         {name: 'snare', sample: null},
@@ -141,7 +150,7 @@ class App extends Component {
         {name: 'midTom', sample: null},
         {name: 'lowTom', sample: null},
         {name: 'crash', sample: null},
-/*10 */ {name: 'ride', sample: null},
+/* 10 */ {name: 'ride', sample: null},
         {name: 'highConga', sample: null},
         {name: 'midConga', sample: null},
         {name: 'lowConga', sample: null},
@@ -152,8 +161,7 @@ class App extends Component {
 /* metronome samples */
         {name: 'cowbell-higher', sample: null},
         {name: 'cowbell-high', sample: null},
-        {name: 'cowbell-mid', sample: null},
-/*20*/  {name: 'cowbell-low', sample: null},
+        {name: 'cowbell-mid', sample: null}, {name: 'cowbell-low', sample: null},
         {name: 'cowbell-lower', sample: null},
         {name: 'male-one', sample: null},
         {name: 'male-two', sample: null},
@@ -172,7 +180,6 @@ class App extends Component {
         {name: 'female-seven', sample: null},
         {name: 'female-eight', sample: null}
     ]
-
   } // end constructor
 
   componentWillMount () { // before render()
@@ -185,8 +192,9 @@ class App extends Component {
       this.params.setLists.push({name: 'default', items: []}, loadedSetListSample)
     } else {
       console.log('savedSetLists loaded items = ' + savedSetLists.length)
-      for (let i = 0; i < savedSetLists.length; i++) { 
-         this.params.setLists.push(savedSetLists[i]) }
+      for (let i = 0; i < savedSetLists.length; i++) {
+        this.params.setLists.push(savedSetLists[i])
+      }
       this.params.setLists.push(loadedSetListSample)
 //    console.log(JSON.stringify(this.params.setLists))
     }
@@ -198,11 +206,10 @@ class App extends Component {
     window.addEventListener('beforeunload', this.handleWindowClose)
     context = new window.AudioContext()
 
-    for (let i=0; i < 8; i++)
-      gainNode[i] = context.createGain()
+    for (let i = 0; i < 8; i++) { gainNode[i] = context.createGain() }
 
     let inputFiles = []
-    for (let i=0; i < this.notes.length; i++){
+    for (let i = 0; i < this.notes.length; i++) {
       inputFiles[i] = this.notes[i].name + '.mp3'
       // console.log(inputFiles[i])
     }
@@ -210,8 +217,7 @@ class App extends Component {
     let bufferLoader = new BufferLoader(
       context, inputFiles,
       function (bufferList) {
-        for (let i=0; i < this.notes.length; i++)
-          this.notes[i].sample = bufferList[i]
+        for (let i = 0; i < this.notes.length; i++) { this.notes[i].sample = bufferList[i] }
         this.findCountSamples()
       }.bind(this)
     )
@@ -242,7 +248,7 @@ class App extends Component {
 
   render () {
     const {ja, loopTable, newRow, loopStat,
-      metroOn,presetNo,metroSound,drumsOn,drumPatternNo,
+      metroOn, presetNo, metroSound, drumsOn, drumPatternNo,
       voiceOn, voice,
       playing, bpm, bpmFrac,
       rest, restBars, swingVal, evenVol, showMore,
@@ -251,8 +257,9 @@ class App extends Component {
 
     const {minBpm, maxBpm, setLists} = this.params
 
-    const {startStop,startStopDrums,customPlay, handleChange,
-           handleTable, handleSetLists} = this
+    const {startStop, startStopDrums, customPlay,
+           handleMenu, handlePattern, handleBpm, handleTimer,
+           handleAdvanced, handleTable, handleSetLists} = this
 
     const presetOptions = loadedPresets.map((e, index) => {
       return (<option value={index} key={index}>
@@ -393,19 +400,19 @@ class App extends Component {
         {m.swing}: &nbsp;
         <span className='selector'>
           <select name='swing' value={parseInt(swingVal * 10, 10)}
-            onChange={handleChange}>{SwingValOptions}</select>
+            onChange={handleAdvanced}>{SwingValOptions}</select>
         </span>
         {m.swingStr}
         <br />
         <span className='selector'>
           {m.increment}: &nbsp;
        <select name='increment' defaultValue='0'
-         onChange={handleChange}>{IncrementOptions}
+         onChange={handleAdvanced}>{IncrementOptions}
        </select> bpm
        </span>
          /
         <span className='selector'>
-          <select name='perBars' defaultValue='0' onChange={handleChange}>
+          <select name='perBars' defaultValue='0' onChange={handleAdvanced}>
             <option value='0'>off</option> <option value='1'>1</option>
             <option value='2'>2</option> <option value='4'>4</option>
             <option value='8'>8</option> <option value='12'>12</option>
@@ -414,17 +421,16 @@ class App extends Component {
           {m.perBars}</span><br />
         <span className='selector'>
           {m.muteBars}: &nbsp;
-         <select name='muteBars' defaultValue='0' onChange={handleChange}>
+         <select name='muteBars' defaultValue='0' onChange={handleAdvanced}>
            <option value='0'>off</option> <option value='1'>1</option>
            <option value='2'>2</option> <option value='4'>4</option>
            <option value='8'>8</option> <option value='12'>12</option>
            <option value='16'>16</option>
          </select>
         </span>
-        {m.muteProb1}
-        {m.muteProb2}
+        {m.muteProb1}, {m.muteProb2}
         <span className='selector'>
-          <select name='muteProb' defaultValue='0' onChange={handleChange}>
+          <select name='muteProb' defaultValue='0' onChange={handleAdvanced}>
             <option value='0.0'>0.0</option> <option value='0.1'>0.1</option>
             <option value='0.2'>0.2</option> <option value='0.3'>0.3</option>
             <option value='0.4'>0.4</option> <option value='0.5'>0.5</option>
@@ -437,7 +443,7 @@ class App extends Component {
         <span className='slider'>
           {m.evenNotes}: {evenVol.toFixed(2)} <input type='range' name='evenVol'
             min='0.0' max='1.0' value={evenVol} step='0.01'
-            onChange={handleChange} />
+            onChange={handleAdvanced} />
         </span>
       </span>)
     } // end AdvancedUI
@@ -518,53 +524,62 @@ class App extends Component {
       <div className='metronome'>
       KG's JS_Metronome &nbsp; <font color='blue'>Lang: </font>
         <span className='small-button'>
-          <button name='language' onClick={handleChange}>
+          <button name='language' onClick={handleMenu}>
             {ja ? 'US' : 'JP'} </button>&nbsp;
         </span>
         Play: <button name='startStop' onClick={startStopDrums}>
-        {playing ? 'Stop' : 'Start'}</button>
+          {playing ? 'Stop' : 'Start'}</button>
         <hr />
         <span className='selector'>
           <input name='metroOn' type='checkbox'
-          checked={metroOn} onChange={handleChange} />
+            checked={metroOn} onChange={handlePattern} />
           {m.metronome}: <select name='preset' value={presetNo}
-            onChange={handleChange}>
+            onChange={handlePattern}>
             {presetOptions}
           </select>
         </span> &nbsp;
         {m.sound}:&nbsp;
         <span className='selector'>
-          <select name='metroSound' value={metroSound} onChange={handleChange}>
+          <select name='metroSound' value={metroSound} onChange={handlePattern}>
             <option value='cb1'>cowbell1</option>
             <option value='cb2'>cowbell2</option>
             <option value='cb3'>cowbell3</option>
             <option value='cb4'>cowbell4</option>
-            <option value='cg'>conga</option>
+            <option value='cb5'>cowbell5</option>
+            <option value='2cb1'>2cowbell1</option>
+            <option value='2cb2'>2cowbell2</option>
+            <option value='2cb3'>2cowbell3</option>
+            <option value='2cb4'>2cowbell4</option>
+            <option value='3cb1'>3cowbell1</option>
+            <option value='3cb2'>3cowbell2</option>
+            <option value='3cb3'>3cowbell3</option>
+            <option value='2cg'>2conga</option>
+            <option value='3cg'>3conga</option>
             <option value='cv'>clave</option>
             <option value='hc'>handClap</option>
           </select>
         </span>
         <br />
         <span className='selector'>
-          <input type='checkbox' name='drumsOn' 
-          checked={drumsOn} onChange={handleChange} />
+          <input type='checkbox' name='drumsOn' checked={drumsOn}
+            onChange={handlePattern} />
           {m.drums}: <select name='drumPattern' value={drumPatternNo}
-            onChange={handleChange}>
+            onChange={handlePattern}>
             {drumPatternOptions}
           </select>
         </span>&nbsp;
-        <input type='checkbox' name='voiceOn' 
-           checked={voiceOn} onChange={handleChange} />
-        {m.voice}: <select name='voice' value={voice} onChange={handleChange}>
-            <option value='male' >male</option>
-            <option value='female'>female</option>
-          </select>
+        <input type='checkbox' name='voiceOn'
+          checked={voiceOn} onChange={handlePattern} />
+        {m.voice}: <select name='voice' value={voice} onChange={handlePattern}>
+          <option value='male' >male</option>
+          <option value='female'>female</option>
+        </select>
         <hr />
         <span className='number'>
         BPM({minBpm}-{maxBpm}): &nbsp; {('0' + Math.floor(bpm)).slice(-3)}.
         <span className='selector'>
           <select name='bpmFrac' value={bpmFrac}
-            onChange={handleChange}>
+            onChange={handleBpm}>
             <option value='0'>0</option> <option value='1'>1</option>
             <option value='2'>2</option> <option value='3'>3</option>
             <option value='4'>4</option> <option value='5'>5</option>
@@ -574,18 +589,25 @@ class App extends Component {
         &nbsp; &nbsp; &nbsp; &nbsp;
         </span>
         <span className='small-button'>
-          <button name='tempo_tap' onClick={handleChange}>
+          <button name='tempo_tap' onClick={handleBpm}>
             {m.tap}</button></span>&nbsp;
         <br />
+        <span className='tinyButton'>
+          <button name='bpmStep'
+            value='-1' onClick={handleBpm}>-</button></span>
         <span className='bpm-slider'>
           <input type='range' name='bpm_slider'
             min={minBpm} max={maxBpm} value={bpm} step='1.0'
-            onChange={handleChange} />
-        </span> <hr />
+            onChange={handleBpm} />
+        </span>
+        <span className='tinyButton'>
+          <button name='bpmStep'
+            value='1' onClick={handleBpm}>+</button></span>
+        <hr />
         {m.timer}: &nbsp;
      <span className='selector'>
        {('00' + rest).slice(-3)}/
-     <select name='timer' defaultValue='0' onChange={handleChange}>
+     <select name='timer' defaultValue='0' onChange={handleTimer}>
        <option value='0'>off</option> <option value='30'>30</option>
        <option value='60'>60</option> <option value='90'>90</option>
        <option value='120'>120</option> <option value='180'>180</option>
@@ -594,48 +616,48 @@ class App extends Component {
      </span>
         <span className='selector'>
           {('00' + restBars).slice(-3)}/
-  <select name='barTimer' defaultValue='0' onChange={handleChange}>
+  <select name='barTimer' defaultValue='0' onChange={handleTimer}>
     <option value='0'>off</option> <option value='12'>12</option>
     <option value='16'>16</option> <option value='24'>24</option>
     <option value='32'>32</option> <option value='64'>64</option>
     <option value='128'>128</option> <option value='256'>256</option>
   </select> ({m.bars})</span><hr />
-    {m.moreFeatures}: <span className='loopButton'>
-       <button name='showMore' onClick={handleChange}>
-       {showMore ? m.hide : m.show} {/* no {} for m.hide,show */}
-       </button></span>
+        {m.moreFeatures}: <span className='loopButton'>
+          <button name='showMore' onClick={handleMenu}>
+            {showMore ? m.hide : m.show} {/* no {} for m.hide,show */}
+          </button></span>
 
         {showMore ? (<span><hr />
-        {m.advanced}: <span className='loopButton'>
-         <button name='advancedUI' onClick={handleChange}>
-         {showAdvanced ? m.hide : m.show} {/* no {} for m.hide,show */}
-         </button></span>
-         {showAdvanced ? (<span><AdvancedUI /></span>) : ''}
-        <hr /><span className='loopButton'>
-        {m.SetLists}: <button name='setListsUI' onClick={handleChange}>
-            {showSetLists ? m.hide : m.show} {/* no {} for m.hide,show */}
-          </button></span>
-        &nbsp; <span className='loopButton'>
-        {m.SongList}: <button name='songListUI' onClick={handleChange}>
-            {showSongList ? m.hide : m.show} {/* no {} for m.hide,show */}
-          </button>
-        </span><br />
-        {m.Current}: <b>(List) {selectedSetList.name} :
+          {m.advanced}: <span className='loopButton'>
+            <button name='advancedUI' onClick={handleMenu}>
+              {showAdvanced ? m.hide : m.show} {/* no {} for m.hide,show */}
+            </button></span><br />
+          {showAdvanced ? (<span><AdvancedUI /></span>) : ''}
+          <hr /><span className='loopButton'>
+            {m.SetLists}: <button name='setListsUI' onClick={handleMenu}>
+              {showSetLists ? m.hide : m.show} {/* no {} for m.hide,show */}
+            </button></span>
+          <span className='loopButton'>
+            {m.SongList}: <button name='songListUI' onClick={handleMenu}>
+              {showSongList ? m.hide : m.show} {/* no {} for m.hide,show */}
+            </button>
+          </span><br />
+          {m.Current}: <b>(List) {selectedSetList.name} :
         (Song) {selectedSong.song} :
         (type) {selectedSong.type} :
         (bpm) {selectedSong.bpm}</b><br />
-        {showSetLists ? <SetListUI /> : ''}
-        {showSongList ? <SongListUI /> : ''}
-        <hr />
-        <span className='loopButton'>
-          {m.custom}: <button name='customLoopUI' onClick={handleChange}>
-            {showCustomLoop ? m.hide : m.show} {/* no {} for m.hide,show */}
-          </button></span>
-        <br />{showCustomLoop ? <CustomLoopUI /> : ''}
+          {showSetLists ? <SetListUI /> : ''}
+          {showSongList ? <SongListUI /> : ''}
+          <hr />
+          <span className='loopButton'>
+            {m.custom}: <button name='customLoopUI' onClick={handleMenu}>
+              {showCustomLoop ? m.hide : m.show} {/* no {} for m.hide,show */}
+            </button></span>
+          <br />{showCustomLoop ? <CustomLoopUI /> : ''}
 
-      </span>) : ''}
-     
-      <hr />
+        </span>) : ''}
+
+        <hr />
       (Version: {version}) <a href={m.url} target='_blank'>{m.guide}</a><br />
       Additional feature coming: Sound variation
       <hr />
@@ -851,16 +873,16 @@ class App extends Component {
           for (presetNo = 0; presetNo < loadedPresets.length; presetNo++) { if (loadedPresets[presetNo].value === song.presetVal) break }
           if (presetNo >= loadedPresets.length) { presetNo = this.params.default_presetNo } // not found
 
-          this.handleChange({target: {name: 'preset', value: presetNo}})
-          this.handleChange({target: {name: 'bpm_set', value: song.bpm}})
+          this.handlePattern({target: {name: 'preset', value: presetNo}})
+          this.handleBpm({target: {name: 'bpm_set', value: song.bpm}})
           // console.log('bpm ' + parseFloat(song.bpm))
           return
         }  // end preset
 
         if (song.type === 'loop') {
-          this.state.loopTable.splice(0,this.state.loopTable.length) // clear
+          this.state.loopTable.splice(0, this.state.loopTable.length) // clear
 
-          this.handleChange(
+          this.handleBpm(
            {target: {name: 'bpm_set', value: parseFloat(song.bpm, 10)}})
 
           for (let i = 0; i < song.table.length; i++) { // search presetNo
@@ -870,7 +892,6 @@ class App extends Component {
             }
             if (presetNo >= loadedPresets.length) { presetNo = this.params.default_presetNo }
              // if not found
-
 
             this.handleTable({target: {name: 'loopAddPreset', value: presetNo}})
             this.handleTable({target:
@@ -943,10 +964,8 @@ class App extends Component {
   } // end handleSetLists
 
   startStopDrums (event) {
-
     if (event.target.name === 'stop') {
-      for (let beat = 0; beat < this.tickEvents.length; beat++) 
-         this.tickEvents[beat].clear()
+      for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
       if (this.state.playing) this.setState({playing: false})
       return
     }
@@ -954,8 +973,8 @@ class App extends Component {
     if (event.target.name === 'start') {
       let drumPattern = drumPatterns[0]
       this.params.drumPattern = drumPattern
-      this.params.numerator   = drumPattern.numerator
-      this.params.denominator   = drumPattern.denominator
+      this.params.numerator = drumPattern.numerator
+      this.params.denominator = drumPattern.denominator
       let clickPmin = this.state.bpm * (this.params.denominator / 4)
       this.findSamplesByName()
 
@@ -974,15 +993,13 @@ class App extends Component {
       return
     }
 
-    if (event.target.name === 'startStop'){
+    if (event.target.name === 'startStop') {
       if (this.state.playing) {
-         this.startStopDrums({target: {name: 'stop'}})
+        this.startStopDrums({target: {name: 'stop'}})
       } else {
-         this.startStopDrums({target: {name: 'start'}})
+        this.startStopDrums({target: {name: 'start'}})
       }
-      return
     }
-
   }
 
   startStop (event) {
@@ -1012,8 +1029,9 @@ class App extends Component {
 
       for (let beat = 0; beat < this.params.numerator; beat++) {
         let event = clock.callbackAtTime(
-            function (event) { 
-            this.playClick(event.deadline) }.bind(this),
+            function (event) {
+              this.playClick(event.deadline)
+            }.bind(this),
             // this.playPattern(event.deadline) }.bind(this),
             this.nextTick(beat)
           ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
@@ -1047,8 +1065,9 @@ class App extends Component {
       this.params.startTime = context.currentTime
       for (let beat = 0; beat < this.params.numerator; beat++) {
         let event = clock.callbackAtTime(
-            function (event) { 
-            this.playClick(event.deadline) }.bind(this),
+            function (event) {
+              this.playClick(event.deadline)
+            }.bind(this),
             // this.playPattern(event.deadline) }.bind(this),
             this.nextTick(beat)
         ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
@@ -1092,59 +1111,51 @@ class App extends Component {
            currentBar * barDur + beatInd * beatDur
   }
 
-  findCountSamples(){
+  findCountSamples () {
     let cowbell = 0
     let male = 1
     let female = 1
-    for (let i = 0; i < this.notes.length; i++){
-      if (this.notes[i].name.match(/^cowbell/)) 
-        this.params.cowbell[cowbell++] = this.notes[i].sample 
-      if (this.notes[i].name.match(/^female/)) 
-        this.params.femaleVoice[female++] = this.notes[i].sample 
-      if (this.notes[i].name.match(/^male/)) 
-        this.params.maleVoice[male++] = this.notes[i].sample 
+    for (let i = 0; i < this.notes.length; i++) {
+      if (this.notes[i].name.match(/^cowbell/)) { this.params.cowbell[cowbell++] = this.notes[i].sample }
+      if (this.notes[i].name.match(/^female/)) { this.params.femaleVoice[female++] = this.notes[i].sample }
+      if (this.notes[i].name.match(/^male/)) { this.params.maleVoice[male++] = this.notes[i].sample }
     }
   }
 
-  findSamplesByName (){
+  findSamplesByName () {
     const {drumPattern} = this.params
-     console.log(JSON.stringify(drumPattern))
+    console.log(JSON.stringify(drumPattern))
 
-    for (let i = 0; i < drumPattern.pattern.length; i++){
+    for (let i = 0; i < drumPattern.pattern.length; i++) {
       // console.log(drumPattern.pattern[i].note)
       let j = 0
-      for (j = 0; j < this.notes.length; j++){
+      for (j = 0; j < this.notes.length; j++) {
         // console.log(this.notes[j].name)
         if (this.notes[j].name === drumPattern.pattern[i].note) break
       }
 
-      if (j < this.notes.length) 
-        this.params.notesInPattern[i] = this.notes[j]
-      else 
-        this.params.notesInPattern[i] = null
+      if (j < this.notes.length) { this.params.notesInPattern[i] = this.notes[j] } else { this.params.notesInPattern[i] = null }
       console.log('note ' + i + ': ' + this.params.notesInPattern[i].name)
     }
-
-
   }
 
-  playPattern(deadline){
-    const {numerator, notesInPattern, drumPattern} = this.params
-    let {count} = this.params
+  playPattern (deadline) {
+    const {drumPattern, drums} = this.params
+    let {count} = drums.count
 
     let source = []
-    for(let i=0; i < notesInPattern.length; i++){
+    for (let i = 0; i < drumPattern.note.length; i++) {
       if (drumPattern.pattern[i].values[count] === 0) continue
-      source[i] = context.createBufferSource() 
-      source[i].buffer = notesInPattern[i].sample
+      source[i] = context.createBufferSource()
+      source[i].buffer = drumPattern.note[i].sample
       source[i].connect(gainNode[i])
       gainNode[i].connect(context.destination)
-      gainNode[i].gain.value 
-          = drumPattern.pattern[i].values[count]/9.0
+      gainNode[i].gain.value =
+          drumPattern.pattern[i].values[count] / 9.0
       source[i].start(deadline)
-    }  
+    }
 
-    this.params.count = (count + 1) % numerator
+    this.params.drums.count = (count + 1) % drums.numerator
   }
 
   playClick (deadline) {
@@ -1250,32 +1261,20 @@ class App extends Component {
     if (this.state.loopStat.playing && count === 0) { this.customPlay({target: {name: 'nextBar'}}) }
   } // end playClick
 
-  handleChange (event) {
-
-
-    if (event.target.name === 'metroOn') {
-      this.setState({metroOn: !this.state.metroOn})
+  handleTimer (event) {
+    if (event.target.name === 'timer') {
+      this.params.timer = parseInt(event.target.value, 10)
+      this.setState({rest: this.params.timer})
       return
     }
 
-    if (event.target.name === 'metroSound') {
-      console.log(event.target.name)
-      this.setState({metroSound: event.target.value})
-      return
+    if (event.target.name === 'barTimer') {
+      this.params.barTimer = parseInt(event.target.value, 10)
+      this.setState({restBars: this.params.barTimer})
     }
+  } // end handleTimer()
 
-
-    if (event.target.name === 'drumsOn') {
-      this.setState({drumsOn: !this.state.drumsOn})
-      return
-    }
-
-    if (event.target.name === 'voiceOn') {
-      this.setState({voiceOn: !this.state.voiceOn})
-      return
-    }
-   
-
+  handleMenu (event) {
     if (event.target.name === 'language') {
       if (this.state.ja === true) {
         m = usText
@@ -1286,160 +1285,6 @@ class App extends Component {
       }
       return
     }
-
-    if (event.target.name === 'evenVol') {
-      if (this.state.evenVol) { this.setState({evenVol: parseFloat(event.target.value)}) } else this.setState({evenVol: 1.0})
-      return
-    }
-
-    if (event.target.name === 'voice') {
-      this.setState({voice: event.target.value})
-      return
-    }
-
-//  Temp tap: https://www.all8.com/tools/bpm.htm
-    if (event.target.name === 'tempo_tap') {
-      let timeSeconds = new Date()
-      let msecs = timeSeconds.getTime()
-
-      if ((msecs - this.tap.msecsPrevious) > 3000) { // timeout 3 sec
-        this.tap.count = 0
-      }
-
-      if (this.tap.count === 0) {
-        this.tap.msecsFirst = msecs
-        this.tap.count = 1
-      } else {
-        let newBpm = 60000 * this.tap.count / (msecs - this.tap.msecsFirst)
-        this.setState({bpm: newBpm.toFixed(1)})
-        if (this.state.playing) {
-          clock.timeStretch(context.currentTime, this.tickEvents,
-          this.state.bpm / newBpm)
-        }
-
-        this.tap.count++
-      }
-      this.tap.msecsPrevious = msecs
-      return
-    }
-
-    if (event.target.name === 'bpmFrac') {
-      // console.log('bpm change')
-      let bpmFrac = parseInt(event.target.value, 10)
-      let newBpm = Math.floor(this.state.bpm) + 0.1 * bpmFrac
-      console.log('newBpm(bpmFrac)' + newBpm)
-      this.setState({bpm: newBpm.toFixed(1)})
-      if (this.state.playing) {
-        clock.timeStretch(context.currentTime, this.tickEvents,
-            this.state.bpm / newBpm)
-      }
-
-      return
-    }
-
-    if (event.target.name === 'bpm_slider') {
-      let newBpm = parseInt(event.target.value, 10) +
-            0.1 * parseInt(this.state.bpmFrac, 10)
-      console.log('newBpm(bpm_slider)' + newBpm)
-      this.setState({bpm: newBpm.toFixed(1)})
-      if (this.state.playing) {
-        clock.timeStretch(context.currentTime, this.tickEvents,
-        this.state.bpm / newBpm)
-      }
-      return
-    }
-
-    if (event.target.name === 'bpm_set') { // for handleSetList, song, lop
-      let newBpm = parseFloat(event.target.value, 10).toFixed(1)
-      this.setState(
-        {bpm: newBpm,
-          bpmFrac: Math.round(10 * (newBpm - Math.floor(newBpm)))}
-      )
-      if (this.state.playing) {
-        clock.timeStretch(context.currentTime, this.tickEvents,
-        this.state.bpm / newBpm)
-      }
-      return
-    }
-
-    if (event.target.name === 'swing') {
-      if (event.target.value !== 15) {
-        let swingVal = parseFloat(event.target.value / 10, 10)
-        this.params.swing = true
-        this.setState({swingVal: swingVal})
-      } else {
-        this.params.swing = false
-        this.setState({swingVal: 1.5})
-      }
-
-      clock.setTimeout(function (event) {
-        this.startStop({target: {name: 'restart'}})
-      }.bind(this), 0.02)
-      return
-    }
-
-    if (event.target.name === 'increment') {
-      this.params.increment = parseInt(event.target.value, 10)
-      return
-    }
-
-    if (event.target.name === 'muteProb') {
-      this.params.muteProb = parseFloat(event.target.value, 10)
-      return
-    }
-
-    if (event.target.name === 'timer') {
-      this.params.timer = parseInt(event.target.value, 10)
-      this.setState({rest: this.params.timer})
-      return
-    }
-
-    if (event.target.name === 'barTimer') {
-      this.params.barTimer = parseInt(event.target.value, 10)
-      this.setState({restBars: this.params.barTimer})
-      return
-    }
-
-    if (event.target.name === 'perBars') {
-      this.params.perBars = parseInt(event.target.value, 10)
-      return
-    }
-
-    if (event.target.name === 'muteBars') {
-      this.params.muteBars = parseInt(event.target.value, 10)
-      return
-    }
-
-    if (event.target.name === 'drumPattern') {
-      this.setState({drumPatternNo: parseInt(event.target.value,10)})
-      return
-    }
-
-    if (event.target.name === 'preset') {
-      const preset = loadedPresets[event.target.value]
-
-      let swingVal
-      if (preset.swingVal !== undefined) {
-        swingVal = preset.swingVal
-        this.params.swing = true
-      } else {
-        swingVal = 1.5
-        this.params.swing = false
-      }
-
-      this.setState({presetNo: event.target.value, swingVal: swingVal})
-      this.params.numerator = preset.numerator
-      this.params.denominator = preset.denominator
-      this.params.triplet = preset.triplet
-
-      if (this.state.playing) {
-        clock.setTimeout(function (event) {
-          this.startStop({target: {name: 'restart'}})
-        }.bind(this), 0.02)
-      }
-      return
-    } // end preset
-
     if (event.target.name === 'showMore') {
       this.setState({showMore: !this.state.showMore})
       return
@@ -1468,7 +1313,176 @@ class App extends Component {
     if (event.target.name === 'songListUI') {
       this.setState({showSongList: !this.state.showSongList})
     }
-  } // end handleChange()
+  } // end handleMenu()
+
+  handlePattern (event) {
+    if (event.target.name === 'metroOn') {
+      this.setState({metroOn: !this.state.metroOn,
+        drumsOn: !this.state.drumsOn})
+      return
+    }
+
+    if (event.target.name === 'metroSound') {
+      console.log(event.target.name)
+      this.setState({metroSound: event.target.value})
+      return
+    }
+
+    if (event.target.name === 'drumsOn') {
+      this.setState({metroOn: !this.state.metroOn,
+        drumsOn: !this.state.drumsOn})
+      return
+    }
+
+    if (event.target.name === 'voiceOn') {
+      this.setState({voiceOn: !this.state.voiceOn})
+      return
+    }
+
+    if (event.target.name === 'voice') {
+      this.setState({voice: event.target.value})
+      return
+    }
+
+    if (event.target.name === 'drumPattern') {
+      this.setState({drumPatternNo: parseInt(event.target.value, 10)})
+      return
+    }
+
+    if (event.target.name === 'preset') {
+      const preset = loadedPresets[event.target.value]
+
+      let swingVal
+      if (preset.swingVal !== undefined) {
+        swingVal = preset.swingVal
+        this.params.swing = true
+      } else {
+        swingVal = 1.5
+        this.params.swing = false
+      }
+
+      this.setState({presetNo: event.target.value, swingVal: swingVal})
+      this.params.numerator = preset.numerator
+      this.params.denominator = preset.denominator
+      this.params.triplet = preset.triplet
+
+      if (this.state.playing) {
+        clock.setTimeout(function (event) {
+          this.startStop({target: {name: 'restart'}})
+        }.bind(this), 0.02)
+      }
+    } // end preset
+  } // end handlePattern()
+
+  handleBpm (event) {
+    if (event.target.name === 'bpmFrac') {
+      // console.log('bpm change')
+      let bpmFrac = parseInt(event.target.value, 10)
+      let newBpm = Math.floor(this.state.bpm) + 0.1 * bpmFrac
+      // console.log('newBpm(bpmFrac)' + newBpm)
+      this.setState({bpm: newBpm.toFixed(1), bpmFrac: bpmFrac})
+      if (this.state.playing) {
+        clock.timeStretch(context.currentTime, this.tickEvents,
+            this.state.bpm / newBpm)
+      }
+      return
+    }
+
+    if (event.target.name === 'bpmStep') {
+      let newBpm = parseFloat(this.state.bpm, 10) +
+        parseInt(event.target.value, 10)
+      this.setState({bpm: newBpm.toFixed(1)})
+      return
+    }
+    if (event.target.name === 'bpm_slider') {
+      let newBpm = parseInt(event.target.value, 10) +
+            0.1 * parseInt(this.state.bpmFrac, 10)
+      console.log('newBpm(bpm_slider)' + newBpm)
+      this.setState({bpm: newBpm.toFixed(1)})
+      if (this.state.playing) {
+        clock.timeStretch(context.currentTime, this.tickEvents,
+        this.state.bpm / newBpm)
+      }
+      return
+    }
+    if (event.target.name === 'bpm_set') { // for handleSetList, song, lop
+      let newBpm = parseFloat(event.target.value, 10).toFixed(1)
+      this.setState(
+        {bpm: newBpm,
+          bpmFrac: Math.round(10 * (newBpm - Math.floor(newBpm)))}
+      )
+      if (this.state.playing) {
+        clock.timeStretch(context.currentTime, this.tickEvents,
+        this.state.bpm / newBpm)
+      }
+      return
+    }
+//  Tempo tap: https://www.all8.com/tools/bpm.htm
+    if (event.target.name === 'tempo_tap') {
+      let timeSeconds = new Date()
+      let msecs = timeSeconds.getTime()
+
+      if ((msecs - this.tap.msecsPrevious) > 3000) { // timeout 3 sec
+        this.tap.count = 0
+      }
+
+      if (this.tap.count === 0) {
+        this.tap.msecsFirst = msecs
+        this.tap.count = 1
+      } else {
+        let newBpm = 60000 * this.tap.count / (msecs - this.tap.msecsFirst)
+        this.setState({bpm: newBpm.toFixed(1)})
+        if (this.state.playing) {
+          clock.timeStretch(context.currentTime, this.tickEvents,
+          this.state.bpm / newBpm)
+        }
+
+        this.tap.count++
+      }
+      this.tap.msecsPrevious = msecs
+    }
+  } // end handleBpm()
+
+  handleAdvanced (event) {
+    if (event.target.name === 'increment') {
+      this.params.increment = parseInt(event.target.value, 10)
+      return
+    }
+
+    if (event.target.name === 'swing') {
+      if (event.target.value !== 15) {
+        let swingVal = parseFloat(event.target.value / 10, 10)
+        this.params.swing = true
+        this.setState({swingVal: swingVal})
+      } else {
+        this.params.swing = false
+        this.setState({swingVal: 1.5})
+      }
+
+      clock.setTimeout(function (event) {
+        this.startStop({target: {name: 'restart'}})
+      }.bind(this), 0.02)
+      return
+    }
+
+    if (event.target.name === 'muteProb') {
+      this.params.muteProb = parseFloat(event.target.value, 10)
+      return
+    }
+
+    if (event.target.name === 'perBars') {
+      this.params.perBars = parseInt(event.target.value, 10)
+      return
+    }
+
+    if (event.target.name === 'muteBars') {
+      this.params.muteBars = parseInt(event.target.value, 10)
+      return
+    }
+    if (event.target.name === 'evenVol') {
+      if (this.state.evenVol) { this.setState({evenVol: parseFloat(event.target.value)}) } else this.setState({evenVol: 1.0})
+    }
+  } // end handleAdvanced()
 
   handleWindowClose (event) { // finishing clean up
     this.startStop({target: {name: 'stop'}})
