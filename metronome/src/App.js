@@ -636,7 +636,7 @@ class App extends Component {
           <hr /><span className='loopButton'>
             {m.SetLists}: <button name='setListsUI' onClick={handleMenu}>
               {showSetLists ? m.hide : m.show} {/* no {} for m.hide,show */}
-            </button></span>
+            </button></span>&nbsp;
           <span className='loopButton'>
             {m.SongList}: <button name='songListUI' onClick={handleMenu}>
               {showSongList ? m.hide : m.show} {/* no {} for m.hide,show */}
