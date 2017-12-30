@@ -5,8 +5,9 @@ import WAAClock from 'waaclock'
 import messages from './language.json'
 import packageJSON from '../package.json'
 import loadedSetListSample from './setListSample.json'
-import drumPatterns from './drumPatterns.json'
+import loadedDrumPatterns from './drumPatterns.json'
 import loadedPresets from './presets.json'
+import soundList from './soundList.json'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
@@ -38,31 +39,20 @@ class App extends Component {
     this.params = {
       minBpm: 30.0,
       maxBpm: 360.0,
-      default_presetNo: 7,
+      default_clickPatternNo: 7,
       default_drumPatternNo: 0,
       timer: 0,
       barTimer: 0,
+
       muteBars: 0,
       muteProb: 0.0,
       muteCount: 0,
       muteStat: false,
-      metro: {numerator: 4,
-        denominator: 4,
-        triplet: false,
-        pattern: [],
-        notes: [],
-        count: 0,
-        voice: false},
+
       cowbell: [],
       maleVoice: [],
       femaleVoice: [],
-      drums: {numerator: 4,
-        denominator: 4,
-        triplet: false,
-        pattern: {},
-        count: 0,
-        voice: false},
-      drumPattern: {},
+      currentPattern: {},
       swing: false,
       count: 0,
       barCount: 0,
@@ -71,6 +61,9 @@ class App extends Component {
       newListName: '',
       newSongName: ''
     }
+
+    this.params.currentPattern 
+      = loadedPresets[this.params.default_clickPatternNo]
 
     this.timerEvent = 0
     this.timeOutEvent = 0
@@ -84,7 +77,7 @@ class App extends Component {
       bpm: 100,
       bpmFrac: 0.0,
       metroOn: true,
-      presetNo: this.params.default_presetNo, // default 4/4
+      clickPatternNo: this.params.default_clickPatternNo, // default 4/4
       metroSound: '2cb3',
       drumsOn: false,
       drumPatternNo: this.params.default_drumPatternNo,
@@ -102,7 +95,7 @@ class App extends Component {
       showSongList: false,
 
       loopTable: [],
-      newRow: {presetNo: this.params.default_presetNo,
+      newRow: {clickPatternNo: this.params.default_clickPatternNo,
         swingVal: 1.5,
         repeat: 4},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
@@ -124,13 +117,12 @@ class App extends Component {
     this.handleTable = this.handleTable.bind(this)
     this.playClick = this.playClick.bind(this)
     this.playPattern = this.playPattern.bind(this)
-    this.findSamplesByName = this.findSamplesByName.bind(this)
-    this.findCountSamples = this.findCountSamples.bind(this)
     this.nextTick = this.nextTick.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
     this.saveSetLists = this.saveSetLists.bind(this)
 
     this.tickEvents = []
+    this.sound = {}
 
 /* Example is in sampleTable.json */
 
@@ -140,65 +132,19 @@ class App extends Component {
       msecsPrevious: 0
     }
 
-    this.notes = [ {name: 'hihatClose', sample: null}, // filename is hihat.mp3
-        {name: 'hihatHalfOpen', sample: null},
-        {name: 'hihatFullOpen', sample: null},
-        {name: 'snare', sample: null},
-        {name: 'snareRim', sample: null},
-        {name: 'bass', sample: null},
-        {name: 'highTom', sample: null},
-        {name: 'midTom', sample: null},
-        {name: 'lowTom', sample: null},
-        {name: 'crash', sample: null},
-/* 10 */ {name: 'ride', sample: null},
-        {name: 'highConga', sample: null},
-        {name: 'midConga', sample: null},
-        {name: 'lowConga', sample: null},
-        {name: 'cowbell-tr808', sample: null},
-        {name: 'clave', sample: null},
-        {name: 'handClap', sample: null},
-        {name: 'maracas', sample: null},
-/* metronome samples */
-        {name: 'cowbell-higher', sample: null},
-        {name: 'cowbell-high', sample: null},
-        {name: 'cowbell-mid', sample: null}, {name: 'cowbell-low', sample: null},
-        {name: 'cowbell-lower', sample: null},
-        {name: 'male-one', sample: null},
-        {name: 'male-two', sample: null},
-        {name: 'male-three', sample: null},
-        {name: 'male-four', sample: null},
-        {name: 'male-five', sample: null},
-        {name: 'male-six', sample: null},
-        {name: 'male-seven', sample: null},
-        {name: 'male-eight', sample: null},
-        {name: 'female-one', sample: null},
-        {name: 'female-two', sample: null},
-        {name: 'female-three', sample: null},
-        {name: 'female-four', sample: null},
-        {name: 'female-five', sample: null},
-        {name: 'female-six', sample: null},
-        {name: 'female-seven', sample: null},
-        {name: 'female-eight', sample: null}
-    ]
   } // end constructor
 
   componentWillMount () { // before render()
-    // console.log('componentWillMount()')
-    // localStorage.removeItem('savedSetLists') // for test
     const savedSetLists = JSON.parse(localStorage.getItem('savedSetLists'))
 
     if (savedSetLists === null) {
-      // console.log('savedSetLists null')
       this.params.setLists.push({name: 'default', items: []}, loadedSetListSample)
     } else {
-      console.log('savedSetLists loaded items = ' + savedSetLists.length)
       for (let i = 0; i < savedSetLists.length; i++) {
         this.params.setLists.push(savedSetLists[i])
       }
       this.params.setLists.push(loadedSetListSample)
-//    console.log(JSON.stringify(this.params.setLists))
     }
-//    console.log(JSON.stringify(this.params.setLists[0]))
     this.setState({selectedSetList: this.params.setLists[0]})
   }
 
@@ -206,19 +152,18 @@ class App extends Component {
     window.addEventListener('beforeunload', this.handleWindowClose)
     context = new window.AudioContext()
 
-    for (let i = 0; i < 8; i++) { gainNode[i] = context.createGain() }
+    for (let i = 0; i < 10; i++) { gainNode[i] = context.createGain() }
 
     let inputFiles = []
-    for (let i = 0; i < this.notes.length; i++) {
-      inputFiles[i] = this.notes[i].name + '.mp3'
-      // console.log(inputFiles[i])
+    for (let i = 0; i < soundList.length; i++) {
+      inputFiles[i] = soundList[i] + '.mp3'
     }
 
     let bufferLoader = new BufferLoader(
       context, inputFiles,
       function (bufferList) {
-        for (let i = 0; i < this.notes.length; i++) { this.notes[i].sample = bufferList[i] }
-        this.findCountSamples()
+        for (let i = 0; i < soundList.length; i++) 
+            this.sound[soundList[i]] = bufferList[i]
       }.bind(this)
     )
 
@@ -248,7 +193,7 @@ class App extends Component {
 
   render () {
     const {ja, loopTable, newRow, loopStat,
-      metroOn, presetNo, metroSound, drumsOn, drumPatternNo,
+      metroOn, clickPatternNo, metroSound, drumsOn, drumPatternNo,
       voiceOn, voice,
       playing, bpm, bpmFrac,
       rest, restBars, swingVal, evenVol, showMore,
@@ -257,7 +202,7 @@ class App extends Component {
 
     const {minBpm, maxBpm, setLists} = this.params
 
-    const {startStop, startStopDrums, customPlay,
+    const {startStopDrums, customPlay,
            handleMenu, handlePattern, handleBpm, handleTimer,
            handleAdvanced, handleTable, handleSetLists} = this
 
@@ -266,7 +211,7 @@ class App extends Component {
         {('0' + index).slice(-2)}: {e.name}</option>)
     })
 
-    const drumPatternOptions = drumPatterns.map((e, index) => {
+    const drumPatternOptions = loadedDrumPatterns.map((e, index) => {
       return (<option value={index} key={index}>
         {('0' + index).slice(-2)}: {e.name}</option>)
     })
@@ -498,7 +443,7 @@ class App extends Component {
        onChange={handleTable} /></td>
                 <td align='right'>add</td>
                 <td align='right' className='selector'>
-                  <select name='loopAddPreset' value={newRow.presetNo}
+                  <select name='loopAddPreset' value={newRow.clickPatternNo}
                     onChange={handleTable}>
                     {presetOptions}</select></td>
                 <td align='right' className='selector'>
@@ -533,7 +478,7 @@ class App extends Component {
         <span className='selector'>
           <input name='metroOn' type='checkbox'
             checked={metroOn} onChange={handlePattern} />
-          {m.metronome}: <select name='preset' value={presetNo}
+          {m.metronome}: <select name='preset' value={clickPatternNo}
             onChange={handlePattern}>
             {presetOptions}
           </select>
@@ -553,7 +498,11 @@ class App extends Component {
             <option value='3cb1'>3cowbell1</option>
             <option value='3cb2'>3cowbell2</option>
             <option value='3cb3'>3cowbell3</option>
-            <option value='2cg'>2conga</option>
+            <option value='1cg1'>1conga1</option>
+            <option value='1cg2'>1conga2</option>
+            <option value='1cg3'>1conga3</option>
+            <option value='2cg1'>2conga1</option>
+            <option value='2cg2'>2conga2</option>
             <option value='3cg'>3conga</option>
             <option value='cv'>clave</option>
             <option value='hc'>handClap</option>
@@ -612,7 +561,7 @@ class App extends Component {
        <option value='60'>60</option> <option value='90'>90</option>
        <option value='120'>120</option> <option value='180'>180</option>
        <option value='240'>240</option> <option value='300'>300</option>
-       <option value='600'>600</option> </select>({m.secs}),
+       <option value='600'>600</option> </select>({m.secs}),&nbsp;
      </span>
         <span className='selector'>
           {('00' + restBars).slice(-3)}/
@@ -766,9 +715,9 @@ class App extends Component {
 
     if (event.target.name === 'loopAdd') {
       loopTable.push(
-        {preset: loadedPresets[newRow.presetNo],
-          presetNo: newRow.presetNo,
-          presetVal: loadedPresets[newRow.presetNo].value,
+        {preset: loadedPresets[newRow.clickPatternNo],
+          clickPatternNo: newRow.clickPatternNo,
+          presetVal: loadedPresets[newRow.clickPatternNo].value,
           swingVal: newRow.swingVal,
           repeat: newRow.repeat
         })
@@ -777,8 +726,8 @@ class App extends Component {
     }
 
     if (event.target.name === 'loopAddPreset') {
-      newRow.presetNo = parseInt(event.target.value, 10)
-      if (loadedPresets[newRow.presetNo].swingVal !== undefined) { newRow.swingVal = loadedPresets[newRow.presetNo].swingVal } else { newRow.swingVal = 1.5 }
+      newRow.clickPatternNo = parseInt(event.target.value, 10)
+      if (loadedPresets[newRow.clickPatternNo].swingVal !== undefined) { newRow.swingVal = loadedPresets[newRow.clickPatternNo].swingVal } else { newRow.swingVal = 1.5 }
       this.setState({newRow: newRow})
       return
     }
@@ -873,7 +822,7 @@ class App extends Component {
           for (presetNo = 0; presetNo < loadedPresets.length; presetNo++) { if (loadedPresets[presetNo].value === song.presetVal) break }
           if (presetNo >= loadedPresets.length) { presetNo = this.params.default_presetNo } // not found
 
-          this.handlePattern({target: {name: 'preset', value: presetNo}})
+          this.handlePattern({target: {name: 'clickPattern', value: presetNo}})
           this.handleBpm({target: {name: 'bpm_set', value: song.bpm}})
           // console.log('bpm ' + parseFloat(song.bpm))
           return
@@ -964,20 +913,24 @@ class App extends Component {
   } // end handleSetLists
 
   startStopDrums (event) {
+    
     if (event.target.name === 'stop') {
-      for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
+      for (let beat = 0; beat < this.tickEvents.length; beat++) 
+         this.tickEvents[beat].clear()
+      // pause the timer
       if (this.state.playing) this.setState({playing: false})
       return
     }
 
     if (event.target.name === 'start') {
-      let drumPattern = drumPatterns[0]
-      this.params.drumPattern = drumPattern
-      this.params.numerator = drumPattern.numerator
-      this.params.denominator = drumPattern.denominator
+      console.log('startDrums')
+      const selected = this.params.currentPattern
+      this.params.numerator = selected.numerator
+      this.params.denominator = selected.denominator
       let clickPmin = this.state.bpm * (this.params.denominator / 4)
-      this.findSamplesByName()
 
+      this.params.count = 0
+      this.params.startTime = context.currentTime  
       for (let beat = 0; beat < this.params.numerator; beat++) {
         event = clock.callbackAtTime(
            function (event) {
@@ -988,8 +941,8 @@ class App extends Component {
          .tolerance({early: early, late: late}) // tight early tolerance
         this.tickEvents[beat] = event
       } // end for
-
       this.setState({playing: true})
+      // start the timer
       return
     }
 
@@ -1000,7 +953,8 @@ class App extends Component {
         this.startStopDrums({target: {name: 'start'}})
       }
     }
-  }
+
+  } // end startStopDrums()
 
   startStop (event) {
     if (this.state.loopStat.playing) return
@@ -1111,51 +1065,163 @@ class App extends Component {
            currentBar * barDur + beatInd * beatDur
   }
 
-  findCountSamples () {
-    let cowbell = 0
-    let male = 1
-    let female = 1
-    for (let i = 0; i < this.notes.length; i++) {
-      if (this.notes[i].name.match(/^cowbell/)) { this.params.cowbell[cowbell++] = this.notes[i].sample }
-      if (this.notes[i].name.match(/^female/)) { this.params.femaleVoice[female++] = this.notes[i].sample }
-      if (this.notes[i].name.match(/^male/)) { this.params.maleVoice[male++] = this.notes[i].sample }
-    }
-  }
-
-  findSamplesByName () {
-    const {drumPattern} = this.params
-    console.log(JSON.stringify(drumPattern))
-
-    for (let i = 0; i < drumPattern.pattern.length; i++) {
-      // console.log(drumPattern.pattern[i].note)
-      let j = 0
-      for (j = 0; j < this.notes.length; j++) {
-        // console.log(this.notes[j].name)
-        if (this.notes[j].name === drumPattern.pattern[i].note) break
-      }
-
-      if (j < this.notes.length) { this.params.notesInPattern[i] = this.notes[j] } else { this.params.notesInPattern[i] = null }
-      console.log('note ' + i + ': ' + this.params.notesInPattern[i].name)
-    }
-  }
-
   playPattern (deadline) {
-    const {drumPattern, drums} = this.params
-    let {count} = drums.count
+
+    console.log('playPattern() ' + deadline)
+    const {currentPattern, numerator} = this.params
+    const sound = this.sound
+    const {metroSound,voiceOn,voice} = this.state
+    let count = this.params.count
+
+//    for (let key in sound) alert (key)
 
     let source = []
-    for (let i = 0; i < drumPattern.note.length; i++) {
-      if (drumPattern.pattern[i].values[count] === 0) continue
-      source[i] = context.createBufferSource()
-      source[i].buffer = drumPattern.note[i].sample
-      source[i].connect(gainNode[i])
-      gainNode[i].connect(context.destination)
-      gainNode[i].gain.value =
-          drumPattern.pattern[i].values[count] / 9.0
-      source[i].start(deadline)
+
+    if (currentPattern.type === 'drumkit'){ // last note is always voice
+      for (let i = 0; i < currentPattern.pattern.length - 1; i++) {
+        const current = currentPattern.pattern[i]
+        if (current.values[count] === 0) continue
+
+        source[i] = context.createBufferSource()
+        source[i].buffer = sound[current.note]
+        source[i].connect(gainNode[i])
+        gainNode[i].connect(context.destination)
+        gainNode[i].gain.value = parseInt(current.values[count],10) / 9.0
+        source[i].start(deadline)
+      }
+    } // end drumkit
+    
+    const lastIndex = currentPattern.pattern.length - 1
+    if (currentPattern.type === 'clicks'){ 
+      console.log('clicks ' + metroSound)
+      for (let i=0; i < lastIndex; i++) 
+         source[i] = context.createBufferSource()
+
+      if (metroSound === 'cb1'){
+         source[0].buffer = sound['cowbell-higher']
+         source[1].buffer = sound['cowbell-higher']
+         source[lastIndex-1].buffer = sound['cowbell-higher']
+      }
+      if (metroSound === 'cb2'){
+        source[0].buffer = sound['cowbell-high']
+        source[1].buffer = sound['cowbell-high']
+        source[lastIndex-1].buffer = sound['cowbell-high']
+      }
+
+      if (metroSound === 'cb3'){
+        source[0].buffer = sound['cowbell-mid']
+        source[1].buffer = sound['cowbell-mid']
+        source[lastIndex-1].buffer = sound['cowbell-mid']
+      }
+
+      if (metroSound === 'cb4'){
+        source[0].buffer = sound['cowbell-low']
+        source[1].buffer = sound['cowbell-low']
+        source[lastIndex-1].buffer = sound['cowbell-low']
+      }
+      if (metroSound === 'cb5'){
+        source[0].buffer = sound['cowbell-lower']
+        source[1].buffer = sound['cowbell-lower']
+        source[lastIndex-1].buffer = sound['cowbell-lower']
+      }
+      if (metroSound === '2cb1'){
+        source[0].buffer = sound['cowbell-higher']
+        source[1].buffer = sound['cowbell-high']
+        source[lastIndex-1].buffer = sound['cowbell-high']
+      }
+      if (metroSound === '2cb2'){
+        source[0].buffer = sound['cowbell-high']
+        source[1].buffer = sound['cowbell-mid']
+        source[lastIndex-1].buffer = sound['cowbell-mid']
+      }
+      if (metroSound === '2cb3'){
+        source[0].buffer = sound['cowbell-mid']
+        source[1].buffer = sound['cowbell-low']
+        source[lastIndex-1].buffer = sound['cowbell-low']
+      }
+      if (metroSound === '2cb4'){
+        source[0].buffer = sound['cowbell-low']
+        source[1].buffer = sound['cowbell-lower']
+        source[lastIndex-1].buffer = sound['cowbell-lower']
+      }
+      if (metroSound === '3cb1'){
+        source[0].buffer = sound['cowbell-higher']
+        source[1].buffer = sound['cowbell-high']
+        source[lastIndex-1].buffer = sound['cowbell-mid']
+      }
+      if (metroSound === '3cb2'){
+        source[0].buffer = sound['cowbell-high']
+        source[1].buffer = sound['cowbell-mid']
+        source[lastIndex-1].buffer = sound['cowbell-low']
+      }
+      if (metroSound === '3cb3'){
+        source[0].buffer = sound['cowbell-mid']
+        source[1].buffer = sound['cowbell-low']
+        source[lastIndex-1].buffer = sound['cowbell-lower']
+      }
+      if (metroSound === '1cg1'){
+        source[0].buffer = sound['highConga']
+        source[1].buffer = sound['highConga']
+        source[lastIndex-1].buffer = sound['highConga']
+      }
+      if (metroSound === '1cg2'){
+        source[0].buffer = sound['midConga']
+        source[1].buffer = sound['midConga']
+        source[lastIndex-1].buffer = sound['midConga']
+      }
+      if (metroSound === '1cg3'){
+        source[0].buffer = sound['lowConga']
+        source[1].buffer = sound['lowConga']
+        source[lastIndex-1].buffer = sound['lowConga']
+      }
+      if (metroSound === '2cg1'){
+        source[0].buffer = sound['highConga']
+        source[1].buffer = sound['midConga']
+        source[lastIndex-1].buffer = sound['midConga']
+      }
+      if (metroSound === '2cg2'){
+        source[0].buffer = sound['midConga']
+        source[1].buffer = sound['lowConga']
+        source[lastIndex-1].buffer = sound['lowConga']
+      }
+      if (metroSound === '3cg'){
+        source[0].buffer = sound['highConga']
+        source[1].buffer = sound['midConga']
+        source[lastIndex-1].buffer = sound['lowConga']
+      }
+      if (metroSound === 'cv'){
+        source[0].buffer = sound['clave']
+        source[1].buffer = sound['clave']
+        source[lastIndex-1].buffer = sound['clave']
+      }
+      if (metroSound === 'hc'){
+        source[0].buffer = sound['handClap']
+        source[1].buffer = sound['handClap']
+        source[lastIndex-1].buffer = sound['handClap']
+      }
+
+      for (let i=0; i < lastIndex; i++){ 
+        let vol = parseInt(currentPattern.pattern[i].values[count],10)
+        if (vol === 0) continue 
+        source[i].connect(gainNode[i])
+        gainNode[i].connect(context.destination)
+        gainNode[i].gain.value = vol/9.0 
+        source[i].start(deadline)
+      }
+
+    } // end clips
+
+    const current = currentPattern.pattern[lastIndex]
+    if (voiceOn && (current.note === 'voice') && (current.values[count] > 0)){
+        source[lastIndex] = context.createBufferSource()
+        source[lastIndex].buffer = sound[voice + '-' + current.values[count]] 
+        source[lastIndex].connect(gainNode[lastIndex])
+        gainNode[lastIndex].connect(context.destination)
+        gainNode[lastIndex].gain.value = 1.0 
+        source[lastIndex].start(deadline)
     }
 
-    this.params.drums.count = (count + 1) % drums.numerator
+    this.params.count = (count + 1) % numerator
   }
 
   playClick (deadline) {
@@ -1316,6 +1382,7 @@ class App extends Component {
   } // end handleMenu()
 
   handlePattern (event) {
+
     if (event.target.name === 'metroOn') {
       this.setState({metroOn: !this.state.metroOn,
         drumsOn: !this.state.drumsOn})
@@ -1344,14 +1411,27 @@ class App extends Component {
       return
     }
 
-    if (event.target.name === 'drumPattern') {
+    if ((event.target.name === 'drumPattern') 
+       || (event.target.name === 'clickPattern')) {
+
+      if (event.target.name === 'drumPattern'){
+         this.params.currentPattern 
+          = loadedDrumPatterns[parseInt(event.target.value,10)]
+      } 
+
+      if (event.target.name === 'clickPattern') {
+         this.params.currentPattern 
+          = loadedPresets[parseInt(event.target.value,10)]
+      }
+   
       this.setState({drumPatternNo: parseInt(event.target.value, 10)})
+      if (this.state.playing)
+          this.startStopDrums({target: {name: 'restart'}})
       return
     }
 
-    if (event.target.name === 'preset') {
-      const preset = loadedPresets[event.target.value]
 
+/*
       let swingVal
       if (preset.swingVal !== undefined) {
         swingVal = preset.swingVal
@@ -1372,6 +1452,7 @@ class App extends Component {
         }.bind(this), 0.02)
       }
     } // end preset
+*/
   } // end handlePattern()
 
   handleBpm (event) {
