@@ -6,7 +6,7 @@ import messages from './language.json'
 import packageJSON from '../package.json'
 import loadedSetListSample from './setListSample.json'
 import loadedDrumPatterns from './drumPatterns.json'
-import loadedPresets from './presets.json'
+import loadedClickPatterns from './presets.json'
 import soundList from './soundList.json'
 
 // global variable
@@ -63,7 +63,7 @@ class App extends Component {
     }
 
     this.params.currentPattern 
-      = loadedPresets[this.params.default_clickPatternNo]
+      = loadedClickPatterns[this.params.default_clickPatternNo]
 
     this.timerEvent = 0
     this.timeOutEvent = 0
@@ -206,7 +206,7 @@ class App extends Component {
            handleMenu, handlePattern, handleBpm, handleTimer,
            handleAdvanced, handleTable, handleSetLists} = this
 
-    const presetOptions = loadedPresets.map((e, index) => {
+    const presetOptions = loadedClickPatterns.map((e, index) => {
       return (<option value={index} key={index}>
         {('0' + index).slice(-2)}: {e.name}</option>)
     })
@@ -467,7 +467,7 @@ class App extends Component {
 /// //////////// UI menus
     return (
       <div className='metronome'>
-      KG's JS_Metronome &nbsp; <font color='blue'>Lang: </font>
+      KG's JS_Metronome2 &nbsp; <font color='blue'>Lang: </font>
         <span className='small-button'>
           <button name='language' onClick={handleMenu}>
             {ja ? 'US' : 'JP'} </button>&nbsp;
@@ -478,7 +478,7 @@ class App extends Component {
         <span className='selector'>
           <input name='metroOn' type='checkbox'
             checked={metroOn} onChange={handlePattern} />
-          {m.metronome}: <select name='preset' value={clickPatternNo}
+          {m.metronome}: <select name='clickPattern' value={clickPatternNo}
             onChange={handlePattern}>
             {presetOptions}
           </select>
@@ -715,9 +715,9 @@ class App extends Component {
 
     if (event.target.name === 'loopAdd') {
       loopTable.push(
-        {preset: loadedPresets[newRow.clickPatternNo],
+        {preset: loadedClickPatterns[newRow.clickPatternNo],
           clickPatternNo: newRow.clickPatternNo,
-          presetVal: loadedPresets[newRow.clickPatternNo].value,
+          presetVal: loadedClickPatterns[newRow.clickPatternNo].value,
           swingVal: newRow.swingVal,
           repeat: newRow.repeat
         })
@@ -727,7 +727,7 @@ class App extends Component {
 
     if (event.target.name === 'loopAddPreset') {
       newRow.clickPatternNo = parseInt(event.target.value, 10)
-      if (loadedPresets[newRow.clickPatternNo].swingVal !== undefined) { newRow.swingVal = loadedPresets[newRow.clickPatternNo].swingVal } else { newRow.swingVal = 1.5 }
+      if (loadedClickPatterns[newRow.clickPatternNo].swingVal !== undefined) { newRow.swingVal = loadedClickPatterns[newRow.clickPatternNo].swingVal } else { newRow.swingVal = 1.5 }
       this.setState({newRow: newRow})
       return
     }
@@ -819,12 +819,11 @@ class App extends Component {
 
         if (song.type === 'preset') {
           let presetNo = 0
-          for (presetNo = 0; presetNo < loadedPresets.length; presetNo++) { if (loadedPresets[presetNo].value === song.presetVal) break }
-          if (presetNo >= loadedPresets.length) { presetNo = this.params.default_presetNo } // not found
+          for (presetNo = 0; presetNo < loadedClickPatterns.length; presetNo++) { if (loadedClickPatterns[presetNo].value === song.presetVal) break }
+          if (presetNo >= loadedClickPatterns.length) { presetNo = this.params.default_presetNo } // not found
 
           this.handlePattern({target: {name: 'clickPattern', value: presetNo}})
           this.handleBpm({target: {name: 'bpm_set', value: song.bpm}})
-          // console.log('bpm ' + parseFloat(song.bpm))
           return
         }  // end preset
 
@@ -836,10 +835,10 @@ class App extends Component {
 
           for (let i = 0; i < song.table.length; i++) { // search presetNo
             let presetNo = 0
-            for (presetNo = 0; presetNo < loadedPresets.length; presetNo++) {
-              if (loadedPresets[presetNo].value === song.table[i].presetVal) { break }
+            for (presetNo = 0; presetNo < loadedClickPatterns.length; presetNo++) {
+              if (loadedClickPatterns[presetNo].value === song.table[i].presetVal) { break }
             }
-            if (presetNo >= loadedPresets.length) { presetNo = this.params.default_presetNo }
+            if (presetNo >= loadedClickPatterns.length) { presetNo = this.params.default_presetNo }
              // if not found
 
             this.handleTable({target: {name: 'loopAddPreset', value: presetNo}})
@@ -887,7 +886,7 @@ class App extends Component {
         this.state.selectedSetList.items.push({
           song: this.params.newSongName,
           type: 'preset',
-          presetVal: loadedPresets[this.state.presetNo].value,
+          presetVal: loadedClickPatterns[this.state.presetNo].value,
           bpm: parseFloat(this.state.bpm, 10).toFixed(1)})
       }
 
@@ -913,18 +912,28 @@ class App extends Component {
   } // end handleSetLists
 
   startStopDrums (event) {
-    
+
+    if (event.target.name === 'startStop') {
+      if (this.state.playing) {
+        this.startStopDrums({target: {name: 'stop'}})
+      } else {
+        this.startStopDrums({target: {name: 'start'}})
+      }
+      this.setState({playing: !this.state.playing})
+    }
+
+/* actual process */    
     if (event.target.name === 'stop') {
       for (let beat = 0; beat < this.tickEvents.length; beat++) 
          this.tickEvents[beat].clear()
-      // pause the timer
-      if (this.state.playing) this.setState({playing: false})
+      this.handleTimer({target: {name: 'clearTimer'}})
       return
     }
 
     if (event.target.name === 'start') {
-      console.log('startDrums')
+      // console.log('startDrums')
       const selected = this.params.currentPattern
+      console.log('selected: ' + selected.name) 
       this.params.numerator = selected.numerator
       this.params.denominator = selected.denominator
       let clickPmin = this.state.bpm * (this.params.denominator / 4)
@@ -941,18 +950,15 @@ class App extends Component {
          .tolerance({early: early, late: late}) // tight early tolerance
         this.tickEvents[beat] = event
       } // end for
-      this.setState({playing: true})
-      // start the timer
-      return
-    }
 
-    if (event.target.name === 'startStop') {
-      if (this.state.playing) {
-        this.startStopDrums({target: {name: 'stop'}})
-      } else {
-        this.startStopDrums({target: {name: 'start'}})
-      }
-    }
+      this.handleTimer({target: {name: 'startTimer'}})
+      return
+    } // end start
+
+    if (event.target.name === 'restart' && this.state.playing) {
+       this.startStopDrums({target: {name: 'stop'}})
+       this.startStopDrums({target: {name: 'start'}})
+    } // end restart 
 
   } // end startStopDrums()
 
@@ -966,8 +972,8 @@ class App extends Component {
       }
       this.params.count = 0
       if (this.timerEvent) {
-        this.timerEvent.clear()
-        this.timeoutEvent.clear()
+        if (this.timerEvent !== undefined) this.timerEvent.clear()
+        if (this.timeoutEvent !== undefined) this.timeoutEvent.clear()
       }
       return
     } // stop
@@ -992,7 +998,6 @@ class App extends Component {
            .tolerance({early: early, late: late})
         this.tickEvents[beat] = event
       } // end for
-//      console.log('restart')
       return
     } // end restart
 
@@ -1066,14 +1071,52 @@ class App extends Component {
   }
 
   playPattern (deadline) {
+//  console.log('playPattern() ' + deadline)
 
-    console.log('playPattern() ' + deadline)
-    const {currentPattern, numerator} = this.params
+    const {bpm,restBars,metroSound,voiceOn,voice} = this.state
+    const {maxBpm, minBpm, increment, barTimer, perBars,
+      muteBars, muteProb, currentPattern, numerator, triplet} = this.params
     const sound = this.sound
-    const {metroSound,voiceOn,voice} = this.state
-    let count = this.params.count
+    let {muteCount, muteStat, count, barCount} = this.params
 
-//    for (let key in sound) alert (key)
+    // bar timer
+    if (barTimer > 0 && restBars <= 0){
+      this.startStop({target: {name: 'stop'}})
+      this.setState({playing: false, restBars: barTimer})
+      return
+    }
+    // automatic bpm increment
+    if ((perBars > 0) && (count === 0) && (barCount > 0) 
+        && (barCount % perBars) === 0) {
+      let newBpm = parseFloat(bpm) + parseFloat(increment)
+      if (newBpm > maxBpm) newBpm = maxBpm
+      if (newBpm < minBpm) newBpm = minBpm
+      this.handleBpm({target: 'bpm_set', value: newBpm.toFix(1)})
+    } // end automatic bpm increment
+
+// random mute
+    if (muteBars > 0 && muteProb > 0 && count === 0) {
+      if (muteCount === muteBars) {
+        muteStat = false
+        muteCount = 0
+      } else {
+        if (muteStat) {
+          muteCount++
+        } else if (Math.random() < parseFloat(muteProb)) {
+          muteStat = true
+          muteCount++
+        }
+      }
+    } // end random mute
+
+// even Volume    
+    let volume = 1.0
+    if (triplet) {
+      if (count % 3 !== 2) volume *= this.state.evenVol
+    } else {
+      if (count % 2 === 0) volume *= this.state.evenVol
+    }
+    if (muteStat) volume = 0.0
 
     let source = []
 
@@ -1086,14 +1129,15 @@ class App extends Component {
         source[i].buffer = sound[current.note]
         source[i].connect(gainNode[i])
         gainNode[i].connect(context.destination)
-        gainNode[i].gain.value = parseInt(current.values[count],10) / 9.0
+        gainNode[i].gain.value 
+          = volume*parseInt(current.values[count],10) / 9.0
         source[i].start(deadline)
       }
     } // end drumkit
     
     const lastIndex = currentPattern.pattern.length - 1
     if (currentPattern.type === 'clicks'){ 
-      console.log('clicks ' + metroSound)
+      // console.log('clicks ' + metroSound)
       for (let i=0; i < lastIndex; i++) 
          source[i] = context.createBufferSource()
 
@@ -1203,9 +1247,10 @@ class App extends Component {
       for (let i=0; i < lastIndex; i++){ 
         let vol = parseInt(currentPattern.pattern[i].values[count],10)
         if (vol === 0) continue 
+
         source[i].connect(gainNode[i])
         gainNode[i].connect(context.destination)
-        gainNode[i].gain.value = vol/9.0 
+        gainNode[i].gain.value = volume*vol/9.0 
         source[i].start(deadline)
       }
 
@@ -1221,9 +1266,24 @@ class App extends Component {
         source[lastIndex].start(deadline)
     }
 
-    this.params.count = (count + 1) % numerator
-  }
+    // next count
+    count = (count + 1) % numerator
+    if (count === 0) {
+      barCount++
+      if (this.state.restBars > 0) 
+         this.setState({restBars: this.state.restBars -1})
+    }
+    this.params.count = count
+    this.params.barCount = barCount
 
+    if (this.state.loopStat.playing && count === 0) 
+       this.customPlay({target: {name: 'nextBar'}})
+
+  } // end playClick
+
+  playClick (deadline) { }
+
+/*
   playClick (deadline) {
     const {bpm, restBars} = this.state
     const {maxBpm, minBpm, numerator, denominator, triplet,
@@ -1326,6 +1386,7 @@ class App extends Component {
 
     if (this.state.loopStat.playing && count === 0) { this.customPlay({target: {name: 'nextBar'}}) }
   } // end playClick
+*/
 
   handleTimer (event) {
     if (event.target.name === 'timer') {
@@ -1337,7 +1398,37 @@ class App extends Component {
     if (event.target.name === 'barTimer') {
       this.params.barTimer = parseInt(event.target.value, 10)
       this.setState({restBars: this.params.barTimer})
+      return
     }
+
+    if (event.target.name === 'startTimer' && this.params.timer > 0){
+
+      this.timerEvent = timerClock.callbackAtTime(function(event){
+        this.setState({rest: this.state.rest -1})         
+      }.bind(this), 1).repeat(1)
+
+      this.timeoutEvent = timerClock.setTimeout(function (event) {
+        this.startStopDrums({target: {name: 'stop'}})
+        this.setState({rest: this.params.timer})
+      }.bind(this), this.state.rest)
+
+      return
+    } // end startTimer
+
+    if (event.target.name === 'clearTimer' && this.params.timer > 0){
+      this.timerEvent.clear()
+      this.timeoutEvent.clear()
+      return
+    } // end clearTimer
+
+    if (event.target.name === 'startBarTimer'){
+      return
+    } 
+
+    if (event.target.name === 'clearBarTimer'){
+      return
+    } 
+
   } // end handleTimer()
 
   handleMenu (event) {
@@ -1384,6 +1475,7 @@ class App extends Component {
   handlePattern (event) {
 
     if (event.target.name === 'metroOn') {
+      this.params.currentPattern = loadedClickPatterns[this.state.clickPatternNo]
       this.setState({metroOn: !this.state.metroOn,
         drumsOn: !this.state.drumsOn})
       return
@@ -1396,6 +1488,7 @@ class App extends Component {
     }
 
     if (event.target.name === 'drumsOn') {
+      this.params.currentPattern = loadedDrumPatterns[this.state.drumPatternNo]
       this.setState({metroOn: !this.state.metroOn,
         drumsOn: !this.state.drumsOn})
       return
@@ -1417,87 +1510,65 @@ class App extends Component {
       if (event.target.name === 'drumPattern'){
          this.params.currentPattern 
           = loadedDrumPatterns[parseInt(event.target.value,10)]
+         this.setState({drumPatternNo: parseInt(event.target.value, 10)})
       } 
 
       if (event.target.name === 'clickPattern') {
          this.params.currentPattern 
-          = loadedPresets[parseInt(event.target.value,10)]
+          = loadedClickPatterns[parseInt(event.target.value,10)]
+         this.setState({clickPatternNo: parseInt(event.target.value, 10)})
       }
+
+      if (this.params.currentPattern.swingVal === undefined){
+        this.params.swing = false
+        this.params.currentPattern.swingVal = 1.5
+      } else this.params.swing = true
+
+      this.setState({swingVal: this.params.currentPattern.swingVal})
    
-      this.setState({drumPatternNo: parseInt(event.target.value, 10)})
       if (this.state.playing)
           this.startStopDrums({target: {name: 'restart'}})
       return
     }
 
-
-/*
-      let swingVal
-      if (preset.swingVal !== undefined) {
-        swingVal = preset.swingVal
-        this.params.swing = true
-      } else {
-        swingVal = 1.5
-        this.params.swing = false
-      }
-
-      this.setState({presetNo: event.target.value, swingVal: swingVal})
-      this.params.numerator = preset.numerator
-      this.params.denominator = preset.denominator
-      this.params.triplet = preset.triplet
-
-      if (this.state.playing) {
-        clock.setTimeout(function (event) {
-          this.startStop({target: {name: 'restart'}})
-        }.bind(this), 0.02)
-      }
-    } // end preset
-*/
   } // end handlePattern()
 
   handleBpm (event) {
+
     if (event.target.name === 'bpmFrac') {
-      // console.log('bpm change')
       let bpmFrac = parseInt(event.target.value, 10)
       let newBpm = Math.floor(this.state.bpm) + 0.1 * bpmFrac
-      // console.log('newBpm(bpmFrac)' + newBpm)
-      this.setState({bpm: newBpm.toFixed(1), bpmFrac: bpmFrac})
-      if (this.state.playing) {
-        clock.timeStretch(context.currentTime, this.tickEvents,
-            this.state.bpm / newBpm)
-      }
+      this.handleBpm({target: {name: 'bpm_set', value: newBpm.toFixed(1)}}) 
       return
     }
 
-    if (event.target.name === 'bpmStep') {
-      let newBpm = parseFloat(this.state.bpm, 10) +
-        parseInt(event.target.value, 10)
-      this.setState({bpm: newBpm.toFixed(1)})
+    if (event.target.name === 'bpmStep') { // +-1
+      let newBpm = parseFloat(this.state.bpm, 10) 
+        + parseInt(event.target.value, 10)
+      this.handleBpm({target: {name: 'bpm_set', value: newBpm.toFixed(1)}})
       return
     }
-    if (event.target.name === 'bpm_slider') {
-      let newBpm = parseInt(event.target.value, 10) +
-            0.1 * parseInt(this.state.bpmFrac, 10)
-      console.log('newBpm(bpm_slider)' + newBpm)
-      this.setState({bpm: newBpm.toFixed(1)})
+
+    if (event.target.name === 'bpm_slider') { // slider
+      let newBpm = parseInt(event.target.value, 10) 
+        + 0.1 * parseInt(this.state.bpmFrac, 10)
+      this.handleBpm({target: {name: 'bpm_set', value: newBpm.toFixed(1)}})
+      return
+    }
+
+    if (event.target.name === 'bpm_set') { // actual process
+      let newBpm = parseFloat(event.target.value, 10).toFixed(1)
       if (this.state.playing) {
         clock.timeStretch(context.currentTime, this.tickEvents,
         this.state.bpm / newBpm)
       }
-      return
-    }
-    if (event.target.name === 'bpm_set') { // for handleSetList, song, lop
-      let newBpm = parseFloat(event.target.value, 10).toFixed(1)
       this.setState(
-        {bpm: newBpm,
+         {bpm: newBpm,
           bpmFrac: Math.round(10 * (newBpm - Math.floor(newBpm)))}
       )
-      if (this.state.playing) {
-        clock.timeStretch(context.currentTime, this.tickEvents,
-        this.state.bpm / newBpm)
-      }
       return
-    }
+    } // end bpm_set
+
 //  Tempo tap: https://www.all8.com/tools/bpm.htm
     if (event.target.name === 'tempo_tap') {
       let timeSeconds = new Date()
@@ -1512,12 +1583,7 @@ class App extends Component {
         this.tap.count = 1
       } else {
         let newBpm = 60000 * this.tap.count / (msecs - this.tap.msecsFirst)
-        this.setState({bpm: newBpm.toFixed(1)})
-        if (this.state.playing) {
-          clock.timeStretch(context.currentTime, this.tickEvents,
-          this.state.bpm / newBpm)
-        }
-
+        this.handleBpm({target: {name: 'bpm_set', value: newBpm.toFixed(1)}})
         this.tap.count++
       }
       this.tap.msecsPrevious = msecs
@@ -1543,8 +1609,9 @@ class App extends Component {
       clock.setTimeout(function (event) {
         this.startStop({target: {name: 'restart'}})
       }.bind(this), 0.02)
+
       return
-    }
+    } // end swing
 
     if (event.target.name === 'muteProb') {
       this.params.muteProb = parseFloat(event.target.value, 10)
