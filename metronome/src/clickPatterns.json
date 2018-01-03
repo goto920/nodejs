@@ -1,0 +1,209 @@
+[
+{"name": "2/4", "type": "clicks", "numerator": 2, "denominator": 4,
+ "pattern": [{"note": "click0", "values": [9,0]},
+             {"note": "click1", "values": [0,7]},
+             {"note": "voice",  "values": [1,2]}]
+}, 
+{"name": "4/8", "type": "clicks", "numerator": 4, "denominator": 8,
+ "pattern": [{"note": "click0", "values": [9,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0]},
+             {"note": "click2", "values": [0,7,0,7]},
+             {"note": "voice",  "values": [1,0,2,0]}]
+},
+{"name": "4/8swing", "type": "clicks", "numerator": 4, "denominator": 8,
+ "swingVal": 2.0,
+ "pattern": [{"note": "click0", "values": [9,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0]},
+             {"note": "click2", "values": [0,7,0,7]},
+             {"note": "voice",  "values": [1,0,2,0]}]
+},
+{"name": "8/16", "type": "clicks", "numerator": 8, "denominator": 16,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,0,7,0,0,0]},
+             {"note": "click2", "values": [0,7,7,7,0,7,7,7]},
+             {"note": "voice",  "values": [1,0,0,0,2,0,0,0]}]
+},
+{"name": "8/16swing", "type": "clicks", "numerator": 8, "denominator": 16,
+  "swingVal": 2.0,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,0,7,0,0,0]},
+             {"note": "click2", "values": [0,7,7,7,0,7,7,7]},
+             {"note": "voice",  "values": [1,0,0,0,2,0,0,0]}]
+},
+
+{"name": "3/4", "type": "clicks", "numerator": 3, "denominator": 4,
+ "pattern": [{"note": "click0", "values": [9,0,0]},
+             {"note": "click1", "values": [0,7,7]},
+             {"note": "voice",  "values": [1,2,3]}]
+}, 
+{"name": "6/8", "type": "clicks", "numerator": 6, "denominator": 8,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0,7,0]},
+             {"note": "click2", "values": [0,7,0,7,0,7]},
+             {"note": "voice",  "values": [1,0,2,0,3,0]}]
+}, 
+{"name": "6/8swing", "type": "clicks", "numerator": 6, "denominator": 8,
+  "swingVal": 2.0,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0,7,0]},
+             {"note": "click2", "values": [0,7,0,7,0,7]},
+             {"note": "voice",  "values": [1,0,2,0,3,0]}]
+}, 
+{"name": "6/8triplet", "type": "clicks", "numerator": 6, "denominator": 8,
+         "triplet": true,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,7,0,0]},
+             {"note": "click2", "values": [0,7,7,0,7,7]},
+             {"note": "voice",  "values": [1,0,0,2,0,0]}]
+}, 
+
+{"name": "7/8","type": "clicks", "numerator": 7, "denominator": 8,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0,7,0,7]},
+             {"note": "click2", "values": [0,7,0,7,0,7,0]},
+             {"note": "voice", "values": [1,0,2,0,3,0,4]}]
+},
+{"name": "12/16(4x3)","type": "clicks", "numerator": 12, "denominator": 16,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,0,7,0,0,0,7,0,0,0]},
+             {"note": "click2", "values": [0,7,7,7,0,7,7,7,0,7,7,7]},
+             {"note": "voice",  "values": [1,0,0,0,2,0,0,0,3,0,0,0]}]
+},
+{"name": "12/16(3x4)","type": "clicks", "numerator": 12, "denominator": 16,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,7,0,0,7,0,0,7,0,0]},
+             {"note": "click2", "values": [0,7,7,0,7,7,0,7,7,0,7,7]},
+             {"note": "voice",  "values": [1,0,0,2,0,0,3,0,0,4,0,0]}]
+},
+
+{"name": "13/16","type": "clicks", "numerator": 13, "denominator": 16,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,0,7,0,0,0,7,0,0,0,7]},
+             {"note": "click2", "values": [0,7,7,7,0,7,7,7,0,7,7,7,0]},
+             {"note": "voice", "values": [1,0,0,0,2,0,0,0,3,0,0,0,4]}]
+},
+{"name": "14/16","type": "clicks", "numerator": 14, "denominator": 16,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,0,7,0,0,0,7,0,0,0,7,0]},
+             {"note": "click2", "values": [0,7,7,7,0,7,7,7,0,7,7,7,0,7]},
+             {"note": "voice", "values": [1,0,0,0,2,0,0,0,3,0,0,0,4,0]}]
+},
+{"name": "15/16","type": "clicks", "numerator": 15, "denominator": 16,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,0,7,0,0,0,7,0,0,0,7,0,0]},
+             {"note": "click2", "values": [0,7,7,7,0,7,7,7,0,7,7,7,0,7,7]},
+             {"note": "voice", "values": [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0]}]
+},
+
+{"name": "2/2", "type": "clicks", "numerator": 4, "denominator": 4,
+ "pattern": [{"note": "click0", "values": [9,0,0,0]}, 
+             {"note": "click1", "values": [0,0,7,0]},
+             {"note": "voice",  "values": [1,0,2,0]}]
+}, 
+{"name": "4/4","type": "clicks", "default": true,
+ "numerator": 4, "denominator": 4,
+ "pattern": [{"note": "click0", "values": [9,0,0,0]},
+             {"note": "click1", "values": [0,7,7,7]},
+             {"note": "voice",  "values": [1,2,3,4]}]
+}, 
+{"name": "8/8", "type": "clicks","numerator": 8, "denominator": 8,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0,7,0,7,0]},
+             {"note": "click2", "values": [0,7,0,7,0,7,0,7]},
+             {"note": "voice",  "values": [1,0,2,0,3,0,4,0]}]
+}, 
+{"name": "8/8swing", "type": "clicks", "numerator": 8, "denominator": 8, 
+         "swingVal": 2.0,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0,7,0,7,0]},
+             {"note": "click2", "values": [0,7,0,7,0,7,0,7]},
+             {"note": "voice", "values": [1,0,2,0,3,0,4,0]}]
+}, 
+{"name": "16/16","type": "clicks", "numerator": 16, "denominator": 16,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0]},
+             {"note": "click2", "values": [0,7,7,7,0,7,7,7,0,7,7,7,0,7,7,7]},
+             {"note": "voice", "values":  [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}]
+},
+{"name": "16/16swing","type": "clicks", "numerator": 16, "denominator": 16, 
+  "swingVal": 2.0,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0]},
+             {"note": "click2", "values": [0,7,7,7,0,7,7,7,0,7,7,7,0,7,7,7]},
+             {"note": "voice", "values":  [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}]
+},
+
+{"name": "17/16","type": "clicks", "numerator": 17, "denominator": 16,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0,7]},
+             {"note": "click2", "values": [0,7,7,7,0,7,7,7,0,7,7,7,0,7,7,7,0]},
+             {"note": "voice", "values": [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0,5]}]
+},
+{"name": "9/8","type": "clicks", "numerator": 9, "denominator": 8,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0,7,0,7,0,7]},
+             {"note": "click2", "values": [0,7,0,7,0,7,0,7,0]},
+             {"note": "voice", "values":  [1,0,2,0,3,0,4,0,5]}]
+}, 
+{"name": "9/8tri","type": "clicks", "numerator": 9, "denominator": 8,
+ "triplet": true,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,7,0,0,7,0,0]},
+             {"note": "click2", "values": [0,7,7,0,7,7,0,7,7]},
+             {"note": "voice", "values":  [1,0,0,2,0,0,3,0,0]}]
+}, 
+
+{"name": "18/16","type": "clicks", "numerator": 18, "denominator": 16,
+ "pattern": [{"note":"click0","values":[9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+           {"note": "click1", "values":[0,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0,7,0]},
+           {"note": "click2", "values":[0,7,7,7,0,7,7,7,0,7,7,7,0,7,7,7,0,7]},
+            {"note": "voice", "values":[1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0,5,0]}]
+},
+{"name": "19/16","type": "clicks", "numerator": 19, "denominator": 16,
+ "pattern":[{"note":"click0","values":[9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+          {"note": "click1", "values":[0,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0,7,0,7]},
+          {"note": "click2", "values":[0,7,7,7,0,7,7,7,0,7,7,7,0,7,7,7,0,7,0]},
+          {"note": "voice",  "values":[1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0,5,0,0]}]
+},
+{"name": "5/4","type": "clicks", "numerator": 5, "denominator": 4,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0]},
+             {"note": "click1", "values": [0,7,7,7,7]},
+             {"note": "voice",  "values": [1,2,3,4,5]}]
+}, 
+{"name": "10/8","type": "clicks", "numerator": 10, "denominator": 8,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0,7,0,7,0,7,0]},
+             {"note": "click2", "values": [0,7,0,7,0,7,0,7,0,7]},
+             {"note": "voice", "values":  [1,0,2,0,3,0,4,0,5,0]}]
+}, 
+
+{"name": "6/4","type": "clicks", "numerator": 6, "denominator": 4,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0]},
+             {"note": "click1", "values": [0,7,7,7,7,7]},
+             {"note": "voice", "values": [1,2,3,4,5,6]}]
+}, 
+{"name": "12/8(2x6)", "type": "clicks", "numerator": 12, "denominator": 8,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0,7,0,7,0,7,0,7,0]},
+             {"note": "click2", "values": [0,7,0,7,0,7,0,7,0,7,0,7]},
+             {"note": "voice",  "values": [1,0,2,0,3,0,4,0,5,0,6,0]}]
+}, 
+{"name": "12/8(3x4)", "type": "clicks", "numerator": 12, "denominator": 8, 
+ "triplet": true,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,0,7,0,0,7,0,0,7,0,0]},
+             {"note": "click2", "values": [0,7,7,0,7,7,0,7,7,0,7,7]},
+             {"note": "voice",  "values": [1,0,0,2,0,0,3,0,0,4,0,0]}]
+}, 
+{"name": "7/4","type": "clicks", "numerator": 7, "denominator": 4,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,7,7,7,7,7,7]},
+             {"note": "voice",  "values": [1,2,3,4,5,6,7]}]
+}, 
+{"name": "14/8","type": "clicks", "numerator": 14, "denominator": 8,
+ "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+             {"note": "click1", "values": [0,0,7,0,7,0,7,0,7,0,7,0,7,0]},
+             {"note": "click2", "values": [0,7,0,7,0,7,0,7,0,7,0,7,0,7]},
+             {"note": "voice",  "values": [1,0,2,0,3,0,4,0,5,0,6,0,7,0]}]
+} 
+]

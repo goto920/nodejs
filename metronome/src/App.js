@@ -6,7 +6,7 @@ import messages from './language.json'
 import packageJSON from '../package.json'
 import loadedSetListSample from './setListSample.json'
 import loadedDrumPatterns from './drumPatterns.json'
-import loadedClickPatterns from './presets.json'
+import loadedClickPatterns from './clickPatterns.json'
 import soundList from './soundList.json'
 
 // global variable
@@ -39,21 +39,24 @@ class App extends Component {
     this.params = {
       minBpm: 30.0,
       maxBpm: 360.0,
-      default_clickPatternNo: 7,
-      default_drumPatternNo: 0,
+      numerator: null, 
+      denominator: null,
+      default_clickPatternNo: null,
+      default_drumPatternNo: null,
       timer: 0,
       barTimer: 0,
 
-      muteBars: 0,
-      muteProb: 0.0,
       muteCount: 0,
       muteStat: false,
+      muteBars: 0,
+      muteProb: 0.0,
 
       cowbell: [],
       maleVoice: [],
       femaleVoice: [],
       currentPattern: {},
       swing: false,
+      triplet: false,
       count: 0,
       barCount: 0,
       startTime: 0,
@@ -62,8 +65,22 @@ class App extends Component {
       newSongName: ''
     }
 
-    this.params.currentPattern 
-      = loadedClickPatterns[this.params.default_clickPatternNo]
+    for (let i=0; i < loadedClickPatterns.length; i++){
+      if (loadedClickPatterns[i].default === true){
+        this.params.default_clickPatternNo = i
+        break
+      }
+    }
+
+    this.params.currentPattern =
+      loadedClickPatterns[this.params.default_clickPatternNo]
+
+    for (let i=0; i < loadedDrumPatterns.length; i++){
+      if (loadedDrumPatterns[i].default === true){
+        this.params.default_drumPatternNo = i
+        break
+      }
+    }
 
     this.timerEvent = 0
     this.timeOutEvent = 0
@@ -78,7 +95,7 @@ class App extends Component {
       bpmFrac: 0.0,
       metroOn: true,
       clickPatternNo: this.params.default_clickPatternNo, // default 4/4
-      metroSound: '2cb3',
+      metroSound: '3cb2',
       drumsOn: false,
       drumPatternNo: this.params.default_drumPatternNo,
       voiceOn: false,
@@ -95,16 +112,15 @@ class App extends Component {
       showSongList: false,
 
       loopTable: [],
-      newRow: {clickPatternNo: this.params.default_clickPatternNo,
-        swingVal: 1.5,
-        repeat: 4},
+      loopTableNewRow: 
+         {pattern: loadedClickPatterns[this.params.defaultClickNo]},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
       selectedSetList: {},
       selectedSong: {name: 'none'} // default
-    } // end params
+    } // end state
 
     this.setState = this.setState.bind(this)
-    this.startStop = this.startStop.bind(this)
+//    this.startStop = this.startStop.bind(this)
     this.startStopDrums = this.startStopDrums.bind(this)
     this.customPlay = this.customPlay.bind(this)
     this.handleMenu = this.handleMenu.bind(this)
@@ -131,7 +147,6 @@ class App extends Component {
       msecsFirst: 0,
       msecsPrevious: 0
     }
-
   } // end constructor
 
   componentWillMount () { // before render()
@@ -162,8 +177,7 @@ class App extends Component {
     let bufferLoader = new BufferLoader(
       context, inputFiles,
       function (bufferList) {
-        for (let i = 0; i < soundList.length; i++) 
-            this.sound[soundList[i]] = bufferList[i]
+        for (let i = 0; i < soundList.length; i++) { this.sound[soundList[i]] = bufferList[i] }
       }.bind(this)
     )
 
@@ -192,10 +206,10 @@ class App extends Component {
   }
 
   render () {
-    const {ja, loopTable, newRow, loopStat,
+    const {ja, loopTable, loopTableNewRow, loopStat,
       metroOn, clickPatternNo, metroSound, drumsOn, drumPatternNo,
-      voiceOn, voice,
-      playing, bpm, bpmFrac,
+      voiceOn, voice, playing, bpm, bpmFrac,
+      increment, perBars, muteBars, muteProb,
       rest, restBars, swingVal, evenVol, showMore,
       showAdvanced, showSetLists, showSongList,
       showCustomLoop, selectedSetList, selectedSong} = this.state
@@ -351,13 +365,13 @@ class App extends Component {
         <br />
         <span className='selector'>
           {m.increment}: &nbsp;
-       <select name='increment' defaultValue='0'
+       <select name='increment' value={increment}
          onChange={handleAdvanced}>{IncrementOptions}
        </select> bpm
        </span>
          /
         <span className='selector'>
-          <select name='perBars' defaultValue='0' onChange={handleAdvanced}>
+          <select name='perBars' value={perBars} onChange={handleAdvanced}>
             <option value='0'>off</option> <option value='1'>1</option>
             <option value='2'>2</option> <option value='4'>4</option>
             <option value='8'>8</option> <option value='12'>12</option>
@@ -366,7 +380,7 @@ class App extends Component {
           {m.perBars}</span><br />
         <span className='selector'>
           {m.muteBars}: &nbsp;
-         <select name='muteBars' defaultValue='0' onChange={handleAdvanced}>
+         <select name='muteBars' value={muteBars} onChange={handleAdvanced}>
            <option value='0'>off</option> <option value='1'>1</option>
            <option value='2'>2</option> <option value='4'>4</option>
            <option value='8'>8</option> <option value='12'>12</option>
@@ -375,7 +389,7 @@ class App extends Component {
         </span>
         {m.muteProb1}, {m.muteProb2}
         <span className='selector'>
-          <select name='muteProb' defaultValue='0' onChange={handleAdvanced}>
+          <select name='muteProb' value={parseFloat(muteProb,10).toFixed(1)} onChange={handleAdvanced}>
             <option value='0.0'>0.0</option> <option value='0.1'>0.1</option>
             <option value='0.2'>0.2</option> <option value='0.3'>0.3</option>
             <option value='0.4'>0.4</option> <option value='0.5'>0.5</option>
@@ -443,18 +457,18 @@ class App extends Component {
        onChange={handleTable} /></td>
                 <td align='right'>add</td>
                 <td align='right' className='selector'>
-                  <select name='loopAddPreset' value={newRow.clickPatternNo}
-                    onChange={handleTable}>
+                  <select name='loopAddPreset' 
+                  value={loopTableNewRow.pattern} onChange={handleTable}>
                     {presetOptions}</select></td>
                 <td align='right' className='selector'>
                   <span><select name='loopSwingVal'
-                    value={parseInt(newRow.swingVal * 10, 10)}
+                    value={parseInt(loopTableNewRow.swingVal * 10, 10)}
                     onChange={handleTable}>
                     {SwingValOptions}</select>
                   </span></td>
                 <td align='right' className='selector'><span>
                   <select name='loopRepeat'
-                    defaultValue={newRow.repeat}
+                    defaultValue={loopTableNewRow.repeat}
                     onChange={handleTable}>{RepeatOptions}</select>
                 </span></td>
               </tr>
@@ -705,7 +719,7 @@ class App extends Component {
   }
 
   handleTable (event) {
-    let {newRow, loopTable} = this.state
+    let {loopTable, loopTableNewRow} = this.state
 
     if (event.target.name === 'loopDel') {
       loopTable.splice(event.target.value, 1)
@@ -714,33 +728,34 @@ class App extends Component {
     }
 
     if (event.target.name === 'loopAdd') {
-      loopTable.push(
-        {preset: loadedClickPatterns[newRow.clickPatternNo],
-          clickPatternNo: newRow.clickPatternNo,
-          presetVal: loadedClickPatterns[newRow.clickPatternNo].value,
-          swingVal: newRow.swingVal,
-          repeat: newRow.repeat
-        })
+      loopTable.push(loopTableNewRow)
       this.setState({loopTable: loopTable})
       return
     }
 
-    if (event.target.name === 'loopAddPreset') {
-      newRow.clickPatternNo = parseInt(event.target.value, 10)
-      if (loadedClickPatterns[newRow.clickPatternNo].swingVal !== undefined) { newRow.swingVal = loadedClickPatterns[newRow.clickPatternNo].swingVal } else { newRow.swingVal = 1.5 }
-      this.setState({newRow: newRow})
+    if (event.target.name === 'loopAddClickPattern') {
+      loopTableNewRow.pattern 
+        = loadedClickPatterns[parseInt(event.target.value, 10)]
+      this.setState({loopTableNewRow: loopTableNewRow})
+      return
+    }
+
+    if (event.target.name === 'loopAddDrumPattern') {
+      loopTableNewRow.pattern 
+        = loadedDrumPatterns[parseInt(event.target.value, 10)]
+      this.setState({loopTableNewRow: loopTableNewRow})
       return
     }
 
     if (event.target.name === 'loopSwingVal') {
-      newRow.swingVal = parseFloat(event.target.value / 10, 10)
-      this.setState({newRow: newRow})
+      loopTableNewRow.swingVal = parseFloat(event.target.value / 10, 10)
+      this.setState({loopTableNewRow: loopTableNewRow})
       return
     }
 
     if (event.target.name === 'loopRepeat') {
-      newRow.repeat = parseInt(event.target.value, 10)
-      this.setState({newRow: newRow})
+      loopTableNewRow.repeat = parseInt(event.target.value, 10)
+      this.setState({loopTableNewRow: loopTableNewRow})
     }
   } // end handleTable
 
@@ -912,7 +927,6 @@ class App extends Component {
   } // end handleSetLists
 
   startStopDrums (event) {
-
     if (event.target.name === 'startStop') {
       if (this.state.playing) {
         this.startStopDrums({target: {name: 'stop'}})
@@ -922,24 +936,23 @@ class App extends Component {
       this.setState({playing: !this.state.playing})
     }
 
-/* actual process */    
+/* actual process */
     if (event.target.name === 'stop') {
-      for (let beat = 0; beat < this.tickEvents.length; beat++) 
-         this.tickEvents[beat].clear()
+      for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
       this.handleTimer({target: {name: 'clearTimer'}})
       return
     }
 
     if (event.target.name === 'start') {
-      // console.log('startDrums')
       const selected = this.params.currentPattern
-      console.log('selected: ' + selected.name) 
+      // console.log('selected: ' + selected.name)
       this.params.numerator = selected.numerator
       this.params.denominator = selected.denominator
+     
       let clickPmin = this.state.bpm * (this.params.denominator / 4)
 
       this.params.count = 0
-      this.params.startTime = context.currentTime  
+      this.params.startTime = context.currentTime
       for (let beat = 0; beat < this.params.numerator; beat++) {
         event = clock.callbackAtTime(
            function (event) {
@@ -956,9 +969,14 @@ class App extends Component {
     } // end start
 
     if (event.target.name === 'restart' && this.state.playing) {
-       this.startStopDrums({target: {name: 'stop'}})
-       this.startStopDrums({target: {name: 'start'}})
-    } // end restart 
+      console.log('restart')
+      this.startStopDrums({target: {name: 'stop'}})
+      // this.startStopDrums({target: {name: 'start'}})
+      clock.setTimeout(function (event) {
+        this.startStopDrums({target: {name: 'start'}})
+      }.bind(this), 0.02)
+      return
+    } // end restart
 
   } // end startStopDrums()
 
@@ -1071,27 +1089,27 @@ class App extends Component {
   }
 
   playPattern (deadline) {
-//  console.log('playPattern() ' + deadline)
-
-    const {bpm,restBars,metroSound,voiceOn,voice} = this.state
-    const {maxBpm, minBpm, increment, barTimer, perBars,
-      muteBars, muteProb, currentPattern, numerator, triplet} = this.params
     const sound = this.sound
+    const {bpm, restBars, metroSound, voiceOn, voice, increment,
+           perBars,muteBars,muteProb,evenVol} = this.state
+    const {maxBpm, minBpm, barTimer, currentPattern, numerator,
+           triplet} = this.params
     let {muteCount, muteStat, count, barCount} = this.params
 
     // bar timer
-    if (barTimer > 0 && restBars <= 0){
+    if (barTimer > 0 && restBars <= 0) {
       this.startStop({target: {name: 'stop'}})
       this.setState({playing: false, restBars: barTimer})
       return
     }
+
     // automatic bpm increment
-    if ((perBars > 0) && (count === 0) && (barCount > 0) 
-        && (barCount % perBars) === 0) {
+    if ((perBars > 0) && (count === 0) && (barCount > 0) &&
+        (barCount % perBars) === 0) {
       let newBpm = parseFloat(bpm) + parseFloat(increment)
       if (newBpm > maxBpm) newBpm = maxBpm
       if (newBpm < minBpm) newBpm = minBpm
-      this.handleBpm({target: 'bpm_set', value: newBpm.toFix(1)})
+      this.handleBpm({target: {name: 'bpm_set', value: newBpm.toFixed(1)}})
     } // end automatic bpm increment
 
 // random mute
@@ -1109,18 +1127,16 @@ class App extends Component {
       }
     } // end random mute
 
-// even Volume    
-    let volume = 1.0
-    if (triplet) {
-      if (count % 3 !== 2) volume *= this.state.evenVol
-    } else {
-      if (count % 2 === 0) volume *= this.state.evenVol
-    }
-    if (muteStat) volume = 0.0
-
     let source = []
+    let master = 1.0
 
-    if (currentPattern.type === 'drumkit'){ // last note is always voice
+    if (triplet) {
+      if (count % 3 !== 2) master = evenVol
+    } else {
+      if (count % 2 === 0) master = evenVol
+    }
+
+    if (currentPattern.type === 'drumkit') { // last note is always voice
       for (let i = 0; i < currentPattern.pattern.length - 1; i++) {
         const current = currentPattern.pattern[i]
         if (current.values[count] === 0) continue
@@ -1129,166 +1145,166 @@ class App extends Component {
         source[i].buffer = sound[current.note]
         source[i].connect(gainNode[i])
         gainNode[i].connect(context.destination)
-        gainNode[i].gain.value 
-          = volume*parseInt(current.values[count],10) / 9.0
+        gainNode[i].gain.value =
+          master * parseInt(current.values[count], 10) / 9.0
         source[i].start(deadline)
       }
     } // end drumkit
-    
-    const lastIndex = currentPattern.pattern.length - 1
-    if (currentPattern.type === 'clicks'){ 
-      // console.log('clicks ' + metroSound)
-      for (let i=0; i < lastIndex; i++) 
-         source[i] = context.createBufferSource()
 
-      if (metroSound === 'cb1'){
-         source[0].buffer = sound['cowbell-higher']
-         source[1].buffer = sound['cowbell-higher']
-         source[lastIndex-1].buffer = sound['cowbell-higher']
+    const lastIndex = currentPattern.pattern.length - 1
+
+    /* voice */
+    const current = currentPattern.pattern[lastIndex]
+    if (voiceOn && (current.note === 'voice') && (current.values[count] > 0)) {
+      source[lastIndex] = context.createBufferSource()
+      source[lastIndex].buffer = sound[voice + '-' + current.values[count]]
+      source[lastIndex].connect(gainNode[lastIndex])
+      gainNode[lastIndex].connect(context.destination)
+      gainNode[lastIndex].gain.value = 0.5
+      source[lastIndex].start(deadline)
+    }
+
+    /* mute */
+    if (currentPattern.type === 'clicks') {
+      // console.log('clicks ' + metroSound)
+      for (let i = 0; i < lastIndex; i++) { source[i] = context.createBufferSource() }
+
+      if (metroSound === 'cb1') {
+        source[0].buffer = sound['cowbell-higher']
+        source[1].buffer = sound['cowbell-higher']
+        source[lastIndex - 1].buffer = sound['cowbell-higher']
       }
-      if (metroSound === 'cb2'){
+      if (metroSound === 'cb2') {
         source[0].buffer = sound['cowbell-high']
         source[1].buffer = sound['cowbell-high']
-        source[lastIndex-1].buffer = sound['cowbell-high']
+        source[lastIndex - 1].buffer = sound['cowbell-high']
       }
 
-      if (metroSound === 'cb3'){
+      if (metroSound === 'cb3') {
         source[0].buffer = sound['cowbell-mid']
         source[1].buffer = sound['cowbell-mid']
-        source[lastIndex-1].buffer = sound['cowbell-mid']
+        source[lastIndex - 1].buffer = sound['cowbell-mid']
       }
 
-      if (metroSound === 'cb4'){
+      if (metroSound === 'cb4') {
         source[0].buffer = sound['cowbell-low']
         source[1].buffer = sound['cowbell-low']
-        source[lastIndex-1].buffer = sound['cowbell-low']
+        source[lastIndex - 1].buffer = sound['cowbell-low']
       }
-      if (metroSound === 'cb5'){
+      if (metroSound === 'cb5') {
         source[0].buffer = sound['cowbell-lower']
         source[1].buffer = sound['cowbell-lower']
-        source[lastIndex-1].buffer = sound['cowbell-lower']
+        source[lastIndex - 1].buffer = sound['cowbell-lower']
       }
-      if (metroSound === '2cb1'){
+      if (metroSound === '2cb1') {
         source[0].buffer = sound['cowbell-higher']
         source[1].buffer = sound['cowbell-high']
-        source[lastIndex-1].buffer = sound['cowbell-high']
+        source[lastIndex - 1].buffer = sound['cowbell-high']
       }
-      if (metroSound === '2cb2'){
+      if (metroSound === '2cb2') {
         source[0].buffer = sound['cowbell-high']
         source[1].buffer = sound['cowbell-mid']
-        source[lastIndex-1].buffer = sound['cowbell-mid']
+        source[lastIndex - 1].buffer = sound['cowbell-mid']
       }
-      if (metroSound === '2cb3'){
+      if (metroSound === '2cb3') {
         source[0].buffer = sound['cowbell-mid']
         source[1].buffer = sound['cowbell-low']
-        source[lastIndex-1].buffer = sound['cowbell-low']
+        source[lastIndex - 1].buffer = sound['cowbell-low']
       }
-      if (metroSound === '2cb4'){
+      if (metroSound === '2cb4') {
         source[0].buffer = sound['cowbell-low']
         source[1].buffer = sound['cowbell-lower']
-        source[lastIndex-1].buffer = sound['cowbell-lower']
+        source[lastIndex - 1].buffer = sound['cowbell-lower']
       }
-      if (metroSound === '3cb1'){
+      if (metroSound === '3cb1') {
         source[0].buffer = sound['cowbell-higher']
         source[1].buffer = sound['cowbell-high']
-        source[lastIndex-1].buffer = sound['cowbell-mid']
+        source[lastIndex - 1].buffer = sound['cowbell-mid']
       }
-      if (metroSound === '3cb2'){
+      if (metroSound === '3cb2') {
         source[0].buffer = sound['cowbell-high']
         source[1].buffer = sound['cowbell-mid']
-        source[lastIndex-1].buffer = sound['cowbell-low']
+        source[lastIndex - 1].buffer = sound['cowbell-low']
       }
-      if (metroSound === '3cb3'){
+      if (metroSound === '3cb3') {
         source[0].buffer = sound['cowbell-mid']
         source[1].buffer = sound['cowbell-low']
-        source[lastIndex-1].buffer = sound['cowbell-lower']
+        source[lastIndex - 1].buffer = sound['cowbell-lower']
       }
-      if (metroSound === '1cg1'){
+      if (metroSound === '1cg1') {
         source[0].buffer = sound['highConga']
         source[1].buffer = sound['highConga']
-        source[lastIndex-1].buffer = sound['highConga']
+        source[lastIndex - 1].buffer = sound['highConga']
       }
-      if (metroSound === '1cg2'){
+      if (metroSound === '1cg2') {
         source[0].buffer = sound['midConga']
         source[1].buffer = sound['midConga']
-        source[lastIndex-1].buffer = sound['midConga']
+        source[lastIndex - 1].buffer = sound['midConga']
       }
-      if (metroSound === '1cg3'){
+      if (metroSound === '1cg3') {
         source[0].buffer = sound['lowConga']
         source[1].buffer = sound['lowConga']
-        source[lastIndex-1].buffer = sound['lowConga']
+        source[lastIndex - 1].buffer = sound['lowConga']
       }
-      if (metroSound === '2cg1'){
+      if (metroSound === '2cg1') {
         source[0].buffer = sound['highConga']
         source[1].buffer = sound['midConga']
-        source[lastIndex-1].buffer = sound['midConga']
+        source[lastIndex - 1].buffer = sound['midConga']
       }
-      if (metroSound === '2cg2'){
+      if (metroSound === '2cg2') {
         source[0].buffer = sound['midConga']
         source[1].buffer = sound['lowConga']
-        source[lastIndex-1].buffer = sound['lowConga']
+        source[lastIndex - 1].buffer = sound['lowConga']
       }
-      if (metroSound === '3cg'){
+      if (metroSound === '3cg') {
         source[0].buffer = sound['highConga']
         source[1].buffer = sound['midConga']
-        source[lastIndex-1].buffer = sound['lowConga']
+        source[lastIndex - 1].buffer = sound['lowConga']
       }
-      if (metroSound === 'cv'){
+      if (metroSound === 'cv') {
         source[0].buffer = sound['clave']
         source[1].buffer = sound['clave']
-        source[lastIndex-1].buffer = sound['clave']
+        source[lastIndex - 1].buffer = sound['clave']
       }
-      if (metroSound === 'hc'){
+      if (metroSound === 'hc') {
         source[0].buffer = sound['handClap']
         source[1].buffer = sound['handClap']
-        source[lastIndex-1].buffer = sound['handClap']
+        source[lastIndex - 1].buffer = sound['handClap']
       }
 
-      for (let i=0; i < lastIndex; i++){ 
-        let vol = parseInt(currentPattern.pattern[i].values[count],10)
-        if (vol === 0) continue 
-
-        source[i].connect(gainNode[i])
-        gainNode[i].connect(context.destination)
-        gainNode[i].gain.value = volume*vol/9.0 
-        source[i].start(deadline)
-      }
-
-    } // end clips
-
-    const current = currentPattern.pattern[lastIndex]
-    if (voiceOn && (current.note === 'voice') && (current.values[count] > 0)){
-        source[lastIndex] = context.createBufferSource()
-        source[lastIndex].buffer = sound[voice + '-' + current.values[count]] 
-        source[lastIndex].connect(gainNode[lastIndex])
-        gainNode[lastIndex].connect(context.destination)
-        gainNode[lastIndex].gain.value = 1.0 
-        source[lastIndex].start(deadline)
-    }
+      if (!muteStat) {
+        for (let i = 0; i < lastIndex; i++) {
+          let vol = parseInt(currentPattern.pattern[i].values[count], 10)
+          if (vol === 0) continue
+          source[i].connect(gainNode[i])
+          gainNode[i].connect(context.destination)
+          gainNode[i].gain.value = master * vol / 9.0
+          source[i].start(deadline)
+        }
+      } // end !muteStat
+    } // end clicks or drums
 
     // next count
     count = (count + 1) % numerator
     if (count === 0) {
       barCount++
-      if (this.state.restBars > 0) 
-         this.setState({restBars: this.state.restBars -1})
+      if (this.state.restBars > 0) { this.setState({restBars: this.state.restBars - 1}) }
     }
     this.params.count = count
     this.params.barCount = barCount
+    this.params.muteCount = muteCount
+    this.params.muteStat = muteStat
 
-    if (this.state.loopStat.playing && count === 0) 
-       this.customPlay({target: {name: 'nextBar'}})
-
+    if (this.state.loopStat.playing && count === 0) { this.customPlay({target: {name: 'nextBar'}}) }
   } // end playClick
 
   playClick (deadline) { }
 
 /*
   playClick (deadline) {
-    const {bpm, restBars} = this.state
+    const {bpm, restBars, increment,perBars,muteBars,muteProb} = this.state
     const {maxBpm, minBpm, numerator, denominator, triplet,
-          increment, barTimer, perBars, muteBars, muteProb,
-          cowbell, maleVoice} = this.params
+          barTimer, cowbell, maleVoice} = this.params
     let {muteCount, muteStat, count, barCount} = this.params
 
     console.log('count: ' + count)
@@ -1360,9 +1376,9 @@ class App extends Component {
     }
 
     if (triplet) {
-      if (count % 3 !== 2) volume *= this.state.evenVol
+      if (count % 3 !== 2) master *= this.state.evenVol
     } else {
-      if (count % 2 === 0) volume *= this.state.evenVol
+      if (count % 2 === 0) master *= this.state.evenVol
     }
 
     if (this.state.voice === 'c') source.connect(gainNode)
@@ -1401,10 +1417,9 @@ class App extends Component {
       return
     }
 
-    if (event.target.name === 'startTimer' && this.params.timer > 0){
-
-      this.timerEvent = timerClock.callbackAtTime(function(event){
-        this.setState({rest: this.state.rest -1})         
+    if (event.target.name === 'startTimer' && this.params.timer > 0) {
+      this.timerEvent = timerClock.callbackAtTime(function (event) {
+        this.setState({rest: this.state.rest - 1})
       }.bind(this), 1).repeat(1)
 
       this.timeoutEvent = timerClock.setTimeout(function (event) {
@@ -1415,20 +1430,19 @@ class App extends Component {
       return
     } // end startTimer
 
-    if (event.target.name === 'clearTimer' && this.params.timer > 0){
-      this.timerEvent.clear()
-      this.timeoutEvent.clear()
+    if (event.target.name === 'clearTimer' && this.params.timer > 0) {
+      if (this.timerEvent) this.timerEvent.clear()
+      if (this.timeoutEvent) this.timeoutEvent.clear()
       return
     } // end clearTimer
 
-    if (event.target.name === 'startBarTimer'){
+    if (event.target.name === 'startBarTimer') {
       return
-    } 
+    }
 
-    if (event.target.name === 'clearBarTimer'){
-      return
-    } 
+    if (event.target.name === 'clearBarTimer') {
 
+    }
   } // end handleTimer()
 
   handleMenu (event) {
@@ -1473,11 +1487,11 @@ class App extends Component {
   } // end handleMenu()
 
   handlePattern (event) {
-
     if (event.target.name === 'metroOn') {
       this.params.currentPattern = loadedClickPatterns[this.state.clickPatternNo]
       this.setState({metroOn: !this.state.metroOn,
         drumsOn: !this.state.drumsOn})
+      this.startStopDrums({target: {name: 'restart'}})
       return
     }
 
@@ -1491,6 +1505,7 @@ class App extends Component {
       this.params.currentPattern = loadedDrumPatterns[this.state.drumPatternNo]
       this.setState({metroOn: !this.state.metroOn,
         drumsOn: !this.state.drumsOn})
+      this.startStopDrums({target: {name: 'restart'}})
       return
     }
 
@@ -1504,31 +1519,35 @@ class App extends Component {
       return
     }
 
-    if ((event.target.name === 'drumPattern') 
-       || (event.target.name === 'clickPattern')) {
+    if ((event.target.name === 'drumPattern') ||
+       (event.target.name === 'clickPattern')) {
 
-      if (event.target.name === 'drumPattern'){
-         this.params.currentPattern 
-          = loadedDrumPatterns[parseInt(event.target.value,10)]
-         this.setState({drumPatternNo: parseInt(event.target.value, 10)})
-      } 
-
-      if (event.target.name === 'clickPattern') {
-         this.params.currentPattern 
-          = loadedClickPatterns[parseInt(event.target.value,10)]
-         this.setState({clickPatternNo: parseInt(event.target.value, 10)})
+      if (event.target.name === 'drumPattern') {
+        // console.log('drumPattern')
+        this.params.currentPattern =
+          loadedDrumPatterns[parseInt(event.target.value, 10)]
+        this.setState({drumPatternNo: parseInt(event.target.value, 10)})
       }
 
-      if (this.params.currentPattern.swingVal === undefined){
+      if (event.target.name === 'clickPattern') {
+        // console.log('clickPattern')
+        this.params.currentPattern =
+          loadedClickPatterns[parseInt(event.target.value, 10)]
+        this.setState({clickPatternNo: parseInt(event.target.value, 10)})
+      }
+
+      if (this.params.currentPattern.triplet === undefined) {
+        this.params.triplet = false
+      } else this.params.triplet = this.params.currentPattern.triplet 
+
+      if (this.params.currentPattern.swingVal === undefined) {
         this.params.swing = false
         this.params.currentPattern.swingVal = 1.5
       } else this.params.swing = true
 
       this.setState({swingVal: this.params.currentPattern.swingVal})
-   
-      if (this.state.playing)
-          this.startStopDrums({target: {name: 'restart'}})
-      return
+      this.startStopDrums({target: {name: 'restart'}})
+
     }
 
   } // end handlePattern()
@@ -1538,32 +1557,33 @@ class App extends Component {
     if (event.target.name === 'bpmFrac') {
       let bpmFrac = parseInt(event.target.value, 10)
       let newBpm = Math.floor(this.state.bpm) + 0.1 * bpmFrac
-      this.handleBpm({target: {name: 'bpm_set', value: newBpm.toFixed(1)}}) 
+      this.handleBpm({target: {name: 'bpm_set', value: newBpm.toFixed(1)}})
       return
     }
 
     if (event.target.name === 'bpmStep') { // +-1
-      let newBpm = parseFloat(this.state.bpm, 10) 
-        + parseInt(event.target.value, 10)
+      let newBpm = parseFloat(this.state.bpm, 10) +
+        parseInt(event.target.value, 10)
       this.handleBpm({target: {name: 'bpm_set', value: newBpm.toFixed(1)}})
       return
     }
 
     if (event.target.name === 'bpm_slider') { // slider
-      let newBpm = parseInt(event.target.value, 10) 
-        + 0.1 * parseInt(this.state.bpmFrac, 10)
+      let newBpm = parseInt(event.target.value, 10) +
+        0.1 * parseInt(this.state.bpmFrac, 10)
       this.handleBpm({target: {name: 'bpm_set', value: newBpm.toFixed(1)}})
       return
     }
 
     if (event.target.name === 'bpm_set') { // actual process
+      console.log('bpm_set: ' + event.target.value)
       let newBpm = parseFloat(event.target.value, 10).toFixed(1)
       if (this.state.playing) {
         clock.timeStretch(context.currentTime, this.tickEvents,
         this.state.bpm / newBpm)
       }
       this.setState(
-         {bpm: newBpm,
+        {bpm: newBpm,
           bpmFrac: Math.round(10 * (newBpm - Math.floor(newBpm)))}
       )
       return
@@ -1592,7 +1612,7 @@ class App extends Component {
 
   handleAdvanced (event) {
     if (event.target.name === 'increment') {
-      this.params.increment = parseInt(event.target.value, 10)
+      this.setState({increment: parseInt(event.target.value, 10)})
       return
     }
 
@@ -1606,38 +1626,38 @@ class App extends Component {
         this.setState({swingVal: 1.5})
       }
 
-      clock.setTimeout(function (event) {
-        this.startStop({target: {name: 'restart'}})
-      }.bind(this), 0.02)
-
+      this.startStopDrums({target: {name: 'restart'}})
       return
     } // end swing
 
     if (event.target.name === 'muteProb') {
-      this.params.muteProb = parseFloat(event.target.value, 10)
+      this.setState({muteProb: parseFloat(event.target.value, 10).toFixed(1)})
       return
     }
 
     if (event.target.name === 'perBars') {
-      this.params.perBars = parseInt(event.target.value, 10)
+      this.setState({perBars: parseInt(event.target.value, 10)})
       return
     }
 
     if (event.target.name === 'muteBars') {
-      this.params.muteBars = parseInt(event.target.value, 10)
+      this.setState({muteBars: parseInt(event.target.value, 10)})
       return
     }
     if (event.target.name === 'evenVol') {
       if (this.state.evenVol) { this.setState({evenVol: parseFloat(event.target.value)}) } else this.setState({evenVol: 1.0})
+      return
     }
   } // end handleAdvanced()
 
   handleWindowClose (event) { // finishing clean up
-    this.startStop({target: {name: 'stop'}})
+    this.startStopDrums({target: {name: 'stop'}})
     this.saveSetLists()
     clock.stop()
     context.close()
+    return
   }
+
 } // end App
 
 export default App
