@@ -323,7 +323,7 @@ class App extends Component {
         <td align='right'>{('00' + index).slice(-2)}</td>
         <td align='left' width='150'>{e.song}</td>
         <td align='right'>{e.bpm}</td>
-        <td align='right'>{e.type}</td>
+        <td align='right'>{e.table ? 'loop' : 'bar' }</td>
       </tr>)
     })
 
@@ -420,7 +420,7 @@ class App extends Component {
           d<input type='radio' name='loopDel' value={index}
             checked={false} onChange={handleTable} /></td>
         <td align='right'>{index}</td>
-        <td align='right'>{e.pattern.name}</td>
+        <td align='right'>{e.bar.name}</td>
         <td align='right'>{e.repeat}</td>
       </tr>)
     })
@@ -721,6 +721,11 @@ class App extends Component {
     const {loopTable,loopTableNewRow} = this.state
 //    let {loopTableNewRow} = this.state
 
+    if (event.target.name === 'setLoopTable') {
+      this.setState({loopTable: event.target.value})
+      return
+    }
+
     if (event.target.name === 'loopDel') {
       loopTable.splice(event.target.value, 1)
       this.setState({loopTable: loopTable})
@@ -834,37 +839,20 @@ class App extends Component {
         let song = songItems[parseInt(names[1], 10)]
         this.setState({selectedSong: song, showSongList: false})
 
-        if (song.type === 'preset') {
-          let presetNo = 0
-          for (presetNo = 0; presetNo < loadedClickPatterns.length; presetNo++) { if (loadedClickPatterns[presetNo].value === song.presetVal) break }
-          if (presetNo >= loadedClickPatterns.length) { presetNo = this.params.default_presetNo } // not found
-
-          this.handlePattern({target: {name: 'clickPattern', value: presetNo}})
-          this.handleBpm({target: {name: 'bpm_set', value: song.bpm}})
+        if (song.bar !== undefined) { // HERE
+          this.handlePattern({target: {name: 'setClickBar', value: song.bar}})
+          this.handleBpm({target: {name: 'bpm_set', 
+             value: parseFloat(song.bpm,10)}})
           return
-        }  // end preset
+        }  // end bar pattern
 
-        if (song.type === 'loop') {
+        if (song.table !== undefined) {
           this.state.loopTable.splice(0, this.state.loopTable.length) // clear
-
           this.handleBpm(
-           {target: {name: 'bpm_set', value: parseFloat(song.bpm, 10)}})
-
-          for (let i = 0; i < song.table.length; i++) { // search presetNo
-            let presetNo = 0
-            for (presetNo = 0; presetNo < loadedClickPatterns.length; presetNo++) {
-              if (loadedClickPatterns[presetNo].value === song.table[i].presetVal) { break }
-            }
-            if (presetNo >= loadedClickPatterns.length) { presetNo = this.params.default_presetNo }
-             // if not found
-
-            this.handleTable({target: {name: 'loopAddPreset', value: presetNo}})
-            this.handleTable({target:
-             {name: 'loopSwingVal', value: 10 * song.table[i].swingVal}})
-            this.handleTable({target:
-             {name: 'loopRepeat', value: song.table[i].repeat}})
-            this.handleTable({target: {name: 'loopAdd'}})
-          } // end for song.table.length
+            {target: {name: 'bpm_set', 
+             value: parseFloat(song.bpm, 10)}}
+          )
+          this.handleTable({target: {name: 'setLoopTable', value: song.table}})
           this.setState({showCustomLoop: true})
           return
         } // end if song.type === 'loop'
@@ -1429,6 +1417,25 @@ class App extends Component {
       this.setState({voice: event.target.value})
       return
     }
+
+ // SongList operation
+    if (event.target.name === 'setClickBar') {
+      this.params.currentPattern = event.target.value
+
+      if (this.params.currentPattern.triplet === undefined) {
+        this.params.triplet = false
+      } else this.params.triplet = this.params.currentPattern.triplet 
+
+      if (this.params.currentPattern.swingVal === undefined) {
+        this.params.swing = false
+        this.params.currentPattern.swingVal = 1.5
+      } else this.params.swing = true
+
+      // console.log('setClickBar swing: ' + this.params.currentPattern.swingVal)
+      this.setState({swingVal: this.params.currentPattern.swingVal})
+      return
+    }
+
 
     if ((event.target.name === 'drumPattern') ||
        (event.target.name === 'clickPattern')) {
