@@ -718,7 +718,8 @@ class App extends Component {
   }
 
   handleTable (event) {
-    let {loopTable, loopTableNewRow} = this.state
+    const {loopTable,loopTableNewRow} = this.state
+//    let {loopTableNewRow} = this.state
 
     if (event.target.name === 'loopDel') {
       loopTable.splice(event.target.value, 1)
@@ -947,7 +948,7 @@ class App extends Component {
 
     if (event.target.name === 'start') {
       const selected = this.params.currentPattern
-      console.log('start with: ' + selected.name)
+      // console.log('start with: ' + selected.name)
       this.params.numerator = selected.numerator
       this.params.denominator = selected.denominator
      
@@ -971,7 +972,7 @@ class App extends Component {
     } // end start
 
     if (event.target.name === 'restart' && this.state.playing) {
-      console.log('restart')
+      // console.log('restart')
       this.startStopDrums({target: {name: 'stop'}})
       clock.setTimeout(function (event) {
         this.startStopDrums({target: {name: 'start'}})
@@ -1486,7 +1487,7 @@ class App extends Component {
     }
 
     if (event.target.name === 'bpm_set') { // actual process
-      console.log('bpm_set: ' + event.target.value)
+      // console.log('bpm_set: ' + event.target.value)
       let newBpm = parseFloat(event.target.value, 10).toFixed(1)
       if (this.state.playing) {
         clock.timeStretch(context.currentTime, this.tickEvents,
