@@ -135,6 +135,7 @@ class App extends Component {
     this.nextTick = this.nextTick.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
     this.saveSetLists = this.saveSetLists.bind(this)
+    this.findNumByName = this.findNumByName.bind(this)
 
     this.tickEvents = []
     this.sound = {}
@@ -337,8 +338,8 @@ class App extends Component {
             {SongListRows}
             <tr>
               <td align='center' className='radioButton'>add current<br />
-         preset<input name='addSong'
-           type='radio' checked={false} value='preset'
+         bar<input name='addSong'
+           type='radio' checked={false} value='bar'
            onChange={handleSetLists} /><br />
          or loop<input name='addSong' type='radio' value='loop'
            checked={false} onChange={handleSetLists} />
@@ -610,7 +611,8 @@ class App extends Component {
           </span><br />
           {m.Current}: <b>(List) {selectedSetList.name} :
         (Song) {selectedSong.song} :
-        (type) {selectedSong.type} :
+        (ptn) {selectedSong.bar ? 
+               selectedSong.bar.name : 'loop'} :
         (bpm) {selectedSong.bpm}</b><br />
           {showSetLists ? <SetListUI /> : ''}
           {showSongList ? <SongListUI /> : ''}
@@ -838,9 +840,10 @@ class App extends Component {
         // console.log(names[1] + ' selected')
         let song = songItems[parseInt(names[1], 10)]
         this.setState({selectedSong: song, showSongList: false})
+        // this.setState({selectedSong: song})
 
         if (song.bar !== undefined) { // HERE
-          this.handlePattern({target: {name: 'setClickBar', value: song.bar}})
+          this.handlePattern({target: {name: 'setBar', value: song.bar}})
           this.handleBpm({target: {name: 'bpm_set', 
              value: parseFloat(song.bpm,10)}})
           return
@@ -865,7 +868,7 @@ class App extends Component {
         // console.log(names[1] + ' move to top')
         this.setState({showSongList: true})
         return
-      }
+      } // end top
 
       if (event.target.value.match(/^move/)) {
         let values = event.target.value.split(':')
@@ -874,7 +877,7 @@ class App extends Component {
         if (parseInt(values[1], 10) < parseInt(names[1], 10)) { songItems.splice(parseInt(names[1], 10) + 1, 1) } else if (parseInt(values[1], 10) > parseInt(names[1], 10)) { songItems.splice(parseInt(names[1], 10), 1) } else {} // console.log('no effect')
         this.setState({showSongList: true})
         return
-      }
+      } // end move
 
       if (event.target.value === 'delete') {
         // console.log(names[1] + ' delete')
@@ -886,12 +889,11 @@ class App extends Component {
     }
 
     if (event.target.name === 'addSong') {
-      if (event.target.value === 'preset') {
+      if (event.target.value === 'bar') {
         // console.log('addSong preset')
         this.state.selectedSetList.items.push({
           song: this.params.newSongName,
-          type: 'preset',
-          presetVal: loadedClickPatterns[this.state.presetNo].value,
+          bar: this.params.currentPattern,
           bpm: parseFloat(this.state.bpm, 10).toFixed(1)})
       }
 
@@ -900,11 +902,10 @@ class App extends Component {
         if (this.state.loopTable.length > 0) {
           this.state.selectedSetList.items.push({
             song: this.params.newSongName,
-            type: 'loop',
             table: this.state.loopTable,
             bpm: parseFloat(this.state.bpm, 10).toFixed(1)})
         } else {} // console.log('addSong loop is empty')
-      }
+      } // end addSong
 
       this.saveSetLists()
       this.setState({showSongList: true})
@@ -913,6 +914,7 @@ class App extends Component {
 
     if (event.target.name === 'newSong') {
       this.params.newSongName = event.target.value
+      return
     }
   } // end handleSetLists
 
@@ -1419,20 +1421,26 @@ class App extends Component {
     }
 
  // SongList operation
-    if (event.target.name === 'setClickBar') {
-      this.params.currentPattern = event.target.value
+    if (event.target.name === 'setBar') {
+      const current = event.target.value
+      this.params.currentPattern = current
 
-      if (this.params.currentPattern.triplet === undefined) {
+      if (current.triplet === undefined) {
         this.params.triplet = false
-      } else this.params.triplet = this.params.currentPattern.triplet 
+      } else this.params.triplet = current.triplet 
 
-      if (this.params.currentPattern.swingVal === undefined) {
+      if (current.swingVal === undefined) {
         this.params.swing = false
-        this.params.currentPattern.swingVal = 1.5
+        current.swingVal = 1.5
       } else this.params.swing = true
+      this.setState({swingVal: current.swingVal})
 
-      // console.log('setClickBar swing: ' + this.params.currentPattern.swingVal)
-      this.setState({swingVal: this.params.currentPattern.swingVal})
+      let num = this.findNumByName(current.name)
+      // console.log('NUM: ' + num) 
+      if (num < 0) return
+      if (current.type === 'clicks') this.setState({clickPatternNo: num})
+      else if (current.type === 'drumkit') this.setState({drumPatternNo: num})
+
       return
     }
 
@@ -1574,6 +1582,16 @@ class App extends Component {
     clock.stop()
     context.close()
     return
+  }
+
+  findNumByName(name){
+    for (let i=0; i < loadedClickPatterns.length; i++)
+      if(loadedClickPatterns[i].name === name) return i
+
+    for (let i=0; i < loadedDrumPatterns.length; i++)
+      if(loadedDrumPatterns[i].name === name) return i
+
+    return -1
   }
 
 } // end App

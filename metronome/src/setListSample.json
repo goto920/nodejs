@@ -8,6 +8,15 @@
                  {"note": "click2", "values": [0,7,0,7,0,7,0,7]},
                  {"note": "voice", "values": [1,0,2,0,3,0,4,0]}]}
     },  
+   {"song": "Sweet Home Chicago2", "bpm": 120.0, 
+   "bar": { "name": "4/4blues01", "type": "drumkit",
+    "numerator": 8, "denominator": 8, "swingVal": 2.0,
+    "pattern": [
+      {"note":"ride","values":  [3,3,3,3,3,3,3,3]},
+      {"note":"snare","values": [2,2,8,2,2,2,8,2]},
+      {"note":"bass", "values": [7,0,7,0,7,0,7,0]},
+      {"note":"voice" ,"values": [1,0,2,0,3,0,4,0]}]}
+    },  
 
    {"song": "Crossroads/Cream", "bpm": 135.3,
    "bar": {"name": "4/4","type": "clicks", "default": true,
