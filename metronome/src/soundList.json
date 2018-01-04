@@ -8,6 +8,8 @@
 "cowbell-mid",
 "cowbell-tr808",
 "crash",
+"crashL",
+"crashR",
 "female-1",
 "female-2",
 "female-3",
@@ -39,5 +41,10 @@
 "openHihat",
 "ride",
 "snare",
-"snareRim"
+"snareRim",
+"snareClosedRim",
+"snareOpenRim",
+"tomHigh",
+"tomMid",
+"tomLow"
 ]

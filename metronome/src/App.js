@@ -110,17 +110,18 @@ class App extends Component {
       showSetLists: false,
       showCustomLoop: false,
       showSongList: false,
-
+      // for custom loop
       loopTable: [],
-      loopTableNewRow: 
-         {pattern: loadedClickPatterns[this.params.defaultClickNo]},
+      loopTableNewRow: {
+        pattern: loadedClickPatterns[this.params.default_clickPatternNo],
+        swingVal: 1.5, repeat: 4},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
+
       selectedSetList: {},
       selectedSong: {name: 'none'} // default
     } // end state
 
     this.setState = this.setState.bind(this)
-//    this.startStop = this.startStop.bind(this)
     this.startStopDrums = this.startStopDrums.bind(this)
     this.customPlay = this.customPlay.bind(this)
     this.handleMenu = this.handleMenu.bind(this)
@@ -128,10 +129,8 @@ class App extends Component {
     this.handleBpm = this.handleBpm.bind(this)
     this.handleTimer = this.handleTimer.bind(this)
     this.handleAdvanced = this.handleAdvanced.bind(this)
-//    this.handleChange = this.handleChange.bind(this)
     this.handleSetLists = this.handleSetLists.bind(this)
     this.handleTable = this.handleTable.bind(this)
-    this.playClick = this.playClick.bind(this)
     this.playPattern = this.playPattern.bind(this)
     this.nextTick = this.nextTick.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
@@ -161,6 +160,7 @@ class App extends Component {
       this.params.setLists.push(loadedSetListSample)
     }
     this.setState({selectedSetList: this.params.setLists[0]})
+    return
   }
 
   componentDidMount () {
@@ -220,7 +220,7 @@ class App extends Component {
            handleMenu, handlePattern, handleBpm, handleTimer,
            handleAdvanced, handleTable, handleSetLists} = this
 
-    const presetOptions = loadedClickPatterns.map((e, index) => {
+    const clickPatternOptions = loadedClickPatterns.map((e, index) => {
       return (<option value={index} key={index}>
         {('0' + index).slice(-2)}: {e.name}</option>)
     })
@@ -420,8 +420,7 @@ class App extends Component {
           d<input type='radio' name='loopDel' value={index}
             checked={false} onChange={handleTable} /></td>
         <td align='right'>{index}</td>
-        <td align='right'>{e.preset.value}</td>
-        <td align='right'>{e.swingVal.toFixed(1)}</td>
+        <td align='right'>{e.pattern.name}</td>
         <td align='right'>{e.repeat}</td>
       </tr>)
     })
@@ -450,22 +449,26 @@ class App extends Component {
           <table border='3'>
             <tbody>
               <tr><th>d/a</th><th>seq</th>
-                <th>preset beat</th><th>swing</th><th>repeat</th></tr>
+                <th>pattern</th><th>repeat</th></tr>
               {loopTableRows}
               <tr><td align='right' className='radioButton'>
-     a<input type='radio' name='loopAdd' checked={false}
-       onChange={handleTable} /></td>
+      metro
+      <input type='radio' name='loopAdd' value='click' checked={false}
+       onChange={handleTable} />
+     <br />
+      drum
+      <input type='radio' name='loopAdd' value='drum' checked={false}
+       onChange={handleTable} />
+     </td>
                 <td align='right'>add</td>
                 <td align='right' className='selector'>
-                  <select name='loopAddPreset' 
-                  value={loopTableNewRow.pattern} onChange={handleTable}>
-                    {presetOptions}</select></td>
-                <td align='right' className='selector'>
-                  <span><select name='loopSwingVal'
-                    value={parseInt(loopTableNewRow.swingVal * 10, 10)}
-                    onChange={handleTable}>
-                    {SwingValOptions}</select>
-                  </span></td>
+                  <select name='loopAddClickPattern' value={clickPatternNo} 
+                  onChange={handleTable}>
+                    {clickPatternOptions}</select><br />
+                  <select name='loopAddDrumPattern' value={drumPatternNo} 
+                  onChange={handleTable}>
+                    {drumPatternOptions}</select><br />
+                </td>
                 <td align='right' className='selector'><span>
                   <select name='loopRepeat'
                     defaultValue={loopTableNewRow.repeat}
@@ -494,7 +497,7 @@ class App extends Component {
             checked={metroOn} onChange={handlePattern} />
           {m.metronome}: <select name='clickPattern' value={clickPatternNo}
             onChange={handlePattern}>
-            {presetOptions}
+            {clickPatternOptions}
           </select>
         </span> &nbsp;
         {m.sound}:&nbsp;
@@ -629,18 +632,16 @@ class App extends Component {
   } // end render()
 
   customPlay (event) {
+
     const {loopTable} = this.state
     let {loopStat} = this.state
     if (loopTable.length <= 0) return
 
     if (event.target.name === 'startLoop') {
-      this.startStop({target: {name: 'stop'}}) // stop the metronome
-
+      this.startStopDrums({target: {name: 'stop'}}) // stop the metronome
       if (loopStat.playing) {
-//        console.log('stopLoop')
         this.customPlay({target: {name: 'stop'}})
       } else {
-//        console.log('startLoop')
         loopStat.seq = 0
         loopStat.bar = 0
         loopStat.repeat = 1
@@ -654,7 +655,6 @@ class App extends Component {
     }
 
     if (event.target.name === 'rewindLoop') {
-//      console.log('rewindLoop')
       this.customPlay({target: {name: 'stop'}})
       loopStat.seq = 0
       loopStat.repeat = 0
@@ -676,7 +676,6 @@ class App extends Component {
     }
 
     if (event.target.name === 'nextBar') {
-//      console.log('nextBar: ' + loopStat.bar)
 
       if (loopStat.bar === 0 ||
          loopStat.repeat === loopTable[loopStat.seq].repeat) { // next seq
@@ -684,12 +683,13 @@ class App extends Component {
         if (loopStat.seq === loopTable.length) loopStat.seq = 0
 
         loopStat.repeat = 1
-        let {preset, swingVal} = loopTable[loopStat.seq]
-        this.params.numerator = preset.numerator
-        this.params.denominator = preset.denominator
-        this.params.triplet = preset.triplet
-        if (parseInt(swingVal * 10, 10) !== 15) {
-          this.setState({swingVal: swingVal})
+        let {pattern} = loopTable[loopStat.seq]
+        this.params.currentPattern = pattern
+        this.params.numerator = pattern.numerator
+        this.params.denominator = pattern.denominator
+        this.params.triplet = pattern.triplet
+        if(pattern.swingVal !== undefined){
+          this.setState({swingVal: pattern.swingVal})
           this.params.swing = true
         } else {
           this.setState({swingVal: 1.5})
@@ -704,8 +704,7 @@ class App extends Component {
       for (let beat = 0; beat < this.params.numerator; beat++) {
         event = clock.callbackAtTime(
           function (event) {
-            this.playClick(event.deadline)
-            // this.playPattern(event.deadline)
+            this.playPattern(event.deadline)
           }.bind(this),
           this.nextTick(beat)
         ).tolerance({early: early, late: late}) // tight early tolerance
@@ -728,28 +727,30 @@ class App extends Component {
     }
 
     if (event.target.name === 'loopAdd') {
-      loopTable.push(loopTableNewRow)
+
+      if (event.target.value === 'drum'){
+        loopTableNewRow.pattern
+          = loadedDrumPatterns[this.state.drumPatternNo] 
+      } else if (event.target.value === 'click'){ 
+        loopTableNewRow.pattern 
+          = loadedClickPatterns[this.state.clickPatternNo] 
+      }
+     
+      loopTable.push({pattern: loopTableNewRow.pattern, 
+        repeat: loopTableNewRow.repeat})
       this.setState({loopTable: loopTable})
       return
     }
 
     if (event.target.name === 'loopAddClickPattern') {
-      loopTableNewRow.pattern 
-        = loadedClickPatterns[parseInt(event.target.value, 10)]
-      this.setState({loopTableNewRow: loopTableNewRow})
+      let clickPatternNo = parseInt(event.target.value, 10)
+      this.setState({clickPatternNo: clickPatternNo})
       return
     }
 
     if (event.target.name === 'loopAddDrumPattern') {
-      loopTableNewRow.pattern 
-        = loadedDrumPatterns[parseInt(event.target.value, 10)]
-      this.setState({loopTableNewRow: loopTableNewRow})
-      return
-    }
-
-    if (event.target.name === 'loopSwingVal') {
-      loopTableNewRow.swingVal = parseFloat(event.target.value / 10, 10)
-      this.setState({loopTableNewRow: loopTableNewRow})
+      let drumPatternNo = parseInt(event.target.value, 10)
+      this.setState({drumPatternNo: drumPatternNo})
       return
     }
 
@@ -927,6 +928,7 @@ class App extends Component {
   } // end handleSetLists
 
   startStopDrums (event) {
+
     if (event.target.name === 'startStop') {
       if (this.state.playing) {
         this.startStopDrums({target: {name: 'stop'}})
@@ -945,7 +947,7 @@ class App extends Component {
 
     if (event.target.name === 'start') {
       const selected = this.params.currentPattern
-      // console.log('selected: ' + selected.name)
+      console.log('start with: ' + selected.name)
       this.params.numerator = selected.numerator
       this.params.denominator = selected.denominator
      
@@ -971,104 +973,14 @@ class App extends Component {
     if (event.target.name === 'restart' && this.state.playing) {
       console.log('restart')
       this.startStopDrums({target: {name: 'stop'}})
-      // this.startStopDrums({target: {name: 'start'}})
       clock.setTimeout(function (event) {
         this.startStopDrums({target: {name: 'start'}})
       }.bind(this), 0.02)
+       .tolerance({early: early, late: late}) // tight early tolerance
       return
     } // end restart
 
   } // end startStopDrums()
-
-  startStop (event) {
-    if (this.state.loopStat.playing) return
-
-    if (event.target.name === 'stop') {
-      if (this.state.playing) {
-        this.setState({playing: false})
-        for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
-      }
-      this.params.count = 0
-      if (this.timerEvent) {
-        if (this.timerEvent !== undefined) this.timerEvent.clear()
-        if (this.timeoutEvent !== undefined) this.timeoutEvent.clear()
-      }
-      return
-    } // stop
-
-    if (event.target.name === 'restart' && this.state.playing) {
-      for (let beat = 0; beat < this.tickEvents.length; beat++) {
-        this.tickEvents[beat].clear()
-      }
-
-      this.params.count = 0
-      this.params.startTime = context.currentTime
-      let clickPmin = this.state.bpm * (this.params.denominator / 4)
-
-      for (let beat = 0; beat < this.params.numerator; beat++) {
-        let event = clock.callbackAtTime(
-            function (event) {
-              this.playClick(event.deadline)
-            }.bind(this),
-            // this.playPattern(event.deadline) }.bind(this),
-            this.nextTick(beat)
-          ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
-           .tolerance({early: early, late: late})
-        this.tickEvents[beat] = event
-      } // end for
-      return
-    } // end restart
-
-    if (event.target.name === 'startStop') {
-      if (this.state.playing) {
-//        console.log('stopping')
-        this.setState({playing: false})
-        for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
-        this.params.count = 0
-        if (this.timerEvent) {
-          this.timerEvent.clear()
-          this.timeoutEvent.clear()
-        }
-//        console.log('stop by startStop')
-        return
-      } // stop
-
-      // start
-//      console.log('starting')
-      let clickPmin = this.state.bpm * (this.params.denominator / 4)
-      this.setState({playing: true})
-
-      this.params.count = 0
-      this.params.startTime = context.currentTime
-      for (let beat = 0; beat < this.params.numerator; beat++) {
-        let event = clock.callbackAtTime(
-            function (event) {
-              this.playClick(event.deadline)
-            }.bind(this),
-            // this.playPattern(event.deadline) }.bind(this),
-            this.nextTick(beat)
-        ).repeat((this.params.numerator * 60.0) / clickPmin) // parBar
-         .tolerance({early: early, late: late})
-        this.tickEvents[beat] = event
-        console.log('Schedule beat ' + beat)
-      } // end for
-
-      if (this.params.timer > 0) {
-        this.timerEvent = timerClock.callbackAtTime(function (event) {
-          let rest = this.state.rest - 1
-          this.setState({rest: rest})
-        }.bind(this), 1).repeat(1)
-
-        this.timeoutEvent = timerClock.setTimeout(function (event) {
-          if (this.timerEvent) this.timerEvent.clear()
-          this.startStop({target: {name: 'stop'}})
-          this.setState({rest: this.params.timer})
-        }.bind(this), this.state.rest)
-      } // end if timer
-
-//        console.log('start by startStop')
-    } // button event
-  } // end startStop()
 
 // https://github.com/sebpiq/WAAClock/blob/master/demos/beatSequence.js
   nextTick (beatInd) {
@@ -1296,9 +1208,7 @@ class App extends Component {
     this.params.muteStat = muteStat
 
     if (this.state.loopStat.playing && count === 0) { this.customPlay({target: {name: 'nextBar'}}) }
-  } // end playClick
-
-  playClick (deadline) { }
+  } // end playPattern
 
 /*
   playClick (deadline) {
