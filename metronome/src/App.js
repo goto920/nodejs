@@ -228,7 +228,7 @@ class App extends Component {
 
     const drumPatternOptions = loadedDrumPatterns.map((e, index) => {
       return (<option value={index} key={index}>
-        {('0' + index).slice(-2)}: {e.name}</option>)
+        {('00' + index).slice(-3)}: {e.name}</option>)
     })
 
 /* Set swing value select options */
@@ -627,7 +627,6 @@ class App extends Component {
 
         <hr />
       (Version: {version}) <a href={m.url} target='_blank'>{m.guide}</a><br />
-      Additional feature coming: Sound variation
       <hr />
       </div>
     )
@@ -1388,10 +1387,11 @@ class App extends Component {
   } // end handleMenu()
 
   handlePattern (event) {
+
     if (event.target.name === 'metroOn') {
       this.params.currentPattern = loadedClickPatterns[this.state.clickPatternNo]
       this.setState({metroOn: !this.state.metroOn,
-        drumsOn: !this.state.drumsOn})
+           drumsOn: !this.state.drumsOn})
       this.startStopDrums({target: {name: 'restart'}})
       return
     }
@@ -1404,8 +1404,8 @@ class App extends Component {
 
     if (event.target.name === 'drumsOn') {
       this.params.currentPattern = loadedDrumPatterns[this.state.drumPatternNo]
-      this.setState({metroOn: !this.state.metroOn,
-        drumsOn: !this.state.drumsOn})
+      this.setState({metroOn: !this.state.metroOn, 
+           drumsOn: !this.state.drumsOn})
       this.startStopDrums({target: {name: 'restart'}})
       return
     }
@@ -1452,14 +1452,16 @@ class App extends Component {
         // console.log('drumPattern')
         this.params.currentPattern =
           loadedDrumPatterns[parseInt(event.target.value, 10)]
-        this.setState({drumPatternNo: parseInt(event.target.value, 10)})
+        this.setState({drumsOn: true, metroOn: false,
+            drumPatternNo: parseInt(event.target.value, 10)})
       }
 
       if (event.target.name === 'clickPattern') {
         // console.log('clickPattern')
         this.params.currentPattern =
           loadedClickPatterns[parseInt(event.target.value, 10)]
-        this.setState({clickPatternNo: parseInt(event.target.value, 10)})
+        this.setState({drumsOn: false, metroOn: true,
+          clickPatternNo: parseInt(event.target.value, 10)})
       }
 
       if (this.params.currentPattern.triplet === undefined) {
