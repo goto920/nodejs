@@ -1000,7 +1000,7 @@ class App extends Component {
 
     // bar timer
     if (barTimer > 0 && restBars <= 0) {
-      this.startStop({target: {name: 'stop'}})
+      this.startStopDrums({target: {name: 'stop'}})
       this.setState({playing: false, restBars: barTimer})
       return
     }
@@ -1232,7 +1232,7 @@ class App extends Component {
     // Timer in bars
     if (barTimer > 0 && restBars <= 0) {
 //      console.log('barTimer ' + barTimer)
-      this.startStop({target: {name: 'stop'}})
+      this.startStopDrums({target: {name: 'stop'}})
       this.setState({restBars: barTimer}) // back to initial value
       return
     }
