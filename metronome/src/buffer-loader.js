@@ -20,10 +20,6 @@ BufferLoader.prototype.loadBuffer = function (url, index) {
   var loader = this
 
   request.onload = function () {
-    // console.log(request.getResponseHeader('Content-Type')) // debug
-
-//    console.log(request.response)
-
     // Asynchronously decode the audio file data in request.response
     loader.context.decodeAudioData(
       request.response,
