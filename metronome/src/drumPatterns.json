@@ -935,6 +935,34 @@
       {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
     ]
   },
+  { "name": "cntr145sw", "type": "drumkit",
+    "numerator": 8, "denominator": 8, "swingVal": 2.0,
+    "pattern": [
+      {"note":"hihatClose","values":     [3,3,3,3,3,3,3,3]},
+      {"note":"snareClosedRim","values": [0,0,8,0,0,0,8,0]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
+    ]
+  },
+  { "name": "cntr146sw", "type": "drumkit",
+    "numerator": 8, "denominator": 8, "swingVal": 2.0,
+    "pattern": [
+      {"note":"ride","values":           [3,3,3,3,3,3,3,3]},
+      {"note":"snareClosedRim","values": [0,0,8,0,0,0,8,0]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
+    ]
+  },
+  { "name": "cntr147sw", "type": "drumkit",
+    "numerator": 8, "denominator": 8, "swingVal": 2.0,
+    "pattern": [
+      {"note":"snareClosedRim","values": [2,2,2,2,2,2,2,2]},
+      {"note":"snareClosedRim","values": [0,0,2,0,0,0,8,0]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
+    ]
+  },
+
   { "name": "train152", "type": "drumkit",
     "numerator": 8, "denominator": 8, 
     "pattern": [
@@ -972,22 +1000,54 @@
     ]
   },
 
-  { "name": "cnt172a(3/4s)", "type": "drumkit", "swingVal": 2.0,
+  { "name": "cnt172a(3/4s*)", "type": "drumkit", "swingVal": 2.0,
     "numerator": 6, "denominator": 8, 
     "pattern": [
-      {"note":"hihatClose","values":  [3,0,3,3,3,3]},
-      {"note":"snareClosedRim","values":       [0,0,0,0,3,0]},
-      {"note":"bass", "values":       [7,0,0,0,0,7]},
-      {"note":"voice","values":       [1,0,2,0,3,0]}
+      {"note":"hihatClose","values":     [3,0,3,3,3,3]},
+      {"note":"snareClosedRim","values": [0,0,0,0,7,0]},
+      {"note":"bass", "values":          [7,0,0,0,0,7]},
+      {"note":"voice","values":          [1,0,2,0,3,0]}
     ]
   },
   { "name": "cnt172b(3/4s)", "type": "drumkit", "swingVal": 2.0,
     "numerator": 6, "denominator": 8, 
     "pattern": [
-      {"note":"hihatClose","values": [3,0,3,3,3,3]},
-      {"note":"snare","values":      [0,0,0,0,3,0]},
-      {"note":"bass", "values":      [7,0,7,0,7,0]},
-      {"note":"voice","values":      [1,0,2,0,3,0]}
+      {"note":"hihatClose","values":     [3,0,3,3,3,3]},
+      {"note":"snareClosedRim","values": [0,0,0,0,7,0]},
+      {"note":"bass", "values":          [7,0,7,0,7,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0]}
+    ]
+  },
+  { "name": "cnt173(3/4s*2)", "type": "drumkit", "triplet": true,
+    "numerator": 18, "denominator": 12, 
+    "pattern": [
+      {"note":"ride","values":          [3,0,0,3,0,3,3,0,3,
+                                         3,0,0,3,0,3,3,0,3]},
+      {"note":"snare","values":         [0,0,0,0,0,0,0,3,0,
+                                         8,0,0,0,0,0,0,3,0]},
+      {"note":"bass", "values":         [7,0,0,0,0,0,0,0,7,
+                                         0,0,0,0,0,0,0,0,7]},
+      {"note":"voice","values":         [1,0,0,2,0,0,3,0,0,
+                                         4,0,0,5,0,0,6,0,0]}
+    ]
+  },
+  { "name": "cnt174", "type": "drumkit", 
+    "numerator": 16, "denominator": 16, 
+    "pattern": [
+      {"note":"hihatClose","values":  [3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0]},
+      {"note":"snareOpenRim","values":[0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0]},
+      {"note":"bass", "values":       [7,0,0,0,0,0,0,7,0,0,7,0,0,0,0,0]},
+      {"note":"voice","values":       [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}
+    ]
+  },
+  { "name": "cnt175sw", "type": "drumkit", "swingVal": 2.0,
+    "numerator": 8, "denominator": 8, 
+    "pattern": [
+      {"note":"ride","values":       [3,0,3,3,3,0,3,3]},
+      {"note":"snare","values":      [0,0,7,0,0,0,7,0]},
+      {"note":"bass", "values":      [7,0,0,0,7,0,0,0]},
+      {"note":"hihatClose","values": [0,0,3,0,0,0,3,0]},
+      {"note":"voice","values":      [1,0,2,0,3,0,4,0]}
     ]
   },
 
@@ -1003,7 +1063,7 @@
   { "name": "rock177sw", "type": "drumkit", "swingVal": 2.0,
     "numerator": 8, "denominator": 8, 
     "pattern": [
-      {"note":"hihatClose","values":  [3,3,3,3,3,3,3,3]},
+      {"note":"hihatClose","values":  [3,0,3,3,3,0,3,3]},
       {"note":"snare","values":       [0,0,8,0,0,0,8,0]},
       {"note":"bass", "values":       [7,0,0,0,7,0,0,0]},
       {"note":"voice","values":       [1,0,2,0,3,0,4,0]}
