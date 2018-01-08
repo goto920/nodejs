@@ -1,10 +1,10 @@
 {
-  "short_name": "KG's JS_Metronome",
-  "name": "KG's JS_Metronome",
+  "short_name": "React App",
+  "name": "Create React App Sample",
   "icons": [
     {
       "src": "favicon.ico",
-      "sizes": "16x16",
+      "sizes": 16x16",
       "type": "image/x-icon"
     }
   ],

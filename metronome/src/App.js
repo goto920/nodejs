@@ -190,7 +190,7 @@ class App extends Component {
   }
 
   componentWillUnMount () {
-    window.removeEventListener('beforeunload')
+    window.removeEventListener('beforeunload', this.handleWindowClose)
   }
 
   saveSetLists () {
