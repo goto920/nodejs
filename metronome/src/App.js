@@ -39,7 +39,7 @@ class App extends Component {
     this.params = {
       minBpm: 30.0,
       maxBpm: 360.0,
-      numerator: null, 
+      numerator: null,
       denominator: null,
       default_clickPatternNo: null,
       default_drumPatternNo: null,
@@ -65,8 +65,8 @@ class App extends Component {
       newSongName: ''
     }
 
-    for (let i=0; i < loadedClickPatterns.length; i++){
-      if (loadedClickPatterns[i].default === true){
+    for (let i = 0; i < loadedClickPatterns.length; i++) {
+      if (loadedClickPatterns[i].default === true) {
         this.params.default_clickPatternNo = i
         break
       }
@@ -75,8 +75,8 @@ class App extends Component {
     this.params.currentPattern =
       loadedClickPatterns[this.params.default_clickPatternNo]
 
-    for (let i=0; i < loadedDrumPatterns.length; i++){
-      if (loadedDrumPatterns[i].default === true){
+    for (let i = 0; i < loadedDrumPatterns.length; i++) {
+      if (loadedDrumPatterns[i].default === true) {
         this.params.default_drumPatternNo = i
         break
       }
@@ -114,7 +114,8 @@ class App extends Component {
       loopTable: [],
       loopTableNewRow: {
         pattern: loadedClickPatterns[this.params.default_clickPatternNo],
-        swingVal: 1.5, repeat: 4},
+        swingVal: 1.5,
+        repeat: 4},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
 
       selectedSetList: {},
@@ -161,7 +162,6 @@ class App extends Component {
       this.params.setLists.push(loadedSetListSample)
     }
     this.setState({selectedSetList: this.params.setLists[0]})
-    return
   }
 
   componentDidMount () {
@@ -390,7 +390,7 @@ class App extends Component {
         </span>
         {m.muteProb1}, {m.muteProb2}
         <span className='selector'>
-          <select name='muteProb' value={parseFloat(muteProb,10).toFixed(1)} onChange={handleAdvanced}>
+          <select name='muteProb' value={parseFloat(muteProb, 10).toFixed(1)} onChange={handleAdvanced}>
             <option value='0.0'>0.0</option> <option value='0.1'>0.1</option>
             <option value='0.2'>0.2</option> <option value='0.3'>0.3</option>
             <option value='0.4'>0.4</option> <option value='0.5'>0.5</option>
@@ -455,19 +455,19 @@ class App extends Component {
               <tr><td align='right' className='radioButton'>
       metro
       <input type='radio' name='loopAdd' value='click' checked={false}
-       onChange={handleTable} />
-     <br />
+        onChange={handleTable} />
+                <br />
       drum
       <input type='radio' name='loopAdd' value='drum' checked={false}
-       onChange={handleTable} />
-     </td>
+        onChange={handleTable} />
+              </td>
                 <td align='right'>add</td>
                 <td align='right' className='selector'>
-                  <select name='loopAddClickPattern' value={clickPatternNo} 
-                  onChange={handleTable}>
+                  <select name='loopAddClickPattern' value={clickPatternNo}
+                    onChange={handleTable}>
                     {clickPatternOptions}</select><br />
-                  <select name='loopAddDrumPattern' value={drumPatternNo} 
-                  onChange={handleTable}>
+                  <select name='loopAddDrumPattern' value={drumPatternNo}
+                    onChange={handleTable}>
                     {drumPatternOptions}</select><br />
                 </td>
                 <td align='right' className='selector'><span>
@@ -485,10 +485,10 @@ class App extends Component {
 /// //////////// UI menus
     return (
       <div className='metronome'>
-      KG's JS_Metronome2 &nbsp; <font color='blue'>Lang: </font>
+      KG's Metronome2 &nbsp; <font color='blue'>Lang: </font>
         <span className='small-button'>
           <button name='language' onClick={handleMenu}>
-            {ja ? 'US' : 'JP'} </button>&nbsp;
+            {ja ? 'US' : 'JP'}</button>&nbsp;
         </span>
         Play: <button name='startStop' onClick={startStopDrums}>
           {playing ? 'Stop' : 'Start'}</button>
@@ -611,8 +611,8 @@ class App extends Component {
           </span><br />
           {m.Current}: <b>(List) {selectedSetList.name} :
         (Song) {selectedSong.song} :
-        (ptn) {selectedSong.bar ? 
-               selectedSong.bar.name : 'loop'} :
+        (ptn) {selectedSong.bar
+               ? selectedSong.bar.name : 'loop'} :
         (bpm) {selectedSong.bpm}</b><br />
           {showSetLists ? <SetListUI /> : ''}
           {showSongList ? <SongListUI /> : ''}
@@ -627,13 +627,12 @@ class App extends Component {
 
         <hr />
       (Version: {version}) <a href={m.url} target='_blank'>{m.guide}</a><br />
-      <hr />
+        <hr />
       </div>
     )
   } // end render()
 
   customPlay (event) {
-
     const {loopTable} = this.state
     let {loopStat} = this.state
     if (loopTable.length <= 0) return
@@ -677,7 +676,6 @@ class App extends Component {
     }
 
     if (event.target.name === 'nextBar') {
-
       if (loopStat.bar === 0 ||
          loopStat.repeat === loopTable[loopStat.seq].repeat) { // next seq
         if (loopStat.bar > 0) loopStat.seq++
@@ -689,7 +687,7 @@ class App extends Component {
         this.params.numerator = pattern.numerator
         this.params.denominator = pattern.denominator
         this.params.triplet = pattern.triplet
-        if(pattern.swingVal !== undefined){
+        if (pattern.swingVal !== undefined) {
           this.setState({swingVal: pattern.swingVal})
           this.params.swing = true
         } else {
@@ -719,7 +717,7 @@ class App extends Component {
   }
 
   handleTable (event) {
-    const {loopTable,loopTableNewRow} = this.state
+    const {loopTable, loopTableNewRow} = this.state
 //    let {loopTableNewRow} = this.state
 
     if (event.target.name === 'setLoopTable') {
@@ -734,16 +732,15 @@ class App extends Component {
     }
 
     if (event.target.name === 'loopAdd') {
-
-      if (event.target.value === 'drum'){
-        loopTableNewRow.pattern
-          = loadedDrumPatterns[this.state.drumPatternNo] 
-      } else if (event.target.value === 'click'){ 
-        loopTableNewRow.pattern 
-          = loadedClickPatterns[this.state.clickPatternNo] 
+      if (event.target.value === 'drum') {
+        loopTableNewRow.pattern =
+          loadedDrumPatterns[this.state.drumPatternNo]
+      } else if (event.target.value === 'click') {
+        loopTableNewRow.pattern =
+          loadedClickPatterns[this.state.clickPatternNo]
       }
-     
-      loopTable.push({pattern: loopTableNewRow.pattern, 
+
+      loopTable.push({pattern: loopTableNewRow.pattern,
         repeat: loopTableNewRow.repeat})
       this.setState({loopTable: loopTable})
       return
@@ -843,16 +840,16 @@ class App extends Component {
 
         if (song.bar !== undefined) { // HERE
           this.handlePattern({target: {name: 'setBar', value: song.bar}})
-          this.handleBpm({target: {name: 'bpm_set', 
-             value: parseFloat(song.bpm,10)}})
+          this.handleBpm({target: {name: 'bpm_set',
+            value: parseFloat(song.bpm, 10)}})
           return
         }  // end bar pattern
 
         if (song.table !== undefined) {
           this.state.loopTable.splice(0, this.state.loopTable.length) // clear
           this.handleBpm(
-            {target: {name: 'bpm_set', 
-             value: parseFloat(song.bpm, 10)}}
+            {target: {name: 'bpm_set',
+              value: parseFloat(song.bpm, 10)}}
           )
           this.handleTable({target: {name: 'setLoopTable', value: song.table}})
           this.setState({showCustomLoop: true})
@@ -913,12 +910,10 @@ class App extends Component {
 
     if (event.target.name === 'newSong') {
       this.params.newSongName = event.target.value
-      return
     }
   } // end handleSetLists
 
   startStopDrums (event) {
-
     if (event.target.name === 'startStop') {
       if (this.state.playing) {
         this.startStopDrums({target: {name: 'stop'}})
@@ -940,7 +935,7 @@ class App extends Component {
       // console.log('start with: ' + selected.name)
       this.params.numerator = selected.numerator
       this.params.denominator = selected.denominator
-     
+
       let clickPmin = this.state.bpm * (this.params.denominator / 4)
 
       this.params.count = 0
@@ -967,9 +962,7 @@ class App extends Component {
         this.startStopDrums({target: {name: 'start'}})
       }.bind(this), 0.02)
        .tolerance({early: early, late: late}) // tight early tolerance
-      return
     } // end restart
-
   } // end startStopDrums()
 
 // https://github.com/sebpiq/WAAClock/blob/master/demos/beatSequence.js
@@ -993,7 +986,7 @@ class App extends Component {
   playPattern (deadline) {
     const sound = this.sound
     const {bpm, restBars, metroSound, voiceOn, voice, increment,
-           perBars,muteBars,muteProb,evenVol} = this.state
+           perBars, muteBars, muteProb, evenVol} = this.state
     const {maxBpm, minBpm, barTimer, currentPattern, numerator,
            triplet} = this.params
     let {muteCount, muteStat, count, barCount} = this.params
@@ -1074,124 +1067,104 @@ class App extends Component {
       if (metroSound === 'cb1') {
         source[0].buffer = sound['cowbell-higher']
         source[1].buffer = sound['cowbell-higher']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-higher']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-higher'] }
       }
       if (metroSound === 'cb2') {
         source[0].buffer = sound['cowbell-high']
         source[1].buffer = sound['cowbell-high']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-high']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-high'] }
       }
 
       if (metroSound === 'cb3') {
         source[0].buffer = sound['cowbell-mid']
         source[1].buffer = sound['cowbell-mid']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-mid']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-mid'] }
       }
 
       if (metroSound === 'cb4') {
         source[0].buffer = sound['cowbell-low']
         source[1].buffer = sound['cowbell-low']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-low']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-low'] }
       }
       if (metroSound === 'cb5') {
         source[0].buffer = sound['cowbell-lower']
         source[1].buffer = sound['cowbell-lower']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-lower']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-lower'] }
       }
       if (metroSound === '2cb1') {
         source[0].buffer = sound['cowbell-higher']
         source[1].buffer = sound['cowbell-high']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-high']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-high'] }
       }
       if (metroSound === '2cb2') {
         source[0].buffer = sound['cowbell-high']
         source[1].buffer = sound['cowbell-mid']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-mid']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-mid'] }
       }
       if (metroSound === '2cb3') {
         source[0].buffer = sound['cowbell-mid']
         source[1].buffer = sound['cowbell-low']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-low']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-low'] }
       }
       if (metroSound === '2cb4') {
         source[0].buffer = sound['cowbell-low']
         source[1].buffer = sound['cowbell-lower']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-lower']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-lower'] }
       }
       if (metroSound === '3cb1') {
         source[0].buffer = sound['cowbell-higher']
         source[1].buffer = sound['cowbell-high']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-mid']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-mid'] }
       }
       if (metroSound === '3cb2') {
         source[0].buffer = sound['cowbell-high']
         source[1].buffer = sound['cowbell-mid']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-low']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-low'] }
       }
       if (metroSound === '3cb3') {
         source[0].buffer = sound['cowbell-mid']
         source[1].buffer = sound['cowbell-low']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['cowbell-lower']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-lower'] }
       }
       if (metroSound === '1cg1') {
         source[0].buffer = sound['highConga']
         source[1].buffer = sound['highConga']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['highConga']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['highConga'] }
       }
       if (metroSound === '1cg2') {
         source[0].buffer = sound['midConga']
         source[1].buffer = sound['midConga']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['midConga']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['midConga'] }
       }
       if (metroSound === '1cg3') {
         source[0].buffer = sound['lowConga']
         source[1].buffer = sound['lowConga']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['lowConga']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['lowConga'] }
       }
       if (metroSound === '2cg1') {
         source[0].buffer = sound['highConga']
         source[1].buffer = sound['midConga']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['midConga']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['midConga'] }
       }
       if (metroSound === '2cg2') {
         source[0].buffer = sound['midConga']
         source[1].buffer = sound['lowConga']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['lowConga']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['lowConga'] }
       }
       if (metroSound === '3cg') {
         source[0].buffer = sound['highConga']
         source[1].buffer = sound['midConga']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['lowConga']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['lowConga'] }
       }
       if (metroSound === 'cv') {
         source[0].buffer = sound['clave']
         source[1].buffer = sound['clave']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['clave']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['clave'] }
       }
       if (metroSound === 'hc') {
         source[0].buffer = sound['handClap']
         source[1].buffer = sound['handClap']
-        if (lastIndex - 1 > 1)
-          source[lastIndex - 1].buffer = sound['handClap']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['handClap'] }
       }
 
       if (!muteStat) {
@@ -1407,10 +1380,9 @@ class App extends Component {
   } // end handleMenu()
 
   handlePattern (event) {
-
     if (event.target.name === 'metroOn') {
-      this.params.currentPattern 
-        = loadedClickPatterns[this.state.clickPatternNo]
+      this.params.currentPattern =
+        loadedClickPatterns[this.state.clickPatternNo]
       this.setState({metroOn: true, drumsOn: false})
       this.startStopDrums({target: {name: 'restart'}})
       return
@@ -1446,7 +1418,7 @@ class App extends Component {
 
       if (current.triplet === undefined) {
         this.params.triplet = false
-      } else this.params.triplet = current.triplet 
+      } else this.params.triplet = current.triplet
 
       if (current.swingVal === undefined) {
         this.params.swing = false
@@ -1455,7 +1427,7 @@ class App extends Component {
       this.setState({swingVal: current.swingVal})
 
       let num = this.findNumByName(current.name)
-      // console.log('NUM: ' + num) 
+      // console.log('NUM: ' + num)
       if (num < 0) return
       if (current.type === 'clicks') this.setState({clickPatternNo: num})
       else if (current.type === 'drumkit') this.setState({drumPatternNo: num})
@@ -1463,15 +1435,14 @@ class App extends Component {
       return
     }
 
-
     if ((event.target.name === 'drumPattern') ||
        (event.target.name === 'clickPattern')) {
-
       if (event.target.name === 'drumPattern') {
         // console.log('drumPattern')
         this.params.currentPattern =
           loadedDrumPatterns[parseInt(event.target.value, 10)]
-        this.setState({drumsOn: true, metroOn: false,
+        this.setState({drumsOn: true,
+          metroOn: false,
           drumPatternNo: parseInt(event.target.value, 10)})
       }
 
@@ -1479,13 +1450,14 @@ class App extends Component {
         console.log('clickPattern: ' + event.target.value)
         this.params.currentPattern =
           loadedClickPatterns[parseInt(event.target.value, 10)]
-        this.setState({metroOn: true, drumsOn: false,
+        this.setState({metroOn: true,
+          drumsOn: false,
           clickPatternNo: parseInt(event.target.value, 10)})
       }
 
       if (this.params.currentPattern.triplet === undefined) {
         this.params.triplet = false
-      } else this.params.triplet = this.params.currentPattern.triplet 
+      } else this.params.triplet = this.params.currentPattern.triplet
 
       if (this.params.currentPattern.swingVal === undefined) {
         this.params.swing = false
@@ -1494,13 +1466,10 @@ class App extends Component {
 
       this.setState({swingVal: this.params.currentPattern.swingVal})
       this.startStopDrums({target: {name: 'restart'}})
-
     }
-
   } // end handlePattern()
 
   handleBpm (event) {
-
     if (event.target.name === 'bpmFrac') {
       let bpmFrac = parseInt(event.target.value, 10)
       let newBpm = Math.floor(this.state.bpm) + 0.1 * bpmFrac
@@ -1593,7 +1562,6 @@ class App extends Component {
     }
     if (event.target.name === 'evenVol') {
       if (this.state.evenVol) { this.setState({evenVol: parseFloat(event.target.value)}) } else this.setState({evenVol: 1.0})
-      return
     }
   } // end handleAdvanced()
 
@@ -1602,19 +1570,15 @@ class App extends Component {
     this.saveSetLists()
     clock.stop()
     context.close()
-    return
   }
 
-  findNumByName(name){
-    for (let i=0; i < loadedClickPatterns.length; i++)
-      if(loadedClickPatterns[i].name === name) return i
+  findNumByName (name) {
+    for (let i = 0; i < loadedClickPatterns.length; i++) { if (loadedClickPatterns[i].name === name) return i }
 
-    for (let i=0; i < loadedDrumPatterns.length; i++)
-      if(loadedDrumPatterns[i].name === name) return i
+    for (let i = 0; i < loadedDrumPatterns.length; i++) { if (loadedDrumPatterns[i].name === name) return i }
 
     return -1
   }
-
 } // end App
 
 export default App
