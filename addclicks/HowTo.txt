@@ -8,14 +8,17 @@ Spec
 
 Step
 
- 0) create-react-app addclicks (no capital letters)
+ 0) create-react-app addclicks (no capital letters) -- done
 
  1) Read local file (even on a smartphone)
 
- 2) bpm detection/estimation (onset detection)
+ 2) bpm and count one set by tap button?
+    automatic adjustment?
 
- 3) add precount and count
+ 4)  bpm detection/estimation (onset detection)
 
- 4) User interface
+ 5) add precount and count
+
+ 6) User interface
 
 
