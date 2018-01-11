@@ -457,6 +457,23 @@
       {"note":"voice" ,"values":     [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}
     ] 
   },
+  { "name": "pop043(*2)", "type": "drumkit", 
+    "numerator": 32, "denominator": 16,
+    "pattern": [ 
+      {"note":"hihatClose","values":   [3,0,3,0,3,0,3,0,3,0,3,0,3,0,0,0,
+                                        3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0]},
+      {"note":"crashL","values":       [0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,
+                                        0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0]},
+      {"note":"crashL","values":       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                        0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0]},
+      {"note":"snareOpenRim","values": [0,0,0,0,8,0,0,0,0,0,0,0,8,0,8,8,
+                                        0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0]},
+      {"note":"bass" ,"values":        [7,0,0,0,0,0,0,0,7,0,7,0,0,0,0,0,
+                                        7,0,0,0,0,0,0,0,7,0,7,0,0,0,0,0]},
+      {"note":"voice" ,"values":       [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0,
+                                        5,0,0,0,6,0,0,0,7,0,0,0,8,0,0,0]}
+    ] 
+  },
   { "name": "pop051", "type": "drumkit", 
     "numerator": 16, "denominator": 16,
     "pattern": [ 
@@ -537,6 +554,17 @@
                                         3,0,0,0,0,0,4,0,0,0,0,0]}
     ] 
   },
+  { "name": "pop058", "type": "drumkit", 
+    "numerator": 8, "denominator": 8,
+    "pattern": [ 
+      {"note":"hihatClose","values":   [3,0,3,0,3,0,3,0]},
+      {"note":"snareOpenRim","values": [0,0,8,0,0,0,8,0]},
+      {"note":"snare","values":        [0,0,4,0,0,0,4,0]},
+      {"note":"bass" ,"values":        [7,0,0,0,0,7,0,7]},
+      {"note":"voice" ,"values":       [1,0,2,0,3,0,4,0]}
+    ] 
+  },
+
   { "name": "pop059tom", "type": "drumkit", 
     "numerator": 16, "denominator": 16,
     "pattern": [ 
@@ -554,7 +582,7 @@
       {"note":"tomHigh","values":      [0,5,0,0,0,0,0,5,0,0,0,0,0,0,0,0]},
       {"note":"tomLow","values":       [5,0,5,0,0,0,5,0,5,7,5,0,0,0,7,7]},
       {"note":"snareOpenRim","values": [0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0]},
-      {"note":"snare","values":        [0,0,0,0,0,3,0,0,0,0,0,0,0,3,0,0]},
+      {"note":"snare","values":        [0,0,0,0,4,3,0,0,0,0,0,0,4,3,0,0]},
       {"note":"bass" ,"values":        [7,0,0,7,0,0,7,0,7,0,0,7,0,0,0,0]},
       {"note":"hihatClose" ,"values":  [2,0,2,0,2,0,2,0,2,0,2,0,2,0,2,0]},
       {"note":"voice" ,"values":       [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}
@@ -717,6 +745,21 @@
                                   3,0,0,0,0,0,4,0,0,0,0,0]}
     ]
   },
+  { "name": "bls086(*2)", "type": "drumkit",
+    "numerator": 32, "denominator": 16,
+    "pattern": [
+      {"note":"ride","values":          [3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0,
+                                         3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0]},
+      {"note":"snareOpenRim","values":  [0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0,
+                                         0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0]},
+      {"note":"snare","values":         [0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,
+                                         0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0]},
+      {"note":"bass", "values":         [7,0,0,0,0,0,0,0,7,0,7,0,0,0,7,0,
+                                         7,0,0,0,0,0,0,0,7,0,7,0,0,0,0,0]},
+      {"note":"voice","values":         [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0,
+                                         5,0,0,0,6,0,0,0,7,0,0,0,8,0,0,0]}
+    ]
+  },
 
   { "name": "swing087", "type": "drumkit",
     "numerator": 8, "denominator": 8, "swingVal": 2.0,
@@ -829,24 +872,15 @@
       {"note":"voice" ,"values":         [1,0,2,0,3,0,4,0]}
     ]
   },
-  { "name": "swing098a", "type": "drumkit",
-    "numerator": 8, "denominator": 8, "swingVal": 2.0,
+  { "name": "swing098(*2)", "type": "drumkit",
+    "numerator": 16, "denominator": 8, "swingVal": 2.0,
     "pattern": [
-      {"note":"ride", "values":          [3,0,3,3,3,0,3,3]},
-      {"note":"snareClosedRim","values": [0,0,0,0,0,0,8,0]},
-      {"note":"bass", "values":          [7,0,7,0,7,0,7,0]},
-      {"note":"hihatClose", "values":    [0,0,3,0,0,0,3,0]},
-      {"note":"voice" ,"values":         [1,0,2,0,3,0,4,0]}
-    ]
-  },
-  { "name": "swing098b", "type": "drumkit",
-    "numerator": 8, "denominator": 8, "swingVal": 2.0,
-    "pattern": [
-      {"note":"ride", "values":          [3,0,3,3,3,0,3,3]},
-      {"note":"tomHigh","values":        [0,0,0,0,0,0,7,7]},
-      {"note":"bass", "values":          [7,0,7,0,7,0,7,0]},
-      {"note":"hihatClose", "values":    [0,0,3,0,0,0,3,0]},
-      {"note":"voice" ,"values":         [1,0,2,0,3,0,4,0]}
+      {"note":"ride", "values":          [3,0,3,3,3,0,3,3,3,0,3,3,3,0,3,3]},
+      {"note":"tomHigh","values":        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7]},
+      {"note":"snareClosedRim","values": [0,0,0,0,0,0,8,0,0,0,0,0,0,0,0,0]},
+      {"note":"bass", "values":          [7,0,7,0,7,0,7,0,7,0,7,0,7,0,7,0]},
+      {"note":"hihatClose", "values":    [0,0,3,0,0,0,3,0,0,0,3,0,0,0,3,0]},
+      {"note":"voice" ,"values":         [1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0]}
     ]
   },
   { "name": "swg136tom", "type": "drumkit",
@@ -981,41 +1015,201 @@
       {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
     ]
   },
-  { "name": "train154b", "type": "drumkit",
+  { "name": "train154", "type": "drumkit",
+    "numerator": 16, "denominator": 8, 
+    "pattern": [
+      {"note":"snareOpenRim","values":   [0,0,8,0,0,0,8,0,0,8,8,0,8,0,8,8]},
+      {"note":"snare","values":          [5,5,0,5,5,5,0,5,5,0,0,5,0,5,0,0]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0]}
+    ]
+  },
+  { "name": "train155(*4)", "type": "drumkit",
+    "numerator": 32, "denominator": 8, 
+    "pattern": [
+      {"note":"snareOpenRim","values":   [0,0,8,0,0,0,8,0,0,0,8,8,0,0,8,0,
+                                          0,0,8,0,0,0,8,0,0,8,8,0,8,0,8,8]},
+      {"note":"snare","values":          [5,5,0,5,5,5,0,5,5,5,0,0,5,5,0,5,
+                                          5,5,0,5,5,5,0,5,5,0,0,5,0,5,0,0]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0,
+                                          7,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,
+                                          1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0]}
+    ]
+  },
+  { "name": "train156(*4)", "type": "drumkit",
+    "numerator": 32, "denominator": 8, 
+    "pattern": [
+      {"note":"snareOpenRim","values":   [0,0,8,0,0,0,8,0,0,8,8,0,0,8,8,0,
+                                          0,0,8,0,0,0,8,0,0,8,8,0,8,8,8,8]},
+      {"note":"snare","values":          [5,5,0,5,5,5,0,5,5,0,0,5,5,0,0,5,
+                                          5,5,0,5,5,5,0,5,5,0,0,5,0,0,0,0]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0,
+                                          7,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0,
+                                          1,0,2,0,3,0,4,0,5,0,6,0,7,0,8,0]}
+    ]
+  },
+  { "name": "train159", "type": "drumkit",
     "numerator": 8, "denominator": 8, 
     "pattern": [
-      {"note":"snareOpenRim","values":   [0,8,8,0,8,0,8,8]},
-      {"note":"snare","values":          [5,0,0,5,0,5,0,0]},
+      {"note":"snareOpenRim","values":   [0,0,8,0,0,0,8,0]},
+      {"note":"snare","values":          [5,5,3,5,5,5,3,5]},
       {"note":"bass", "values":          [7,0,0,0,7,0,0,0]},
       {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
     ]
   },
-  { "name": "train158b", "type": "drumkit",
+  { "name": "train160", "type": "drumkit",
     "numerator": 8, "denominator": 8, 
     "pattern": [
-      {"note":"snareOpenRim","values":   [0,0,8,8,0,0,8,0]},
-      {"note":"snare","values":          [5,5,0,0,5,5,0,5]},
+      {"note":"snareOpenRim","values":   [0,0,8,0,0,0,8,0]},
+      {"note":"snare","values":          [5,0,0,0,5,5,0,5]},
+      {"note":"snareBuzz","values":      [0,5,0,0,0,0,0,0]},
       {"note":"bass", "values":          [7,0,0,0,7,0,0,0]},
       {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
+    ]
+  },
+  { "name": "train161(*2)", "type": "drumkit", "triplet": true,
+    "numerator": 24, "denominator": 12, 
+    "pattern": [
+      {"note":"snareOpenRim","values":   [0,0,0,0,0,0,8,0,0,8,0,0,
+                                          0,0,0,0,0,0,8,0,0,0,0,0]},
+      {"note":"snare","values":          [5,0,5,0,5,0,0,0,0,0,0,0,
+                                          5,0,0,5,0,0,0,0,0,5,0,0]},
+      {"note":"bass", "values":          [7,0,0,0,0,0,0,0,0,0,0,0,
+                                          7,0,0,0,0,0,0,0,0,0,0,0]},
+      {"note":"voice","values":          [1,0,0,0,0,0,2,0,0,0,0,0,
+                                          3,0,0,0,0,0,4,0,0,0,0,0]}
+    ]
+  },
+  { "name": "train162", "type": "drumkit",
+    "numerator": 8, "denominator": 8, 
+    "pattern": [
+      {"note":"snareOpenRim","values":   [0,0,8,0,0,0,8,0]},
+      {"note":"snare","values":          [5,0,0,5,5,5,0,5]},
+      {"note":"snareBuzz","values":      [0,5,5,0,0,0,5,0]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
+    ]
+  },
+  { "name": "train163", "type": "drumkit",
+    "numerator": 8, "denominator": 8, 
+    "pattern": [
+      {"note":"snareOpenRim","values":   [0,0,8,0,0,0,8,0]},
+      {"note":"snare","values":          [5,5,5,5,5,5,5,5]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0]},
+      {"note":"hihatClose","values":     [3,0,3,0,0,0,3,0]},
+      {"note":"hihatFullOpen","values":  [0,0,0,0,3,0,0,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
+    ]
+  },
+  { "name": "train164", "type": "drumkit",
+    "numerator": 8, "denominator": 8, 
+    "pattern": [
+      {"note":"ride","values":           [3,3,3,3,0,3,3,3]},
+      {"note":"rideCup","values":        [0,0,0,0,3,3,3,3]},
+      {"note":"snareOpenRim","values":   [0,0,8,0,0,0,8,0]},
+      {"note":"snare","values":          [5,5,0,5,5,5,0,5]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0]},
+      {"note":"hihatClose","values":     [3,0,3,0,3,0,3,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
+    ]
+  },
+  { "name": "train165(*4)", "type": "drumkit", "triplet": true,
+    "numerator": 48, "denominator": 12, 
+    "pattern": [
+      {"note":"snareOpenRim","values":   [0,0,0,8,0,0,0,0,0,8,0,0,
+                                          0,0,0,8,0,8,0,0,0,8,0,0,
+                                          0,0,0,8,0,0,0,0,0,8,0,0,
+                                          0,0,8,8,0,0,8,0,0,8,0,8]},
+      {"note":"snare","values":          [5,0,5,0,0,5,5,0,5,0,0,5,
+                                          5,5,5,0,0,0,5,0,5,0,0,5,
+                                          5,0,5,0,0,5,5,0,5,0,0,5,
+                                          5,5,0,0,0,5,0,0,5,0,0,0]},
+      {"note":"bass", "values":          [7,0,0,0,0,0,7,0,0,0,0,0,
+                                          7,0,0,0,0,0,7,0,0,0,0,0,
+                                          7,0,0,0,0,0,7,0,0,0,0,0,
+                                          7,0,0,0,0,0,7,0,0,0,0,0]},
+      {"note":"voice","values":          [1,0,0,2,0,0,3,0,0,4,0,0,
+                                          5,0,0,6,0,0,7,0,0,8,0,0,
+                                          1,0,0,2,0,0,3,0,0,4,0,0,
+                                          5,0,0,6,0,0,7,0,0,8,0,0]}
+    ]
+  },
+  { "name": "train166", "type": "drumkit",
+    "numerator": 16, "denominator": 16,
+    "pattern": [
+      {"note":"hihatClose", "values":    [3,0,6,0,3,0,6,0,3,0,6,0,3,0,6,0]},
+      {"note":"snareOpenRim","values":   [0,0,0,0,8,0,0,8,0,0,0,0,8,0,0,0]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0]},
+      {"note":"voice" ,"values":         [1,0,0,0,2,0,0,0,3,0,0,0,4,0,8,0]}
+    ]
+  },
+  { "name": "train167", "type": "drumkit",
+    "numerator": 16, "denominator": 16,
+    "pattern": [
+      {"note":"hihatClose", "values":    [3,0,6,0,3,0,6,0,3,0,6,0,3,0,6,0]},
+      {"note":"snareOpenRim","values":   [0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0]},
+      {"note":"snare","values":          [0,3,0,0,0,3,0,3,0,3,0,0,0,3,0,0]},
+      {"note":"snareBuzz","values":      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0]},
+      {"note":"voice" ,"values":         [1,0,0,0,2,0,0,0,3,0,0,0,4,0,8,0]}
+    ]
+  },
+  { "name": "train168", "type": "drumkit",
+    "numerator": 16, "denominator": 16,
+    "pattern": [
+      {"note":"hihatClose", "values":    [3,0,6,0,3,0,6,0,3,0,0,0,3,0,6,0]},
+      {"note":"hihatHalfOpen", "values": [0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0]},
+      {"note":"tomHigh", "values":       [0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0]},
+      {"note":"snareOpenRim","values":   [0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0]},
+      {"note":"snare","values":          [0,3,0,0,0,3,0,3,0,3,0,0,3,0,0,8]},
+      {"note":"bass", "values":          [7,0,0,0,7,0,0,0,7,0,0,0,7,0,0,0]},
+      {"note":"voice" ,"values":         [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}
+    ]
+  },
+  { "name": "train169", "type": "drumkit",
+    "numerator": 16, "denominator": 16,
+    "pattern": [
+      {"note":"snareOpenRim","values":   [0,0,0,0,8,0,0,8,0,0,0,0,8,0,0,0]},
+      {"note":"snare","values":          [0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0]},
+      {"note":"snareBuzz","values":      [3,3,3,3,0,3,3,3,3,3,3,3,0,3,3,0]},
+      {"note":"bass", "values":          [7,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0]},
+      {"note":"voice" ,"values":         [1,0,0,0,2,0,0,0,3,0,0,0,4,0,8,0]}
+    ]
+  },
+  { "name": "cntr170", "type": "drumkit", "swingVal": true,
+    "numerator": 8, "denominator": 8, 
+    "pattern": [
+      {"note":"ride","values":           [3,0,3,3,3,0,3,3]},
+      {"note":"snare","values":          [0,8,0,8,0,8,0,8]},
+      {"note":"bass", "values":          [7,0,7,0,7,0,7,0]},
+      {"note":"hihatClose","values":     [0,0,3,0,0,0,3,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0]}
+    ]
+  },
+  { "name": "train171", "type": "drumkit",
+    "numerator": 16, "denominator": 16,
+    "pattern": [
+      {"note":"hihatClose","values":     [3,0,3,0,3,0,3,0,3,0,3,3,0,0,3,0]},
+      {"note":"tomHight","values":       [0,0,0,0,0,0,0,0,0,0,0,0,5,0,5,0]},
+      {"note":"snare","values":          [0,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0]},
+      {"note":"bass", "values":          [7,0,0,0,0,0,7,0,0,0,0,0,0,0,7,0]},
+      {"note":"voice" ,"values":         [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}
     ]
   },
 
-  { "name": "cnt172a(3/4s*)", "type": "drumkit", "swingVal": 2.0,
-    "numerator": 6, "denominator": 8, 
+  { "name": "cnt172(3/4s*4)", "type": "drumkit", "swingVal": 2.0,
+    "numerator": 24, "denominator": 8, 
     "pattern": [
-      {"note":"hihatClose","values":     [3,0,3,3,3,3]},
-      {"note":"snareClosedRim","values": [0,0,0,0,7,0]},
-      {"note":"bass", "values":          [7,0,0,0,0,7]},
-      {"note":"voice","values":          [1,0,2,0,3,0]}
-    ]
-  },
-  { "name": "cnt172b(3/4s)", "type": "drumkit", "swingVal": 2.0,
-    "numerator": 6, "denominator": 8, 
-    "pattern": [
-      {"note":"hihatClose","values":     [3,0,3,3,3,3]},
-      {"note":"snareClosedRim","values": [0,0,0,0,7,0]},
-      {"note":"bass", "values":          [7,0,7,0,7,0]},
-      {"note":"voice","values":          [1,0,2,0,3,0]}
+      {"note":"hihatClose","values":     [3,0,3,3,3,3,3,0,3,3,3,3,
+                                          3,0,3,3,3,3,3,0,3,3,3,3]},
+      {"note":"snareClosedRim","values": [0,0,0,0,7,0,0,0,0,0,7,0,
+                                          0,0,0,0,7,0,0,0,0,0,7,0]},
+      {"note":"bass", "values":          [7,0,0,0,0,7,7,0,0,0,0,7,
+                                          7,0,0,0,0,7,7,0,7,0,7,0]},
+      {"note":"voice","values":          [1,0,2,0,3,0,4,0,5,0,6,0,
+                                          1,0,2,0,3,0,4,0,5,0,6,0]}
     ]
   },
   { "name": "cnt173(3/4s*2)", "type": "drumkit", "triplet": true,
@@ -1116,6 +1310,34 @@
       {"note":"voice","values":  [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}
     ]
   },
+  { "name": "rock183", "type": "drumkit", "swingVal": 2.0,
+    "numerator": 8, "denominator": 8, 
+    "pattern": [
+      {"note":"hihatHalfOpen", "values":  [3,0,3,0,3,0,3,0]},
+      {"note":"snareOpenRim","values":    [0,0,8,0,0,0,8,0]},
+      {"note":"bass", "values":           [7,7,0,0,7,7,0,0]},
+      {"note":"voice","values":           [1,0,2,0,3,0,4,0]}
+    ]
+  },
+  { "name": "rock184(*2)", "type": "drumkit", "triplet": true, 
+    "numerator": 24, "denominator": 12, 
+    "pattern": [
+      {"note":"tomHigh", "values":     [0,0,0,5,0,5,0,0,0,0,0,0,
+                                        0,0,0,5,0,5,0,0,5,0,0,0]},
+      {"note":"snareOpenRim","values": [8,0,0,0,0,0,0,0,0,8,0,8,
+                                        8,0,0,0,0,0,0,0,0,8,0,8]},
+      {"note":"snare","values":        [0,0,0,5,0,0,0,0,0,5,0,0,
+                                        0,0,0,5,0,0,0,0,0,5,0,0]},
+      {"note":"tomLow", "values":      [3,0,3,0,0,0,3,0,3,0,0,0,
+                                        3,0,3,0,0,0,3,0,3,0,0,0]},
+      {"note":"bass", "values":        [7,0,7,0,0,0,7,0,7,0,0,0,
+                                        7,0,7,0,0,0,7,0,7,0,0,0]},
+      {"note":"hihatClose","values":   [0,0,0,3,0,0,0,0,0,3,0,0,
+                                        0,0,0,3,0,0,0,0,0,3,0,0]},
+      {"note":"voice","values":        [1,0,0,2,0,0,3,0,0,4,0,0,
+                                        5,0,0,6,0,0,7,0,0,8,0,0]}
+    ]
+  },
   { "name": "motown185", "type": "drumkit", 
     "numerator": 8, "denominator": 8, 
     "pattern": [
@@ -1152,28 +1374,45 @@
       {"note":"voice","values":        [1,0,2,0,3,0,4,0]}
     ]
   },
-  { "name": "motown189a", "type": "drumkit", 
-    "numerator": 16, "denominator": 16, 
+  { "name": "motown189(*2)", "type": "drumkit", 
+    "numerator": 32, "denominator": 16, 
     "pattern": [
-      {"note":"hihatHalfOpen","values":[0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0]},
-      {"note":"hihatClose", "values":  [3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0]},
-      {"note":"snare","values":        [0,0,0,0,0,0,0,3,0,3,0,0,0,0,8,0]},
-      {"note":"snareOpenRim","values": [0,0,0,0,8,0,0,0,0,0,0,0,0,0,8,0]},
-      {"note":"bass", "values":        [7,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0]},
-      {"note":"voice","values":        [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}
+      {"note":"hihatHalfOpen","values":[0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,
+                                        0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0]},
+      {"note":"hihatClose", "values":  [3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0,
+                                        3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0]},
+      {"note":"snareOpenRim","values": [0,0,0,0,8,0,0,0,0,0,0,0,0,0,8,0,
+                                        0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0]},
+      {"note":"snare","values":        [0,0,0,0,0,0,0,3,0,3,0,0,0,0,8,0,
+                                        0,3,0,0,0,0,0,0,0,3,0,0,0,0,0,0]},
+      {"note":"snareBuzz","values":    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3]},
+      {"note":"bass", "values":        [7,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,
+                                        0,0,7,0,0,0,0,0,0,0,7,0,0,0,0,0]},
+      {"note":"voice","values":        [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0,
+                                        5,0,0,0,6,0,0,0,7,0,0,0,8,0,0,0]}
     ]
   },
-  { "name": "motown189b", "type": "drumkit", 
-    "numerator": 16, "denominator": 16, 
+  { "name": "motown189(*2)", "type": "drumkit", 
+    "numerator": 32, "denominator": 16, 
     "pattern": [
-      {"note":"hihatClose", "values":  [3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0]},
-      {"note":"snareBuzz","values":    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3]},
-      {"note":"snare","values":        [0,3,0,0,0,0,0,0,0,3,0,0,0,0,0,0]},
-      {"note":"snareOpenRim","values": [0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0]},
-      {"note":"bass", "values":        [0,0,7,0,0,0,0,0,0,0,7,0,0,0,0,0]},
-      {"note":"voice","values":        [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}
+      {"note":"hihatHalfOpen", "values":[0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,
+                                         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+      {"note":"hihatClose", "values":   [3,0,3,0,3,0,3,0,3,0,0,0,3,0,3,0,
+                                        3,0,3,0,3,0,3,0,3,0,3,0,3,0,3,0]},
+      {"note":"snareOpenRim","values": [0,0,0,0,8,0,0,0,0,0,0,0,0,0,8,0,
+                                        0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0]},
+      {"note":"snareBuzz","values":    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3]},
+      {"note":"snare","values":        [0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,
+                                        0,3,0,0,0,0,0,0,0,3,0,0,0,0,0,0]},
+      {"note":"bass", "values":        [7,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,
+                                        0,0,7,0,0,0,0,0,0,0,7,0,0,0,0,0]},
+      {"note":"voice","values":        [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0,
+                                        5,0,0,0,6,0,0,0,7,0,0,0,8,0,0,0]}
     ]
   },
+
   { "name": "disco190", "type": "drumkit", 
     "numerator": 8, "denominator": 8, 
     "pattern": [
@@ -1854,6 +2093,35 @@
       {"note":"hihatFullOpen", "values":[3,0,0,0,3,0,0,0,3,0,0,0,3,0,0,0]},
       {"note":"hihatClose", "values":   [0,0,3,0,0,0,3,0,0,0,3,0,0,0,3,0]},
       {"note":"voice","values":         [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0]}
+    ]
+  },
+  { "name": "fusion245(*4)", "type": "drumkit", 
+    "numerator": 64, "denominator": 16, 
+    "pattern": [
+      {"note":"hihatFullOpen", "values":[0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,
+                                         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                                         0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,
+                                         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+      {"note":"hihatClose", "values":   [3,0,3,0,3,0,3,3,0,0,0,0,0,0,3,0,
+                                         3,0,3,0,3,0,3,3,3,0,3,0,3,0,6,0,
+                                         0,6,0,0,6,0,3,3,0,0,0,0,0,0,3,0,
+                                         3,0,3,0,3,0,3,0,3,0,0,0,0,0,0,0]},
+      {"note":"snareOpenRim","values":  [0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0,
+                                         0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0,
+                                         0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,0,
+                                         0,0,0,0,8,0,0,0,0,0,0,0,8,0,0,8]},
+      {"note":"snare","values":         [0,3,3,0,0,3,0,0,0,0,0,0,0,3,0,3,
+                                         0,3,3,0,0,3,0,0,0,3,3,0,0,3,0,3,
+                                         0,0,3,0,0,3,0,0,0,0,0,0,0,3,0,3,
+                                         0,3,3,0,0,3,0,3,0,7,7,7,0,0,0,0]},
+      {"note":"bass", "values":         [7,0,0,7,0,0,0,7,0,0,0,0,0,0,0,0,
+                                         7,0,0,7,0,0,7,0,7,0,0,7,0,0,0,0,
+                                         7,0,0,7,0,0,7,0,7,0,0,0,0,0,0,0,
+                                         7,0,0,7,0,0,7,0,0,7,0,0,0,7,7,0]},
+      {"note":"voice","values":         [1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0,
+                                         5,0,0,0,6,0,0,0,7,0,0,0,8,0,0,0,
+                                         1,0,0,0,2,0,0,0,3,0,0,0,4,0,0,0,
+                                         5,0,0,0,6,0,0,0,7,0,0,0,8,0,0,0]}
     ]
   },
   { "name": "fusion246", "type": "drumkit", 
