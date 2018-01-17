@@ -2,8 +2,8 @@
   "name": "metronome",
   "version": "0.9.8",
   "private": true,
-  "homepage": "/demos/metronome2/20180108",
-  "subversion": "02",
+  "homepage": "/demos/metronome2/20180111",
+  "subversion": "00",
   "dependencies": {
     "react": "^16.2.0",
     "react-dom": "^16.2.0",

@@ -10,12 +10,20 @@ Step
 
  0) create-react-app addclicks (no capital letters) -- done
 
- 1) Read local file (even on a smartphone)
+ 1) Read local file (even on a smartphone??) 
+    -- audio/* (wav, mp3, m4a) depends on web browser 
+    FileReader (readAsArrayBuffer)
+    context.decodeAudioData(arraybuffer, function(result){/* use result*/ })
+
+    bufferSource -- disposable.. how to stop?
 
  2) bpm and count one set by tap button?
     automatic adjustment?
 
- 4)  bpm detection/estimation (onset detection)
+ 4) bpm detection/estimation (onset/rms peak detection)
+    R L
+    rms windows size 512 samples(1? msec? at 44100 Hz)
+    shifr 256 samples
 
  5) add precount and count
 

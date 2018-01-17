@@ -1,20 +1,29 @@
 import React, { Component } from 'react';
-// import logo from './logo.svg';
-// import './App.css';
 import './addClicks.css'
+import WAAClock from 'waaclock'
+// import logo from './logo.svg'
+// import './App.css'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context
+var clock
 
 class App extends Component {
   constructor (props) {
     super(props)
-    this.setState = this.setState.bind(this)
-    this.inputAudio = undefined
-    this.currentSource = undefined
+    this.params = {
+       inputAudio: undefined,
+       currentSource: undefined,
+       beginAt: undefined,
+       pausedAt: undefined,
+       scheEvent: undefined
+    }
+
     this.state = {
-      playing: false,
-      decoded: false,
+      playing: 'stopped', // 'not playing', 'paused', 'playing'
+      startButtonStr: 'not ready',
+      stateStr: 'No sound data',
+      currentPos: 0,
       click: 'pre',
       bpm: 0 
     }
@@ -26,10 +35,12 @@ class App extends Component {
       msecsPrevious: 0
     }
 
+    this.setState = this.setState.bind(this)
     this.loadFile = this.loadFile.bind(this)
     this.handleStartStop = this.handleStartStop.bind(this)
     this.handleTap = this.handleTap.bind(this)
     this.handleClick = this.handleClick.bind(this)
+    this.handleTimeSlider = this.handleTimeSlider.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
   }
 
@@ -39,6 +50,8 @@ class App extends Component {
 
   componentDidMount () {  // after render()
     context = new window.AudioContext()
+    clock = new WAAClock(context)
+//    clock.start()
   }
 
   componentWillUnMount() { // before closing app
@@ -46,26 +59,37 @@ class App extends Component {
   }
 
   handleWindowClose (event) { // clean up before exit
-    // clock.stop()
+    clock.stop()
     context.close()
   }
   
   render() {
-    const {handleStartStop,handleTap,loadFile,handleClick} = this
-    const {playing,decoded,bpm} = this.state
+    const {handleStartStop,handleTap,loadFile,handleClick,
+      handleTimeSlider} = this
+    const {playing,bpm,startButtonStr,stateStr,songLength,currentPos} 
+      = this.state
 
     return (
      <div className='addClicks'>
      Add clicks to a music track for practice
      <hr />
-     Select sound file: <br />
-     <input type='file' accept='audio/*' onChange={loadFile} /><br />
+     sound file: &nbsp; 
+     <input type='file' name='loadFile' 
+     accept='audio/*' onChange={loadFile} />
      <hr />
-     {decoded ? 'Ready to Play' : 'Not loaded'}&nbsp;
-     <button name='startStop' onClick={handleStartStop}>
-     {playing ? 'Stop' : 'Start'}
-     </button> &nbsp;
-     BPM: {parseFloat(bpm).toFixed(1)}
+     &nbsp; <button name='startPause' onClick={handleStartStop}>
+     {startButtonStr}
+     </button> 
+     <button name='stop' onClick={handleStartStop}>Stop</button> 
+     &nbsp;
+     {('000' + parseFloat(currentPos).toFixed(1)).slice(-5)}/{parseFloat(songLength).toFixed(1)}:<br /> 
+     <span className='timeSlider'>
+     <input type='range' name='timeSlider' min='-10' 
+       max={songLength} step='0.01' value={currentPos} 
+       onChange={handleTimeSlider} />
+     </span>
+     <hr />
+     BPM: {('000' + parseFloat(bpm).toFixed(1)).slice(-5)}
      <hr />
      <button name='tempo_tap' onClick={handleTap}>Tap</button> &nbsp;
      (timeout: 3 sec)
@@ -87,17 +111,23 @@ class App extends Component {
   }
 
   loadFile(event){
+
     if (event.target.name !== 'loadFile') return
 
     if (event.target.files.length === 0) return
 
     let file = event.target.files[0]
+
     let reader = new FileReader()
     reader.onload = function(e) {
+//      this.setState({stateStr: 'decoding...(wait)'})
       context.decodeAudioData(reader.result,
         function(buffer) {
-          this.inputAudio = buffer
-          this.setState({decoded: true})
+          this.params.inputAudio = buffer
+          console.log('decoded')
+//          this.setState({decoded: true, stateStr: 'ready to play'})
+          this.setState({startButtonStr: 'Play',
+                         songLength: this.params.inputAudio.duration})
         }.bind(this),
         function(error){ 
           console.log('ERROR decodeAudioData:') 
@@ -109,24 +139,78 @@ class App extends Component {
   }
 
   handleStartStop(event){
-    if (event.target.name !== 'startStop') return
+    const {inputAudio,currentSource} = this.params
+    const {startButtonStr} = this.state
 
-    const {playing} = this.state
-    let {currentSource} = this
-
-    if (!playing) {
-      if (currentSource !== undefined) currentSource.stop()
-      let source = context.createBufferSource()
-      source.buffer = this.inputAudio
-      source.connect(context.destination)
-      source.start()
-      this.currrentSource = source
-      this.setState({playing: true})
-    } else {
-      if (currentSource !== undefined) currentSource.stop()
-      this.currentSource = undefined
-      this.setState({playing: false})
+    if (event.target.name === 'stop'){
+      currentSource.stop()
+      this.params.scheEvent.clear()
+      this.setState({startButtonStr: 'Play', currentPos: 0.0})
+      return
     }
+
+    if (event.target.name === 'startPause'){
+      if (startButtonStr === 'Play') {
+        let source = context.createBufferSource()
+        source.buffer = inputAudio
+        source.connect(context.destination)
+        this.params.beginAt = context.currentTime
+        source.start(10.0)
+        this.params.currentSource = source
+        this.setState({startButtonStr: 'Pause'})
+        clock.start()
+        this.params.scheEvent = clock.callbackAtTime(
+          function(event) {
+            if (this.state.currentPos > inputAudio.duration) {
+              // event.cancel()
+              this.handleStartStop({target:{name:'stop'}})
+            }
+            this.setState({
+             currentPos: context.currentTime - this.params.beginAt})
+          }.bind(this), 0
+         ).repeat(0.1)
+          .tolerance({early: 0.0, late: 1.0})
+      } else if (startButtonStr === 'Pause'){
+        this.params.pausedAt = this.state.currentPos 
+               + context.currentTime - this.params.beginAt
+        this.setState({startButtonStr: 'Resume', 
+                       currentPos: this.params.pausedAt})
+        currentSource.stop()
+        this.params.scheEvent.clear()
+        console.log('paused at: ' + this.params.pausedAt)
+      } else if (startButtonStr === 'Resume'){
+        this.params.beginAt = context.currentTime
+        this.params.scheEvent = clock.callbackAtTime(
+          function(event) {
+            if (this.state.currentPos > inputAudio.duration) {
+               // event.cancel()
+               this.handleStartStop({target:{name:'stop'}})
+            }
+            this.setState({currentPos: this.params.pausedAt 
+                + context.currentTime - this.params.beginAt})
+          }.bind(this), 0
+         ).repeat(0.1)
+          .tolerance({early: 0.1, late: 1.0})
+
+        this.setState({startButtonStr: 'Pause'})
+        let source = context.createBufferSource()
+        this.params.currentSource = source
+        source.buffer = inputAudio
+        source.connect(context.destination)
+        source.start(0, this.params.pausedAt);
+        console.log('resume at: ' + this.params.pausedAt)
+      } 
+
+      return
+    }
+   
+    if (event.target.name === 'stop') {
+      currentSource.stop()
+      this.params.startButtonStr = 'play'
+      if (this.params.scheEvent) this.params.scheEvent.cancel()
+      return
+    }
+
   }
 
   handleClick (event){
@@ -162,6 +246,10 @@ class App extends Component {
       }
       this.tap.msecsPrevious = msecs
 
+  }
+
+  handleTimeSlider(event){
+     this.setState({currentPos: parseFloat(event.target.value)})
   }
 
 }

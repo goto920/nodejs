@@ -5,3 +5,9 @@
   padding: 30px;
   cursor: pointer;
 }
+
+.timeSlider input {
+  width: 80%;
+  margin: auto;
+  cursor: pointer;
+}
