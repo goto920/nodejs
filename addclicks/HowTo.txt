@@ -16,6 +16,7 @@ Step
     context.decodeAudioData(arraybuffer, function(result){/* use result*/ })
 
     bufferSource -- disposable.. how to stop?
+      --> context.suspend(), context.resume()
 
  2) bpm and count one set by tap button?
     automatic adjustment?
@@ -29,4 +30,9 @@ Step
 
  6) User interface
 
+ 7) save to a wav file 
+    write header
+    create URL for object
+    https://qiita.com/HirokiTanaka/items/56f80844f9a32020ee3b
 
+End
