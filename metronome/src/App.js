@@ -926,7 +926,7 @@ class App extends Component {
 /* actual process */
     if (event.target.name === 'stop') {
       for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
-      this.tickEvents = []
+      this.tickEvents.splice(0, this.tickEvents.length)
       this.handleTimer({target: {name: 'clearTimer'}})
       return
     }
