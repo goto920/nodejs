@@ -7,7 +7,7 @@ import packageJSON from '../package.json'
 import loadedSetListSample from './setListSample.json'
 import loadedDrumPatterns from './drumPatterns.json'
 import loadedClickPatterns from './clickPatterns.json'
-import soundList from './soundList.json'
+import soundList from './soundList.js'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
@@ -172,7 +172,10 @@ class App extends Component {
 
     let inputFiles = []
     for (let i = 0; i < soundList.length; i++) {
-      inputFiles[i] = soundList[i] + '.mp3'
+      // inputFiles[i] = soundList[i] + '.mp3'
+      inputFiles[i] = soundList[i]
+      soundList[i] = soundList[i].replace(/\/.*\/(.*)\..*\.mp3/, '$1')
+      // console.log(soundList[i])
     }
 
     let bufferLoader = new BufferLoader(
@@ -1053,7 +1056,7 @@ class App extends Component {
     const current = currentPattern.pattern[lastIndex]
     if (voiceOn && (current.note === 'voice') && (current.values[count] > 0)) {
       source[lastIndex] = context.createBufferSource()
-      source[lastIndex].buffer = sound[voice + '-' + current.values[count]]
+      source[lastIndex].buffer = sound[voice + '_' + current.values[count]]
       source[lastIndex].connect(gainNode[lastIndex])
       gainNode[lastIndex].connect(context.destination)
       gainNode[lastIndex].gain.value = 0.5
@@ -1066,66 +1069,66 @@ class App extends Component {
       for (let i = 0; i < lastIndex; i++) { source[i] = context.createBufferSource() }
 
       if (metroSound === 'cb1') {
-        source[0].buffer = sound['cowbell-higher']
-        source[1].buffer = sound['cowbell-higher']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-higher'] }
+        source[0].buffer = sound['cowbell_higher']
+        source[1].buffer = sound['cowbell_higher']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_higher'] }
       }
       if (metroSound === 'cb2') {
-        source[0].buffer = sound['cowbell-high']
-        source[1].buffer = sound['cowbell-high']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-high'] }
+        source[0].buffer = sound['cowbell_high']
+        source[1].buffer = sound['cowbell_high']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_high'] }
       }
 
       if (metroSound === 'cb3') {
-        source[0].buffer = sound['cowbell-mid']
-        source[1].buffer = sound['cowbell-mid']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-mid'] }
+        source[0].buffer = sound['cowbell_mid']
+        source[1].buffer = sound['cowbell_mid']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_mid'] }
       }
 
       if (metroSound === 'cb4') {
-        source[0].buffer = sound['cowbell-low']
-        source[1].buffer = sound['cowbell-low']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-low'] }
+        source[0].buffer = sound['cowbell_low']
+        source[1].buffer = sound['cowbell_low']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_low'] }
       }
       if (metroSound === 'cb5') {
-        source[0].buffer = sound['cowbell-lower']
-        source[1].buffer = sound['cowbell-lower']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-lower'] }
+        source[0].buffer = sound['cowbell_lower']
+        source[1].buffer = sound['cowbell_lower']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_lower'] }
       }
       if (metroSound === '2cb1') {
-        source[0].buffer = sound['cowbell-higher']
-        source[1].buffer = sound['cowbell-high']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-high'] }
+        source[0].buffer = sound['cowbell_higher']
+        source[1].buffer = sound['cowbell_high']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_high'] }
       }
       if (metroSound === '2cb2') {
-        source[0].buffer = sound['cowbell-high']
-        source[1].buffer = sound['cowbell-mid']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-mid'] }
+        source[0].buffer = sound['cowbell_high']
+        source[1].buffer = sound['cowbell_mid']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_mid'] }
       }
       if (metroSound === '2cb3') {
-        source[0].buffer = sound['cowbell-mid']
-        source[1].buffer = sound['cowbell-low']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-low'] }
+        source[0].buffer = sound['cowbell_mid']
+        source[1].buffer = sound['cowbell_low']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_low'] }
       }
       if (metroSound === '2cb4') {
-        source[0].buffer = sound['cowbell-low']
-        source[1].buffer = sound['cowbell-lower']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-lower'] }
+        source[0].buffer = sound['cowbell_low']
+        source[1].buffer = sound['cowbell_lower']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_lower'] }
       }
       if (metroSound === '3cb1') {
-        source[0].buffer = sound['cowbell-higher']
-        source[1].buffer = sound['cowbell-high']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-mid'] }
+        source[0].buffer = sound['cowbell_higher']
+        source[1].buffer = sound['cowbell_high']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_mid'] }
       }
       if (metroSound === '3cb2') {
-        source[0].buffer = sound['cowbell-high']
-        source[1].buffer = sound['cowbell-mid']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-low'] }
+        source[0].buffer = sound['cowbell_high']
+        source[1].buffer = sound['cowbell_mid']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_low'] }
       }
       if (metroSound === '3cb3') {
-        source[0].buffer = sound['cowbell-mid']
-        source[1].buffer = sound['cowbell-low']
-        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell-lower'] }
+        source[0].buffer = sound['cowbell_mid']
+        source[1].buffer = sound['cowbell_low']
+        if (lastIndex - 1 > 1) { source[lastIndex - 1].buffer = sound['cowbell_lower'] }
       }
       if (metroSound === '1cg1') {
         source[0].buffer = sound['highConga']
