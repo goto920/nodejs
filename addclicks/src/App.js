@@ -1,18 +1,35 @@
 import React, { Component } from 'react';
 import './addClicks.css'
 import WAAClock from 'waaclock'
-// import logo from './logo.svg'
-// import './App.css'
+import BufferLoader from './buffer-loader'
+import clickSound from './cowbell-mid.mp3'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
+window.OfflineAudioContext = window.OfflineAudioContext || window.webkitOfflineAudioContext
+
 var context
 var clock
+var cowbell_mid_sound
+
+var offlineContext = new window.OfflineAudioContext(2, 4*44100*10, 44100)
+var lowpass = offlineContext.createBiquadFilter();
+    lowpass.tyvar  = "lowpass"
+    lowpass.frequency.value = 150
+    lowpass.Q.value = 1
+
+var highpass = offlineContext.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value = 100;
+    highpass.Q.value = 1;
+
 
 class App extends Component {
   constructor (props) {
     super(props)
     this.params = {
        inputAudio: undefined,
+       bpm: undefined,
+       offset: undefined,
        currentSource: undefined,
        beginAt: undefined,
        pausedAt: undefined,
@@ -43,6 +60,9 @@ class App extends Component {
     this.handleClick = this.handleClick.bind(this)
     this.handleTimeSlider = this.handleTimeSlider.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
+    this.bpmDetect = this.bpmDetect.bind(this)
+    this.getPeaks = this.getPeaks.bind(this)
+    this.getIntervals = this.getIntervals.bind(this)
   }
 
   componentWillMount () { // before render()
@@ -51,6 +71,18 @@ class App extends Component {
 
   componentDidMount () {  // after render()
     context = new window.AudioContext()
+
+    let inputFiles = []
+    inputFiles.push(clickSound)
+
+    let bufferLoader = new BufferLoader(
+      context, inputFiles, function (bufferList) {
+        cowbell_mid_sound = bufferList[0]
+        // console.log(cowbell_mid_sound)
+      }
+    )
+    bufferLoader.load()
+
     clock = new WAAClock(context)
     clock.start()
   }
@@ -68,7 +100,7 @@ class App extends Component {
   render() {
     const {handleStartStop,handleTap,loadFile,handleClick,
       handleTimeSlider} = this
-    const {playing,bpm,startButtonStr,songLength,currentPos,clickVolume} 
+    const {bpm,startButtonStr,songLength,currentPos,clickVolume} 
       = this.state
 
     return (
@@ -148,7 +180,7 @@ class App extends Component {
       context.decodeAudioData(reader.result,
         function(buffer) {
           this.params.inputAudio = buffer
-          // console.log('decoded')
+ //         this.bpmDetect(this.params.inputAudio)
           this.setState({startButtonStr: 'Play',
                          songLength: this.params.inputAudio.duration})
         }.bind(this),
@@ -159,6 +191,99 @@ class App extends Component {
 
     reader.readAsArrayBuffer(file)
     return
+  }
+
+/* https://github.com/JMPerez/beats-audio-api/blob/gh-pages/script.js */
+  bpmDetect(inputAudioBuffer){
+    let {bpm,offset} = this.params
+
+    let source = offlineContext.createBufferSource()
+    source.buffer = inputAudioBuffer
+    source.connect(lowpass)
+    // lowpass and then highpass
+    lowpass.connect(highpass)
+    highpass.connect(offlineContext.destination)
+    source.start()
+    offlineContext.startRendering()
+    
+    offlineContext.oncomplete = function (e){
+      console.log('Rendering complete')
+      let buffer = e.renderedBuffer;
+      let peaks = this.getPeaks(
+           [buffer.getChannelData(0), buffer.getChannelData(1)])
+      let groups = this.getIntervals(peaks);
+    }
+
+  }
+
+  getPeaks(data){
+     var partSize = 22050,
+     parts = data[0].length / partSize,
+     peaks = [];
+
+  for (var i = 0; i < parts; i++) {
+    var max = 0;
+    for (var j = i * partSize; j < (i + 1) * partSize; j++) {
+      var volume = Math.max(Math.abs(data[0][j]), Math.abs(data[1][j]));
+      if (!max || (volume > max.volume)) {
+        max = {
+          position: j,
+          volume: volume
+        };
+      }
+    }
+    peaks.push(max);
+  }
+
+  // We then sort the peaks according to volume...
+
+  peaks.sort(function(a, b) {
+    return b.volume - a.volume;
+  });
+
+  // ...take the loundest half of those...
+
+  peaks = peaks.splice(0, peaks.length * 0.5);
+
+  // ...and re-sort it back based on position.
+
+  peaks.sort(function(a, b) {
+    return a.position - b.position;
+  });
+
+  return peaks;
+} // END getPeaks
+
+  getIntervals(peaks){
+   var groups = [];
+
+  peaks.forEach(function(peak, index) {
+    for (var i = 1; (index + i) < peaks.length && i < 10; i++) {
+      var group = {
+        tempo: (60 * 44100) / (peaks[index + i].position - peak.position),
+        count: 1
+      };
+
+      while (group.tempo < 90) {
+        group.tempo *= 2;
+      }
+
+      while (group.tempo > 180) {
+        group.tempo /= 2;
+      }
+
+      group.tempo = Math.round(group.tempo);
+
+/*
+      if (!(groups.some(function(interval) {
+        return (interval.tempo === group.tempo ? interval.count++ : 0);
+      }))) { groups.push(group); }
+*/
+
+    }
+  });
+
+    return groups;
   }
 
   handleStartStop(event){
@@ -177,6 +302,12 @@ class App extends Component {
 
     if (event.target.name === 'startPause'){
       if (startButtonStr === 'Play') {
+        let count  = context.createBufferSource()
+        console.log(cowbell_mid_sound)
+        count.buffer = cowbell_mid_sound
+        count.connect(context.destination)
+        count.start()
+
         let source = context.createBufferSource()
         source.buffer = inputAudio
         source.connect(context.destination)
