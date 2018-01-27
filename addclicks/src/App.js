@@ -60,7 +60,7 @@ class App extends Component {
     this.handleClick = this.handleClick.bind(this)
     this.handleTimeSlider = this.handleTimeSlider.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
-    this.bpmDetect = this.bpmDetect.bind(this)
+    this.makeClickTrack = this.makeClickTrack.bind(this)
     this.getPeaks = this.getPeaks.bind(this)
     this.getIntervals = this.getIntervals.bind(this)
   }
@@ -180,7 +180,7 @@ class App extends Component {
       context.decodeAudioData(reader.result,
         function(buffer) {
           this.params.inputAudio = buffer
- //         this.bpmDetect(this.params.inputAudio)
+          this.makeClickTrack(this.params.inputAudio)
           this.setState({startButtonStr: 'Play',
                          songLength: this.params.inputAudio.duration})
         }.bind(this),
@@ -194,7 +194,7 @@ class App extends Component {
   }
 
 /* https://github.com/JMPerez/beats-audio-api/blob/gh-pages/script.js */
-  bpmDetect(inputAudioBuffer){
+  makeClickTrack(inputAudioBuffer){
     let {bpm,offset} = this.params
 
     let source = offlineContext.createBufferSource()
@@ -204,20 +204,21 @@ class App extends Component {
     lowpass.connect(highpass)
     highpass.connect(offlineContext.destination)
     source.start()
-    offlineContext.startRendering()
     
     offlineContext.oncomplete = function (e){
       console.log('Rendering complete')
-      let buffer = e.renderedBuffer;
       let peaks = this.getPeaks(
-           [buffer.getChannelData(0), buffer.getChannelData(1)])
-      let groups = this.getIntervals(peaks);
-    }
+       [e.renderedBuffer.getChannelData(0), 
+        e.renderedBuffer.getChannelData(1)])
+      console.log(peaks)
+    }.bind(this)
 
-  }
+    offlineContext.startRendering()
+
+  } // END makeClickTrack
 
   getPeaks(data){
-     var partSize = 22050,
+     var partSize = 22050, // 0.5 sec
      parts = data[0].length / partSize,
      peaks = [];
 
@@ -310,6 +311,8 @@ class App extends Component {
 
         let source = context.createBufferSource()
         source.buffer = inputAudio
+        // source.playbackRate.value = 0.5
+        // source.detune.value = 1200 // one octave
         source.connect(context.destination)
         this.params.beginAt = context.currentTime
         source.start(context.currentTime,parseFloat(currentPos,10))

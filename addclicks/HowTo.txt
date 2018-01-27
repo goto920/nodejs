@@ -17,6 +17,18 @@ Step
 
     bufferSource -- disposable.. how to stop?
       --> context.suspend(), context.resume()
+    loop可能、oneended (終了イベント), 
+        detune(cents), playbackRate(resampling) 
+          -- same thing with different setting
+
+  AudioBuffer.getChannelData() -- 0,1(LR)
+  (AudioBuffer.copyFromChannel())
+  AudioBuffer.copyToChannel()
+
+  For PC
+    Use MediaElementAudioSourcenode for long sound samples
+      instead of AudioSourceNode 
+    MediaElement... does not work on smartphones yet.
 
  2) bpm and count one set by tap button?
     automatic adjustment?
@@ -26,7 +38,12 @@ Step
     rms windows size 512 samples(1? msec? at 44100 Hz)
     shifr 256 samples
 
- 5) add precount and count
+ 5) add count and precount
+
+   click sound files in src/
+   import name from './sound.mp3'
+    name becomes (build)/static/media/sound.hash.mp3
+   load URL(name) and decode
 
  6) User interface
 
