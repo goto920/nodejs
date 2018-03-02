@@ -11,8 +11,9 @@ var context
 var clock
 var cowbell_mid_sound
 
-var offlineContext = new window.OfflineAudioContext(2, 4*44100*10, 44100)
-var lowpass = offlineContext.createBiquadFilter();
+var offlineContext = new window.OfflineAudioContext(2, 4*44100*10, 44100) 
+ // 40 sec
+var lowpass = offlineContext.createBiquadFilter()
     lowpass.tyvar  = "lowpass"
     lowpass.frequency.value = 150
     lowpass.Q.value = 1
@@ -199,6 +200,7 @@ class App extends Component {
 
     let source = offlineContext.createBufferSource()
     source.buffer = inputAudioBuffer
+       // console.log('inputLen: ' + inputAudioBuffer.getChannelData(0).length)
     source.connect(lowpass)
     // lowpass and then highpass
     lowpass.connect(highpass)
@@ -218,11 +220,12 @@ class App extends Component {
   } // END makeClickTrack
 
   getPeaks(data){
-     var partSize = 22050, // 0.5 sec
-     parts = data[0].length / partSize,
-     peaks = [];
+     let partSize = 22050 // 0.5 sec
+     let parts = data[0].length / partSize
+     let peaks = []
 
   for (var i = 0; i < parts; i++) {
+    console.log('part: ' + i)
     var max = 0;
     for (var j = i * partSize; j < (i + 1) * partSize; j++) {
       var volume = Math.max(Math.abs(data[0][j]), Math.abs(data[1][j]));
@@ -230,7 +233,7 @@ class App extends Component {
         max = {
           position: j,
           volume: volume
-        };
+        }
       }
     }
     peaks.push(max);

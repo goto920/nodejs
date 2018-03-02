@@ -1,0 +1,174 @@
+Bass Drum sounds start with "BD".
+Snare Drum sounds start with "SD".
+Low Tom sounds start with "LT".
+Mid Tom sounds start with "MT".
+Hi Tom sounds start with "HT".
+Low Conga sounds start with "LC".
+Mid Conga sounds start with "MC".
+Hi Conga sounds start with "HC".
+Rim Shot sound starts with "RS".
+Claves sounds starts with "CL".
+Hand Clap sound starts with "CP".
+Maracas sound starts with "MA".
+Cowbell sound starts with "CB".
+Cymbal sounds start with "CY".
+Open Hi Hat sounds start with "OH".
+Closed Hi Hat sound starts with "CH".
+-----------------------
+1 Closed Hi Hat sound
+*CH.WAV
+-----------------------
+5 Open Hi Hat sounds
+OH00.WAV
+OH10.WAV
+*OH25.WAV
+OH50.WAV
+OH75.WAV
+---------------------
+25 Bass Drum sounds
+BD0000.WAV
+*BD0010.WAV
+BD0025.WAV
+*BD0050.WAV
+*BD0075.WAV
+BD1000.WAV
+BD1010.WAV
+BD1025.WAV
+BD1050.WAV
+BD1075.WAV
+BD2500.WAV
+BD2510.WAV
+*BD2525.WAV
+BD2550.WAV
+BD2575.WAV
+BD5000.WAV
+BD5010.WAV
+**BD5025.WAV
+BD5050.WAV
+BD5075.WAV
+BD7500.WAV
+BD7510.WAV
+*BD7525.WAV
+BD7550.WAV
+BD7575.WAV
+------------------
+25 Snare Drum sounds
+1 Rim Shot sound
+*RS.WAV
+SD0000.WAV
+*SD0010.WAV
+SD0025.WAV
+*SD0050.WAV
+SD0075.WAV
+SD1000.WAV
+*SD1010.WAV
+SD1025.WAV
+*SD1050.WAV
+*SD1075.WAV
+SD2500.WAV
+*SD2510.WAV
+SD2525.WAV
+SD2550.WAV
+*SD2575.WAV
+SD5000.WAV
+*SD5010.WAV
+SD5025.WAV
+*SD5050.WAV
+**SD5075.WAV
+SD7500.WAV
+SD7510.WAV
+SD7525.WAV
+*SD7550.WAV
+*SD7575.WAV
+-----------------
+5 Low Tom sounds
+*LT00.WAV
+LT10.WAV
+LT25.WAV
+LT50.WAV
+LT75.WAV
+---------------
+5 Mid Tom sounds
+MT00.WAV
+MT10.WAV
+MT25.WAV
+*MT50.WAV
+MT75.WAV
+--------------
+5 Hi Tom sounds
+HT00.WAV
+HT10.WAV
+*HT25.WAV
+HT50.WAV
+HT75.WAV
+---------------------
+5 Low Conga sounds
+*LC00.WAV
+LC10.WAV
+LC25.WAV
+LC50.WAV
+LC75.WAV
+5 Mid Conga sounds
+*MC00.WAV
+MC10.WAV
+MC25.WAV
+MC50.WAV
+MC75.WAV
+5 Hi Conga sounds
+*HC00.WAV
+HC10.WAV
+HC25.WAV
+HC50.WAV
+HC75.WAV
+--------------------
+1 Claves sound
+CL.WAV
+1 Hand Clap sound
+CP.WAV
+1 Maracas sound
+MA.WAV
+--------------------
+1 Cow Bell sound
+CB.WAV
+--------------------
+25 Cymbal sounds (ride, crash?)
+CY0000.WAV -- short
+CY0010.WAV
+CY0025.WAV -- short
+CY0050.WAV -- short
+CY0075.WAV -- short
+-------------
+*CY1000.WAV -- ride? 
+CY1010.WAV
+CY1025.WAV
+CY1050.WAV
+CY1075.WAV
+-----------
+*CY2500.WAV --mmm
+CY2510.WAV
+CY2525.WAV
+CY2550.WAV
+CY2575.WAV
+------------
+*CY5000.WAV -- ride?
+CY5010.WAV
+CY5025.WAV
+CY5050.WAV
+CY5075.WAV
+----------
+CY7500.WAV
+CY7510.WAV
+CY7525.WAV
+CY7550.WAV
+*CY7575.WAV -- crash(long)
+----------------------
+5 Open Hi Hat sounds
+OH00.WAV
+OH10.WAV
+**OH25.WAV
+OH50.WAV
+OH75.WAV
+---------------------
+1 Closed Hi Hat sound
+H.WAV
+---------------------

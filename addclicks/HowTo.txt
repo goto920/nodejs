@@ -53,3 +53,16 @@ Step
     https://qiita.com/HirokiTanaka/items/56f80844f9a32020ee3b
 
 End
++++++++++++
+https://www.npmjs.com/package/web-audio-beat-detector
+import { analyze } from 'web-audio-beat-detector'
+import { guess } from 'web-audio-beat-detector'
+
+guess(audioBuffer) // (buff,begin,duration)
+    .then(({ bpm, offset }) => {
+        // the bpm and offset could be guessed
+    })
+    .catch((err) => {
+        // something went wrong
+    });
+

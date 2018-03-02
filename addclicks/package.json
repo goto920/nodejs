@@ -6,7 +6,8 @@
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-scripts": "1.0.17",
-    "waaclock": "^0.5.3"
+    "waaclock": "^0.5.3",
+    "web-audio-beat-detector": "^6.0.4"
   },
   "scripts": {
     "start": "react-scripts start",
