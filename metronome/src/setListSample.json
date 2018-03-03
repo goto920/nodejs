@@ -81,6 +81,7 @@
                    {"note": "voice", "values":  [1,0,2,0,3,0,4]}]},
       "repeat": 1},
       {"bar": {"name": "2/4","type": "clicks","numerator": 2,"denominator": 4,
+      "numerator": 2, "denominator": 4,
       "pattern": [{"note": "click0", "values": [9,0]},
                   {"note": "click1", "values": [0,7]},
                   {"note": "voice",  "values": [1,2]}]},

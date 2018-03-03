@@ -113,7 +113,7 @@ class App extends Component {
       // for custom loop
       loopTable: [],
       loopTableNewRow: {
-        pattern: loadedClickPatterns[this.params.default_clickPatternNo],
+        bar: loadedClickPatterns[this.params.default_clickPatternNo],
         swingVal: 1.5,
         repeat: 4},
       loopStat: {playing: false, seq: 0, repeat: 0, bar: 0},
@@ -685,13 +685,13 @@ class App extends Component {
         if (loopStat.seq === loopTable.length) loopStat.seq = 0
 
         loopStat.repeat = 1
-        let {pattern} = loopTable[loopStat.seq]
-        this.params.currentPattern = pattern
-        this.params.numerator = pattern.numerator
-        this.params.denominator = pattern.denominator
-        this.params.triplet = pattern.triplet
-        if (pattern.swingVal !== undefined) {
-          this.setState({swingVal: pattern.swingVal})
+        let {bar} = loopTable[loopStat.seq]
+        this.params.currentPattern = bar
+        this.params.numerator = bar.numerator
+        this.params.denominator = bar.denominator
+        this.params.triplet = bar.triplet
+        if (bar.swingVal !== undefined) {
+          this.setState({swingVal: bar.swingVal})
           this.params.swing = true
         } else {
           this.setState({swingVal: 1.5})
@@ -736,14 +736,14 @@ class App extends Component {
 
     if (event.target.name === 'loopAdd') {
       if (event.target.value === 'drum') {
-        loopTableNewRow.pattern =
+        loopTableNewRow.bar =
           loadedDrumPatterns[this.state.drumPatternNo]
       } else if (event.target.value === 'click') {
-        loopTableNewRow.pattern =
+        loopTableNewRow.bar =
           loadedClickPatterns[this.state.clickPatternNo]
       }
 
-      loopTable.push({pattern: loopTableNewRow.pattern,
+      loopTable.push({bar: loopTableNewRow.bar,
         repeat: loopTableNewRow.repeat})
       this.setState({loopTable: loopTable})
       return
@@ -1059,8 +1059,10 @@ class App extends Component {
       source[lastIndex].buffer = sound[voice + '_' + current.values[count]]
       source[lastIndex].connect(gainNode[lastIndex])
       gainNode[lastIndex].connect(context.destination)
-      gainNode[lastIndex].gain.value = 0.5
-      source[lastIndex].start(deadline)
+      if (!muteStat){
+        gainNode[lastIndex].gain.value = 0.5
+        source[lastIndex].start(deadline)
+      }
     }
 
     /* mute */
