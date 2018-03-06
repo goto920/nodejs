@@ -1,7 +1,7 @@
 import bass from './bass.mp3'
 import clave from './clave.mp3'
 import cowbell_high from './cowbell_high.mp3'
-import cowbell_higher from'./cowbell_higher.mp3'
+import cowbell_higher from './cowbell_higher.mp3'
 import cowbell_low from './cowbell_low.mp3'
 import cowbell_lower from './cowbell_lower.mp3'
 import cowbell_mid from './cowbell_mid.mp3'
@@ -50,7 +50,7 @@ import tomMid from './tomMid.mp3'
 import tomLow from './tomLow.mp3'
 
 // BEGIN
-var soundList = [] 
+var soundList = []
 soundList.push(bass)
 soundList.push(clave)
 soundList.push(cowbell_high)
