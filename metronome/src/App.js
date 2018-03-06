@@ -22,9 +22,10 @@ var gainNode = []
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
  // define in package.json
-// const early = 0.1
 const early = 0.1
-const late = 1.0
+// const early = 0.01
+const late = 0.1
+// const late = 0.01
 const jaText = messages.ja
 const usText = messages.us
 var m = usText
@@ -709,7 +710,7 @@ class App extends Component {
             this.playPattern(event.deadline)
           }.bind(this),
           this.nextTick(beat)
-        ).tolerance({early: early, late: late}) // tight early tolerance
+        ).tolerance({early: early, late: late})
         this.tickEvents[beat] = event
       } // end for
 
@@ -717,7 +718,8 @@ class App extends Component {
       loopStat.bar++
       this.setState({loopStat: loopStat})
     } // end nextBar
-  }
+
+  } // end customPlay
 
   handleTable (event) {
     const {loopTable, loopTableNewRow} = this.state

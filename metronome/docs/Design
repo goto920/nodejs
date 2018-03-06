@@ -41,8 +41,10 @@ C) Sound files (mp3)
        'nextBar'
 
 2. Bugs
- extra time at the end of the repeat in the Custom Loop table
 
+Delay of the last sound repeat in the Custom Loop table
+
+Cause???
 L.716  this.params.nextTick = this.nextTick(this.params.numerator) // next
 
 

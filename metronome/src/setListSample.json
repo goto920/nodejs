@@ -108,7 +108,7 @@
        "pattern": [{"note": "click0", "values": [9,0,0,0,0,0,0]},
                    {"note": "click1", "values": [0,0,7,0,7,0,7]},
                    {"note": "click2", "values": [0,7,0,7,0,7,0]},
-                   {"note": "voice", "values":  [1,0,2,0,3,0,4]}]},
+                   {"note": "voice", "values":  [1,2,3,4,5,6,7]}]},
       "repeat": 1},
       {"bar": {"name": "4/4","type": "clicks", "default": true,
       "numerator": 4, "denominator": 4,
