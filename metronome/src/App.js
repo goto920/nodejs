@@ -22,10 +22,9 @@ var gainNode = []
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
  // define in package.json
+// const early = 0.1
 const early = 0.1
-// const early = 0.01
 const late = 0.1
-// const late = 0.01
 const jaText = messages.ja
 const usText = messages.us
 var m = usText
@@ -669,6 +668,7 @@ class App extends Component {
 
     if (event.target.name === 'stop') {
       for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
+      this.tickEvents.splice(0, this.tickEvents.length)
       loopStat.playing = false
       this.setState({loopStat: loopStat})
       return
@@ -703,7 +703,6 @@ class App extends Component {
       if (loopStat.bar === 0) { this.params.startTime = context.currentTime } else { this.params.startTime = this.params.nextTick }
 
       this.params.count = 0
-      let event
       for (let beat = 0; beat < this.params.numerator; beat++) {
         event = clock.callbackAtTime(
           function (event) {
@@ -714,9 +713,9 @@ class App extends Component {
         this.tickEvents[beat] = event
       } // end for
 
-      this.params.nextTick = this.nextTick(this.params.numerator) // next
       loopStat.bar++
       this.setState({loopStat: loopStat})
+      this.params.nextTick = this.nextTick(this.params.numerator) // next
     } // end nextBar
 
   } // end customPlay
@@ -920,6 +919,10 @@ class App extends Component {
 
   startStopDrums (event) {
     if (event.target.name === 'startStop') {
+      if (this.state.loopStat.playing) {
+        this.customPlay({target: {name: 'stop'}})
+      }
+
       if (this.state.playing) {
         this.startStopDrums({target: {name: 'stop'}})
       } else {
