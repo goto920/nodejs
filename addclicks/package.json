@@ -5,9 +5,9 @@
   "dependencies": {
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
-    "react-scripts": "1.0.17",
+    "react-scripts": "^1.1.1",
     "waaclock": "^0.5.3",
-    "web-audio-beat-detector": "^6.0.4"
+    "web-audio-beat-detector": "^6.0.10"
   },
   "scripts": {
     "start": "react-scripts start",

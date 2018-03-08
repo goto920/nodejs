@@ -6,7 +6,7 @@ export default function BufferLoader (context, urlList, callback) {
   this.context = context
   this.urlList = urlList
   this.onload = callback
-//  this.bufferList = new Array();
+  //  this.bufferList = new Array();
   this.bufferList = []
   this.loadCount = 0
 }
@@ -21,7 +21,7 @@ BufferLoader.prototype.loadBuffer = function (url, index) {
 
   request.onload = function () {
     // Asynchronously decode the audio file data in request.response
-/* 
+    /*
     let arr = Array.prototype.slice.call(new Uint8Array(request.response))
     let arr1 = arr.map(function(item){
        return String.fromCharCode(item)
