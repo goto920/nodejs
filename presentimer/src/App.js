@@ -75,7 +75,7 @@ class App extends Component {
         this.soundList[4] = bufferList[4] 
         this.soundList[5] = bufferList[5] 
         this.soundList[6] = bufferList[6] 
-        this.soundList[6] = bufferList[7] 
+        this.soundList[7] = bufferList[7] 
      }.bind(this)
     )
     bufferLoader.load()
