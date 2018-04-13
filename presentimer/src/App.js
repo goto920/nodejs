@@ -179,7 +179,7 @@ class App extends Component {
         this.processTimer()
          }.bind(this), context.currentTime)
         .repeat(1.0)
-        .tolerance({early: 0.1, late: 0.1})
+        .tolerance({early: 0.1, late: 1})
         this.setState({timerState: 'running'})
       } else if (this.state.timerState === 'paused') { // continue
         this.params.beginTime = context.currentTime 
