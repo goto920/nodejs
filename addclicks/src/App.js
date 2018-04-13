@@ -3,35 +3,27 @@ import './addClicks.css'
 import WAAClock from 'waaclock'
 import BufferLoader from './buffer-loader'
 import clickSound from './cowbell-mid.mp3'
-import {guess} from 'web-audio-beat-detector'
+import {analyze,guess} from 'web-audio-beat-detector'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 window.OfflineAudioContext = window.OfflineAudioContext || window.webkitOfflineAudioContext
 
 var context
+var offlineContext
 var clock
 var cowbell_mid_sound
 
-var offlineContext = new window.OfflineAudioContext(2, 4 * 44100 * 10, 44100)
-// 40 sec
-var lowpass = offlineContext.createBiquadFilter()
-lowpass.tyvar = 'lowpass'
-lowpass.frequency.value = 150
-lowpass.Q.value = 1
-
-var highpass = offlineContext.createBiquadFilter()
-highpass.type = 'highpass'
-highpass.frequency.value = 100
-highpass.Q.value = 1
 
 class App extends Component {
   constructor (props) {
     super(props)
     this.params = {
       inputAudio: undefined,
+      clickTrack: undefined,
       bpm: undefined,
       offset: undefined,
       currentSource: undefined,
+      currentClick: undefined,
       beginAt: undefined,
       pausedAt: undefined,
       scheEvent: undefined
@@ -61,7 +53,8 @@ class App extends Component {
     this.handleClick = this.handleClick.bind(this)
     this.handleTimeSlider = this.handleTimeSlider.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
-    this.guessBeat = this.guessBeat.bind(this)
+    this.makeClickTrack = this.makeClickTrack.bind(this)
+    this.Analyze = this.Analyze.bind(this)
   }
 
   componentWillMount () { // before render()
@@ -94,6 +87,7 @@ class App extends Component {
     if (this.params.scheEvent !== undefined) this.params.scheEvent.clear()
     clock.stop()
     context.close()
+    // offlineContext.close()
   }
 
   render () {
@@ -168,19 +162,16 @@ class App extends Component {
 
   loadFile (event) {
     if (event.target.name !== 'loadFile') return
-
     if (event.target.files.length === 0) return
-
     let file = event.target.files[0]
-
     let reader = new FileReader()
     reader.onload = function (e) {
       context.decodeAudioData(reader.result,
         function (buffer) {
           this.params.inputAudio = buffer
-          this.guessBeat(this.params.inputAudio)
-          this.setState({startButtonStr: 'Play',
-            songLength: this.params.inputAudio.duration})
+          this.params.bpm = undefined
+          this.params.offset = undefined
+          this.makeClickTrack(this.params.inputAudio)
         }.bind(this),
         function (error) {
           console.log('ERROR decodeAudioData:')
@@ -191,28 +182,67 @@ class App extends Component {
   }
 
   // https://github.com/chrisguttandin/web-audio-beat-detector
-  guessBeat (audioBuffer) {
-    console.log('length: ' + audioBuffer.duration)
-    guess(audioBuffer, 0, 30)
-      .then(({bpm, offset}) => {
-        this.params.bpm = bpm
-        this.params.offset = offset
-        console.log('bpm/offset(then): ' + this.params.bpm +
-                       '/' + this.params.offset)
-      })
-      .catch((err) => {
-        console.log('error: ' + err)
-      })
+  makeClickTrack(audioBuffer) {
+    let channels=2
+    let samplingRate = 44100
+    offlineContext = new window.OfflineAudioContext(channels, audioBuffer.length, samplingRate)
 
-    console.log('bpm/offset: ' + this.params.bpm + '/' + this.params.offset)
+     guess(audioBuffer,0,30) // 30 sec (use offset only)
+       .then(({bpm, offset}) => {
+          this.params.offset = offset
+          this.Analyze(audioBuffer,offset,10) }) // end guess
+
   }
 
+  Analyze(audioBuffer,from,duration) {
+    analyze(audioBuffer,from,duration)
+    .then((bpm) => {
+      this.params.bpm = bpm
+      console.log(from + ': bpm: ' + this.params.bpm)
+      let count
+      for(let beat=0; beat < 8; beat++){ 
+        if (from + 60/this.params.bpm * beat < audioBuffer.duration){
+          count = offlineContext.createBufferSource()
+          count.buffer = cowbell_mid_sound
+          count.connect(offlineContext.destination)
+          count.start(from + 60/this.params.bpm * beat)
+        }
+      }
+
+      from += 60/this.params.bpm * 8
+      if (from < audioBuffer.duration){
+        this.Analyze(audioBuffer,from,duration)
+      } else {
+        console.log('StartRendering')
+        offlineContext.startRendering()
+          .then((renderedBuffer) => {
+          this.params.clickTrack = renderedBuffer
+          console.log('Rendering complete, offset = ' + this.params.offset)
+          this.setState({startButtonStr: 'Play',
+            songLength: this.params.inputAudio.duration})
+          })
+        
+      } 
+    })
+    .catch((err) => { console.log(err) 
+        console.log('StartRendering anyway')
+        offlineContext.startRendering()
+          .then((renderedBuffer) => {
+          this.params.clickTrack = renderedBuffer
+          console.log('Rendering complete, offset = ' + this.params.offset)
+          this.setState({startButtonStr: 'Play',
+            songLength: this.params.inputAudio.duration})
+          })
+    }) // use current bpm
+  } // End Analyze
+
   handleStartStop (event) {
-    const {inputAudio, currentSource} = this.params
+    const {inputAudio, currentSource, currentClick} = this.params
     const {startButtonStr, currentPos} = this.state
 
     if (event.target.name === 'stop') {
       currentSource.stop()
+      currentClick.stop()
       if (this.params.scheEvent !== undefined) {
         this.params.scheEvent.clear()
         this.params.scheEvent = undefined
@@ -224,19 +254,19 @@ class App extends Component {
     if (event.target.name === 'startPause') {
       if (startButtonStr === 'Play') {
         let count = context.createBufferSource()
-        console.log(cowbell_mid_sound)
-        count.buffer = cowbell_mid_sound
+        count.buffer = this.params.clickTrack
         count.connect(context.destination)
-        count.start()
 
         let source = context.createBufferSource()
         source.buffer = inputAudio
-        // source.playbackRate.value = 0.5
-        // source.detune.value = 1200 // one octave
         source.connect(context.destination)
         this.params.beginAt = context.currentTime
         source.start(context.currentTime, parseFloat(currentPos, 10))
+        count.start(context.currentTime, parseFloat(currentPos, 10))
+
         this.params.currentSource = source
+        this.params.currentClick = count
+
         this.setState({startButtonStr: 'Pause'})
         this.params.scheEvent = clock.callbackAtTime(
           function (event) {
@@ -249,6 +279,7 @@ class App extends Component {
           .tolerance({early: 0.0, late: 0.1})
       } else if (startButtonStr === 'Pause') {
         currentSource.stop()
+        currentClick.stop()
         if (this.params.scheEvent !== undefined) {
           this.params.scheEvent.clear()
           this.params.scheEvent = undefined
@@ -258,8 +289,18 @@ class App extends Component {
         let source = context.createBufferSource()
         source.buffer = inputAudio
         source.connect(context.destination)
+        let count = context.createBufferSource()
+        count.buffer = this.params.clickTrack
+        count.connect(context.destination)
+
         this.params.currentSource = source
+        this.params.currentClick = count
+/*
         source.start(context.currentTime, currentPos)
+        count.start(context.currentTime, currentPos)
+*/
+        source.start()
+       // count.start(context.currentTime, 3)
 
         this.params.scheEvent = clock.callbackAtTime(
           function (event) {
@@ -275,11 +316,6 @@ class App extends Component {
       return
     }
 
-    if (event.target.name === 'stop') {
-      currentSource.stop()
-      this.params.startButtonStr = 'play'
-      if (this.params.scheEvent) this.params.scheEvent.cancel()
-    }
   }
 
   handleClick (event) {
