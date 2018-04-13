@@ -1,0 +1,19 @@
+{
+  "name": "presentimer",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "/demos/presentimer/20180413",
+  "subversion": "00",
+  "dependencies": {
+    "react": "^16.3.1",
+    "react-dom": "^16.3.1",
+    "react-scripts": "1.1.4",
+    "waaclock": "^0.5.3"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  }
+}

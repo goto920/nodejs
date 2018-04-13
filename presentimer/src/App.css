@@ -1,0 +1,35 @@
+.presentimer {
+  cursor: pointer;
+  text-align: center;
+  max-width: 375px;
+  margin: 0 auto;
+  padding: 30px;
+}
+
+.timebox {
+  background: #dddddd;
+  width: 300px;
+  margin: 10px;
+  padding: 10px;
+  border: 5px solid #000000; 
+  font-size: 80px;
+}
+
+.redbutton button {
+  cursor: pointer;
+  background: #C94D46;
+  padding: 10px;
+  border: 1px solid #832420;
+  border-radius: 2px;
+  width: 150px;
+  color: #ffffff;
+  font-size: 30px;
+}
+
+.selector select {
+  cursor: pointer;
+}
+
+.radioButton input {
+  cursor: pointer;
+}
