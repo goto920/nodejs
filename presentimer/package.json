@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "homepage": "/demos/presentimer/20180413",
-  "subversion": "03",
+  "subversion": "04",
   "dependencies": {
     "react": "^16.3.1",
     "react-dom": "^16.3.1",

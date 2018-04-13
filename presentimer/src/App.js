@@ -11,8 +11,8 @@ import endSession from './endSession.mp3'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
-var context
-var clock
+var context = 'undefined'
+var clock = 'undefined'
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
 const homepage = 'https://goto920.github.io/presentationTimer.html'
@@ -68,8 +68,8 @@ class App extends Component {
     )
     bufferLoader.load()
 
-    clock = new WAAClock(context)
-    clock.start()
+    // clock = new WAAClock(context)
+    // clock.start()
   }
 
   componentWillUnMount () {
@@ -174,6 +174,12 @@ class App extends Component {
         this.timerEvent.clear()
         this.setState({timerState: 'paused'})
       } else if (this.state.timerState === 'initial') { // start
+
+        if (clock === 'undefined') {
+            clock = new WAAClock(context)
+            clock.start()
+        }
+
         this.params.beginTime = context.currentTime
         this.timerEvent = clock.callbackAtTime(function (event) {
         this.processTimer()
