@@ -12,12 +12,8 @@ import soundList from './soundList.js'
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 var context
-// const context = new window.AudioContext()
-// const clock = new WAAClock(context)
 var clock
-// const timerClock = new WAAClock(context)
 var timerClock
-// const gainNode = context.createGain()
 var gainNode = []
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
@@ -28,9 +24,6 @@ const late = 0.1
 const jaText = messages.ja
 const usText = messages.us
 var m = usText
-
-// clock.start()
-// timerClock.start()
 
 class App extends Component {
   constructor (props) {
@@ -187,9 +180,9 @@ class App extends Component {
 
     bufferLoader.load()
 
-    clock = new WAAClock(context)
-    timerClock = clock
-    clock.start()
+    // clock = new WAAClock(context)
+    // timerClock = clock
+    // clock.start()
   }
 
   componentWillUnMount () {
@@ -675,6 +668,11 @@ class App extends Component {
     }
 
     if (event.target.name === 'start') {
+     if (clock === undefined) {
+       clock = new WAAClock(context)
+       timerClock = clock
+       clock.start()
+     }
       this.customPlay({target: {name: 'nextBar'}})
       return
     }
@@ -940,6 +938,11 @@ class App extends Component {
     }
 
     if (event.target.name === 'start') {
+      if (clock === undefined){
+       clock = new WAAClock(context)
+       timerClock = clock
+       clock.start()
+      }
       const selected = this.params.currentPattern
       // console.log('start with: ' + selected.name)
       this.params.numerator = selected.numerator

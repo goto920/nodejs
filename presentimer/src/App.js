@@ -4,15 +4,19 @@ import './App.css';
 import packageJSON from '../package.json'
 import WAAClock from 'waaclock'
 import BufferLoader from './buffer-loader'
-import bell from './bell.mp3'
+import cowbell_mid from './cowbell_mid.mp3'
+import cowbell_high from './cowbell_high.mp3'
+import rideCup from './rideCup.mp3'
+import church from './church.mp3'
+import hotel from './hotel.mp3'
 import oneMore from './oneMore.mp3'
 import endTalk from './endTalk.mp3'
 import endSession from './endSession.mp3'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
-var context = 'undefined'
-var clock = 'undefined'
+var context
+var clock
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
 const homepage = 'https://goto920.github.io/presentationTimer.html'
@@ -42,7 +46,7 @@ class App extends Component {
 
     this.state.timerString = ('00' + this.params.presentationTime).slice(-2)
        + ':00' 
-    this.timerEvent = null
+    this.timerEvent = undefined
     this.soundList = []
   }
 
@@ -53,10 +57,14 @@ class App extends Component {
     window.addEventListener('beforeunload', this.handleWindowClose)
     context = new window.AudioContext()
     let inputFiles = []
-    inputFiles[0] = bell 
-    inputFiles[1] = oneMore 
-    inputFiles[2] = endTalk
-    inputFiles[3] = endSession
+    inputFiles[0] = cowbell_mid 
+    inputFiles[1] = cowbell_high
+    inputFiles[2] = rideCup
+    inputFiles[3] = church
+    inputFiles[4] = hotel
+    inputFiles[5] = oneMore 
+    inputFiles[6] = endTalk
+    inputFiles[7] = endSession
 
     let bufferLoader = new BufferLoader(
       context, inputFiles, function(bufferList) {
@@ -64,6 +72,10 @@ class App extends Component {
         this.soundList[1] = bufferList[1] 
         this.soundList[2] = bufferList[2] 
         this.soundList[3] = bufferList[3] 
+        this.soundList[4] = bufferList[4] 
+        this.soundList[5] = bufferList[5] 
+        this.soundList[6] = bufferList[6] 
+        this.soundList[6] = bufferList[7] 
      }.bind(this)
     )
     bufferLoader.load()
@@ -150,10 +162,18 @@ class App extends Component {
       </select>
       </span>
       <br/>
-      Sound: 
+      Sound alarm: <br/> 
        <span className='radioButton'>
-       <input type='radio' name='alarmSound' value='bell' 
-           onChange={this.handleUI}/>Bell, 
+       <input type='radio' name='alarmSound' value='cowbell_mid' 
+           onChange={this.handleUI}/>Cowbell_mid, 
+       <input type='radio' name='alarmSound' value='cowbell_high' 
+           onChange={this.handleUI}/>Cowbell_high, 
+       <input type='radio' name='alarmSound' value='rideCup' 
+           onChange={this.handleUI}/>RideCup, <br/>
+       <input type='radio' name='alarmSound' value='church' 
+           onChange={this.handleUI}/>Church, 
+       <input type='radio' name='alarmSound' value='hotel' 
+           onChange={this.handleUI}/>Hotel, 
        <input type='radio' name='alarmSound' value='voice' 
            defaultChecked='true' onChange={this.handleUI}/>Voice,
        <input type='radio' name='alarmSound' value='mute' 
@@ -175,7 +195,7 @@ class App extends Component {
         this.setState({timerState: 'paused'})
       } else if (this.state.timerState === 'initial') { // start
 
-        if (clock === 'undefined') {
+        if (clock === undefined) {
             clock = new WAAClock(context)
             clock.start()
         }
@@ -202,9 +222,10 @@ class App extends Component {
     }
 
     if (event.target.name === 'reset'){
-      if (this.timerEvent !== 'undefined') this.timerEvent.clear()
+      if (this.timerEvent !== undefined) this.timerEvent.clear()
       let timerStr = this.params.presentationTime + ':00' 
-      this.setState({timerState: 'initial', timerString: timerStr})
+      this.setState({timerState: 'initial', timerString: timerStr,
+         timerStyle: {color: 'black'}})
       return
     }
 
@@ -280,57 +301,73 @@ class App extends Component {
   playSound(phase){
     let source
     // console.log(phase)
+    let sound
+    if (this.params.sound === 'cowbell_mid') 
+        sound = this.soundList[0] 
+    else if (this.params.sound === 'cowbell_high') 
+        sound = this.soundList[1] 
+    else if (this.params.sound === 'rideCup') 
+        sound = this.soundList[2] 
+    else if (this.params.sound === 'church') 
+        sound = this.soundList[3] 
+    else if (this.params.sound === 'hotel') 
+        sound = this.soundList[4] 
 
     if (phase === 1){
-      source = context.createBufferSource()
-      // console.log(this.params.sound)
-      if (this.params.sound === 'bell') 
-        source.buffer = this.soundList[0] // bell
-      else if (this.params.sound === 'voice') 
-        source.buffer = this.soundList[1] // oneMore
-
-      source.connect(context.destination)
-      source.start(context.currentTime)
-
-    } else if (phase === 2){
-      // console.log(this.params.sound)
-      if (this.params.sound === 'bell'){ 
-        for (let i = 0; i < phase; i++){
-          source = context.createBufferSource()
-          source.buffer = this.soundList[0] // bell
-          source.connect(context.destination)
-          source.start(context.currentTime + i*0.75)
-        }
-      } else if (this.params.sound === 'voice'){
+      if (this.params.sound === 'voice'){
         source = context.createBufferSource()
-        source.buffer = this.soundList[2] // End of Talk
+        source.buffer = this.soundList[5] // one more
+        source.connect(context.destination)
+        source.start(context.currentTime)
+      } else {
+        source = context.createBufferSource()
+        source.buffer = sound
         source.connect(context.destination)
         source.start(context.currentTime)
       }
+      return
+    } 
 
-    } else if (phase === 3){
-      // console.log(this.params.sound)
-      if (this.params.sound === 'bell'){
+    if (phase === 2){
+
+     if (this.params.sound === 'voice'){
+        source = context.createBufferSource()
+        source.buffer = this.soundList[6] // End of Talk
+        source.connect(context.destination)
+        source.start(context.currentTime)
+     } else {
         for (let i = 0; i < phase; i++){
           source = context.createBufferSource()
-          source.buffer = this.soundList[0] // bell
+          source.buffer = sound // bell
           source.connect(context.destination)
-          source.start(context.currentTime + i*1.0)
+          source.start(context.currentTime + i*1.5)
         }
-     } else if (this.params.sound === 'voice') {
+     }
+     return
+   }
+
+   if (phase === 3){
+      // console.log(this.params.sound)
+     if (this.params.sound === 'voice') {
        source = context.createBufferSource()
-       source.buffer = this.soundList[3] // End of Session
+       source.buffer = this.soundList[7] // End of Session
        source.connect(context.destination)
        source.start(context.currentTime)
-
+     } else {
+        for (let i = 0; i < phase; i++){
+          source = context.createBufferSource()
+          source.buffer = sound
+          source.connect(context.destination)
+          source.start(context.currentTime + i*1.5)
+        }
      }
+    return
+   } // end phase 2
 
-    } else console.log('undefined phase')
-
-
+   return
+   
   } // end of playSound()
 
 }
-
 
 export default App;
