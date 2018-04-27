@@ -9,7 +9,14 @@ import cowbell_high from './cowbell_high.mp3'
 import rideCup from './rideCup.mp3'
 import church from './church.mp3'
 import hotel from './hotel.mp3'
-import oneMore from './oneMore.mp3'
+import more01 from './01more.mp3'
+import more02 from './02more.mp3'
+import more03 from './03more.mp3'
+import more04 from './04more.mp3'
+import more05 from './05more.mp3'
+import more10 from './10more.mp3'
+import more15 from './15more.mp3'
+import more20 from './20more.mp3'
 import endTalk from './endTalk.mp3'
 import endSession from './endSession.mp3'
 
@@ -33,6 +40,8 @@ class App extends Component {
 
     this.params = {
       presentationTime: 5, // default min
+      warningTime: 1, // default 1 min before end of talk
+      warningSound: null, // default 1 min before end of talk
       qAndATime: 3, // default min
       beginTime: 0, // in sec
       pausedAt: 0, // in sec
@@ -62,20 +71,21 @@ class App extends Component {
     inputFiles[2] = rideCup
     inputFiles[3] = church
     inputFiles[4] = hotel
-    inputFiles[5] = oneMore 
-    inputFiles[6] = endTalk
-    inputFiles[7] = endSession
+    inputFiles[5] = more01 
+    inputFiles[6] = more02
+    inputFiles[7] = more03 
+    inputFiles[8] = more04 
+    inputFiles[9] = more05
+    inputFiles[10] = more10 
+    inputFiles[11] = more15 
+    inputFiles[12] = more20
+    inputFiles[13] = endTalk
+    inputFiles[14] = endSession
 
     let bufferLoader = new BufferLoader(
       context, inputFiles, function(bufferList) {
-        this.soundList[0] = bufferList[0] 
-        this.soundList[1] = bufferList[1] 
-        this.soundList[2] = bufferList[2] 
-        this.soundList[3] = bufferList[3] 
-        this.soundList[4] = bufferList[4] 
-        this.soundList[5] = bufferList[5] 
-        this.soundList[6] = bufferList[6] 
-        this.soundList[7] = bufferList[7] 
+       for (let i=0; i < inputFiles.length; i++)
+       this.soundList[i] = bufferList[i] 
      }.bind(this)
     )
     bufferLoader.load()
@@ -117,7 +127,7 @@ class App extends Component {
       <button name='reset' onClick={this.handleUI}>Reset</button></span>
       <hr/>
       <span className='selector'>
-      Presentation (min): &nbsp; 
+      Presentation talk(min): &nbsp; 
       <select name='presenTime' 
          defaultValue={this.params.presentationTime} onChange={this.handleUI}>
       <option value='1'>1</option>
@@ -143,6 +153,21 @@ class App extends Component {
       <option value='80'>80</option>
       <option value='90'>90</option>
       </select>
+      <br/>
+      Warning: &nbsp;
+      <select name='warningTime' 
+         defaultValue={this.params.warningTime} onChange={this.handleUI}>
+      <option value='0'>none</option>
+      <option value='1'>1</option>
+      <option value='2'>2</option>
+      <option value='3'>3</option>
+      <option value='4'>4</option>
+      <option value='5'>5</option>
+      <option value='10'>10</option>
+      <option value='15'>15</option>
+      <option value='20'>20</option>
+      </select> 
+      &nbsp; minute(s) more
       <br/>
       Q and A (min): &nbsp;
       <select name='qAndATime' defaultValue={this.params.qAndATime} 
@@ -236,6 +261,14 @@ class App extends Component {
       return
     }
 
+    if (event.target.name === 'warningTime'){
+      this.params.warningTime = parseInt(event.target.value,10)
+      if (this.params.warningTime >= this.params.presentationTime)
+         this.params.warningTime = 0 // none
+
+
+    }
+
     if (event.target.name === 'qAndATime'){
       this.params.qAndATime = parseInt(event.target.value,10)
       return
@@ -260,7 +293,8 @@ class App extends Component {
     let over
     let color
 
-    if (currentSec < (this.params.presentationTime - 1)*60){
+    if (currentSec 
+       < (this.params.presentationTime - this.params.warningTime)*60){
       let left = this.params.presentationTime*60 - currentSec
       timerStr = ('00' + parseInt(left/60,10)).slice(-2) 
            + ':' + ('00' + parseInt(left % 60,10)).slice(-2) 
@@ -313,10 +347,29 @@ class App extends Component {
     else if (this.params.sound === 'hotel') 
         sound = this.soundList[4] 
 
+    if (this.params.warningTime === 0)
+      this.params.warningSound = null
+    else if (this.params.warningTime === 1)
+      this.params.warningSound = this.soundList[5]
+    else if (this.params.warningTime === 2)
+      this.params.warningSound = this.soundList[6]
+    else if (this.params.warningTime === 3)
+      this.params.warningSound = this.soundList[7]
+    else if (this.params.warningTime === 4)
+      this.params.warningSound = this.soundList[8]
+    else if (this.params.warningTime === 5)
+      this.params.warningSound = this.soundList[9]
+    else if (this.params.warningTime === 10)
+      this.params.warningSound = this.soundList[10]
+    else if (this.params.warningTime === 15)
+      this.params.warningSound = this.soundList[11]
+    else if (this.params.warningTime === 20)
+      this.params.warningSound = this.soundList[12]
+
     if (phase === 1){
       if (this.params.sound === 'voice'){
         source = context.createBufferSource()
-        source.buffer = this.soundList[5] // one more
+        source.buffer = this.params.warningSound // X more minutes
         source.connect(context.destination)
         source.start(context.currentTime)
       } else {
@@ -332,7 +385,7 @@ class App extends Component {
 
      if (this.params.sound === 'voice'){
         source = context.createBufferSource()
-        source.buffer = this.soundList[6] // End of Talk
+        source.buffer = this.soundList[13] // End of Talk
         source.connect(context.destination)
         source.start(context.currentTime)
      } else {
@@ -350,7 +403,7 @@ class App extends Component {
       // console.log(this.params.sound)
      if (this.params.sound === 'voice') {
        source = context.createBufferSource()
-       source.buffer = this.soundList[7] // End of Session
+       source.buffer = this.soundList[14] // End of Session
        source.connect(context.destination)
        source.start(context.currentTime)
      } else {
