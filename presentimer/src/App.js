@@ -22,8 +22,10 @@ import endSession from './endSession.mp3'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
-var context
-var clock
+var context 
+// = new window.AudioContext()
+var clock 
+// = undefined
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
 const homepage = 'https://goto920.github.io/presentationTimer.html'
@@ -65,6 +67,9 @@ class App extends Component {
   componentDidMount () {
     window.addEventListener('beforeunload', this.handleWindowClose)
     context = new window.AudioContext()
+    clock = new WAAClock(context)
+    clock.start()
+
     let inputFiles = []
     inputFiles[0] = cowbell_mid 
     inputFiles[1] = cowbell_high
@@ -90,8 +95,6 @@ class App extends Component {
     )
     bufferLoader.load()
 
-    // clock = new WAAClock(context)
-    // clock.start()
   }
 
   componentWillUnMount () {
@@ -198,9 +201,9 @@ class App extends Component {
        <input type='radio' name='alarmSound' value='church' 
            onChange={this.handleUI}/>Church, 
        <input type='radio' name='alarmSound' value='hotel' 
-           onChange={this.handleUI}/>Hotel, 
+           defaultChecked='true' onChange={this.handleUI}/>Hotel, 
        <input type='radio' name='alarmSound' value='voice' 
-           defaultChecked='true' onChange={this.handleUI}/>Voice,
+           onChange={this.handleUI}/>Voice,
        <input type='radio' name='alarmSound' value='mute' 
            onChange={this.handleUI}/>Mute
        </span>
@@ -219,11 +222,6 @@ class App extends Component {
         this.timerEvent.clear()
         this.setState({timerState: 'paused'})
       } else if (this.state.timerState === 'initial') { // start
-
-        if (clock === undefined) {
-            clock = new WAAClock(context)
-            clock.start()
-        }
 
         this.params.beginTime = context.currentTime
         this.timerEvent = clock.callbackAtTime(function (event) {
