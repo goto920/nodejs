@@ -1,0 +1,65 @@
+source ~/github/emsdk/emsdk_env.sh
+
+In the library
+emconfigure ./configure --disable-static --enable-shared CXXFLAGS=-std=c++11 \
+	--prefix=/path/to/install/dir
+
+emmake make
+emmake make install
+
+emcc -c -std=C++11 -I/path/to/install/dir/iclude MyWrapper.cpp -o MyWrapper.bc
+emcc --bind /path/to/install/dir/lib/library.so MyWrapper.bc -o MyLibrary.js
+
+array return --> std::vector<type> 
+passing array --> const float& is OK
+
+Using it from JavaScript
+
+var instance = new Module.MyClass(10, "hello");
+instance.incrementX();
+instance.x; // 11
+instance.x = 20; // 20
+Module.MyClass.getStringFromInstance(instance); // "hello"
+instance.delete();
+
++++++++++++++++++++++
+URL
+https://kripken.github.io/emscripten-site/docs/porting/connecting_cpp_and_javascript/embind.html
+
+++++++++++++++++++++++++
+
+buffer = audioContext.createBuffer(2, frames, rate)
+buf = newFloat32Array(size)
+buffer.buffer = buf
+
+source.buffer = buffer
+
+Example
+https://developer.mozilla.org/en-US/docs/Web/API/AudioBuffer/getChannelData
++++++++++++++++++++++
+context.createMediaStreamSource
+https://developer.mozilla.org/en-US/docs/Web/API/Media_Streams_API
+https://dvcs.w3.org/hg/audio/raw-file/tip/webaudio/webrtc-integration.html
++++++++++++++++
+https://stackoverflow.com/questions/47614878/createmediaelementsource-from-an-audio-file-input
+
+
+createMediaElementSource() needs an <audio> element, so if we create an one and pass the file data to it, we get the source.
+
+upload.addEventListener("change", function() {
+  fr = new FileReader();
+  fr.readAsDataURL(document.getElementById("upload").files[0]);
+  fr.onload = e => {
+    var audio = document.createElement('audio');
+    audio.src = e.target.result;
+    var context = new(window.AudioContext || window.webkitAudioContext)(),
+      source = context.createMediaElementSource(audio);
+    console.log(source);
+  };
+});
+
+<input id="upload" accept="audio/*" type="file">
++++++++++++++++
+
+view-source:https://mdn.github.io/webaudio-examples/media-source-buffer/
+
