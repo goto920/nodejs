@@ -5,12 +5,12 @@ import {PitchShifter} from 'soundtouchjs'
 import packageJSON from '../package.json'
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
-const homepage = 'https://goto920.github.io/TimePitchPlayer.html'
+const homepage = 'https://goto920.github.io/demos/variableplayer/'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
 const audioCtx = new window.AudioContext()
-var gainNode =  audioCtx.createGain()
+const gainNode =  audioCtx.createGain()
 var shifter = 0 // null
 
 class App extends Component {
@@ -19,6 +19,7 @@ class App extends Component {
     super(props)
 
     this.params = {
+      audioBuffer: 0
     }
 
     this.state = {
@@ -67,13 +68,17 @@ class App extends Component {
 
     return (
       <div className="App">
-      Variable Speed/Pitch Player using soundtouchjs<br />
-      by KG
+      Variable speed/pitch audio player<br /> 
+      with soundtouchjs by KG
       <hr />
       Input Audio (url or local file): <br />
         <span className='selectFile'>
         <input type='file' name='loadFile' 
-        accept='audio/*' onChange={loadFile} />
+        accept='audio/*' onChange={loadFile} /><br />
+        </span>
+        <span className='selectFile'>
+        URL and Enter <input type='url' name='fetchFile' 
+        accept='audio/*' onKeyPress={fetchFile} />
         </span>
       <hr />
 
@@ -113,9 +118,12 @@ class App extends Component {
         <button name='rewind' onClick={handlePlay}> 
         Rewind
         </button> &nbsp;&nbsp;
+{/*
         <button name='save' onClick={handlePlay}> 
         Save
         </button>
+*/}
+
       </span>
       <hr />
         Version: {version}, &nbsp;
@@ -159,20 +167,27 @@ class App extends Component {
 fetchFile (event) {
 
    if (event.target.name !== 'fetchFile') return
+
+   let code = event.keyCode || event.charCode 
+   if (code !== 13) return
+
+//   console.log ("Got enter")
+
    let url = event.target.value 
    this.setState({startButtonStr: 'Wait'})
 
    if (shifter) { shifter.off() }
-   console.log('loadFile: ' + url)
+   console.log('fetchFile: ' + url)
 
    fetch(url)
      .then(response => response.arrayBuffer())
      .then(buffer => {
        audioCtx.decodeAudioData(buffer, audioBuffer => {
-         shifter = new PitchShifter(audioCtx, audioBuffer, 1024)
-         shifter.tempo = 1.0
-         shifter.pitch = 1.0
-       //  this.setState({startButtonStr: 'Start', currentTime: 0})
+          this.params.audioBuffer = audioBuffer
+          shifter = new PitchShifter(audioCtx, audioBuffer, 1024)
+          shifter.tempo = this.state.playSpeed/100.0
+          shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0)
+          this.setState({startButtonStr: 'Start', currentTime: 0})
        })  // end decode 
      }) // end then
 
@@ -219,20 +234,42 @@ fetchFile (event) {
   }
 
   handlePlay(event) { 
+
      if (event.target.name === 'startPause') {
 
        if (this.state.startButtonStr === 'Start'
            || this.state.startButtonStr === 'Resume'){ 
+
         shifter.connect(gainNode)
         gainNode.connect(audioCtx.destination)
         this.setState({ startButtonStr: 'Pause' })
+
+       } else if (this.state.startButtonStr === 'Pause'){
+        if (!shifter) return
+
+        shifter.disconnect()
+        this.setState({ startButtonStr: 'Resume' })
+
        }
 
-     } else if (this.state.startButtonStr === 'Pause'){
+     } 
 
+     if (event.target.name === 'rewind') {
 
-     } else if (this.state.startButtonStr === 'rewind'){
+        if (!shifter) return
+        shifter.disconnect()
+        shifter.off()
+        shifter = 0 // null
 
+        shifter = new PitchShifter(audioCtx, this.params.audioBuffer, 1024)
+        shifter.tempo = this.state.playSpeed/100.0
+        shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0)
+
+        this.setState({startButtonStr: 'Start', currentTime: 0})
+     } // end if
+
+     if (event.target.name === 'Save') {
+        shifter.disconnect()
      } // end if
 
   } // end handlePlay()

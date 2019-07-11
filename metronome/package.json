@@ -5,8 +5,8 @@
   "homepage": "/demos/metronome2/20180413",
   "subversion": "00",
   "dependencies": {
-    "react": "^16.5.2",
-    "react-dom": "^16.5.2",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
     "react-scripts": "^1.1.5",
     "waaclock": "^0.5.3"
   },
