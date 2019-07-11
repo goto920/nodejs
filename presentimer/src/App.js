@@ -97,7 +97,7 @@ class App extends Component {
 
   }
 
-  componentWillUnMount () {
+  componentWillUnmount () {
     window.removeEventListener('beforeunload', this.handleWindowClose)
   }
  
