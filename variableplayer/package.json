@@ -2,7 +2,7 @@
   "name": "variablespeedplayer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/demos/variableplayer/20200210",
+  "homepage": "/demos/variableplayer/20200211",
   "subversion": "00",
   "dependencies": {
     "react": "^16.12.0",

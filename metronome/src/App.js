@@ -185,7 +185,7 @@ class App extends Component {
     // clock.start()
   }
 
-  componentWillUnMount () {
+  componentWillUnmount () {
     window.removeEventListener('beforeunload', this.handleWindowClose)
   }
 

@@ -1,5 +1,5 @@
 .metronome {
-  // text-align: center;
+  /* text-align: center; */
   text-align: left;
   max-width: 375px;
   margin: 0 auto;
@@ -9,7 +9,7 @@
 
 .bpm-slider input {
   width: 80%;
-  // margin: 10px;
+  /* margin: 10px; */
   margin: auto;
   cursor: pointer;
 }
@@ -23,7 +23,7 @@
   padding: 10px;
   border: 1px solid #832420;
   border-radius: 2px;
-//  width: 80px;
+ /*  width: 80px; */
   width: 60px;
   color: #fff;
   font-size: 18px;
@@ -35,7 +35,7 @@
   padding: 10px;
   border: 1px solid #832420;
   border-radius: 2px;
-//  width: 80px;
+/*  width: 80px; */
   width: 50px;
   color: #fff;
   font-size: 18px;
@@ -62,11 +62,11 @@
 
 .loopButton button {
   background: #008888;
-//  padding: 10px;
+/*  padding: 10px; */
   padding: 0px;
   border: 1px solid #832420;
   border-radius: 2px;
-//  width: 80px;
+/*  width: 80px; */
   width: 70px;
   height: 40px;
   color: #fff;
