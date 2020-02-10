@@ -22,6 +22,7 @@ class App extends Component {
 
      this.params = {
        inputAudio: undefined,
+       clickTrack: undefined,
        currentSource: undefined
      }
 
@@ -46,7 +47,7 @@ class App extends Component {
    let bufferLoader = new BufferLoader(
     audioCtx, inputFiles, function (bufferList) {
       clickSamples = bufferList[0]
-    }.bind(this) 
+    }
    )
    bufferLoader.load()
   }
@@ -102,9 +103,8 @@ class App extends Component {
     reader.onload = function (e) {
        audioCtx.decodeAudioData(reader.result, 
         function(audioBuffer) {
-        //  console.log ("read")
-          ClickAll(audioCtx,audioBuffer, clickSamples)
           this.params.inputAudio = audioBuffer
+          this.params.clickTrack = ClickAll(audioCtx, audioBuffer, clickSamples)
           this.setState({startButtonStr: 'Start', currentTime: 0})
         }.bind(this),
         function (error) { console.log ("Filereader error: " + error.err) })
@@ -120,23 +120,19 @@ class App extends Component {
 
     if (this.state.startButtonStr === 'Start'){
       this.setState({startButtonStr: 'Pause'})
-      let source = audioCtx.createBufferSource()
-      source.buffer = this.params.inputAudio
-/*
-      let bufferSize = 1024
-      let channels = 2
-      let scrproc 
-         = audioCtx.createScriptProcessor(bufferSize, channels, channels) 
-      scrproc.onaudioprocess = Effector
-      Effector.audioSample = clickSamples
-      Effector.audioCtx = audioCtx
-      source.connect(scrproc)
-      scrproc.connect(audioCtx.destination)
-      source.start()
-      this.params.currentSource = source
-*/
-      source.connect(audioCtx.destination)
-      source.start()
+      let musicTrack = audioCtx.createBufferSource()
+      musicTrack.buffer = this.params.inputAudio
+      musicTrack.connect(audioCtx.destination)
+
+      let clickTrack = audioCtx.createBufferSource()
+      clickTrack.buffer = this.params.clickTrack
+      clickTrack.connect(gainNode)
+      gainNode.gain.value = 1
+      gainNode.connect(audioCtx.destination)
+
+      let delay = 0.082
+      clickTrack.start()
+      musicTrack.start(audioCtx.currentTime + delay)
     }
 
     if (this.state.startButtonStr === 'Pause'){
