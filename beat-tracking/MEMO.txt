@@ -1,0 +1,78 @@
+https://www.badlogicgames.com/wordpress/?p=187
+https://www.linkedin.com/pulse/elaboration-datas-using-fast-fourier-transform-nodejs-frediani
+
+fftw-js
+fft-windowing
+
+http://www.fftw.org/fftw3_doc/The-Halfcomplex_002dformat-DFT.html#The-Halfcomplex_002dformat-DFT
+
+fftw_plan_r2r_id ()
+
+input   r0,,,,,,,rn/2
+output  i(n+1)/2-1,,....., i2, i1
+same size
+
+hc[n] 
+kth component real hc[k], imaginary  hc[n-k]
+hc[0] = 0th (real only)
+hc[n/2] = n/2 th (real only, if n is even)
+
+fft-js の方が使いやすい? -- 遅すぎてだめ
+
+Output:
+
+node fft.js -s 44100 test/signal8.js
+
+Signal:  [ 1, 1, 1, 1, 0, 0, 0, 0 ]
+
+FFT:  [ 
+[ 4, 0 ],
+[ 1, -2.414213562373095 ],
+[ 0, 0 ],
+[ 1, -0.4142135623730949 ],
+[ 0, 0 ],
+[ 0.9999999999999999, 0.4142135623730949 ],
+[ 0, 0 ],
+[ 0.9999999999999997, 2.414213562373095 ] 
+]
+
+FFT Magnitudes:  [ 4, 2.613125929752753, 0, 1.0823922002923938 ] //We only see the first 4, because the 2nd 4 are the Nyquist frequency (discarded for aliasing), and then the mirror image negative frequencies.
+
+FFT Frequencies:  [ 0, 5512.5, 11025, 16537.5 ]
+
+
+
+
+local averageを引く
+
+
+File output
+
+HTML5: FileSystem API
+https://www.jotform.com/blog/html5-filesystem-api-create-files-store-locally-using-javascript-webkit/
+
+js-file-download
+https://github.com/kennethjiang/js-file-download
+
+debug logging instead of console.log()
+
+https://levelup.gitconnected.com/step-up-your-console-messaging-game-in-your-react-app-42eee17659ec
+++++++++++++
+BPM
+ Comb-filter, autocorrelation, Fourier transform
+
+tempogram
+
+autocorrelation https://www.npmjs.com/package/autocorrelation
+
+input array, output array
+using fft-js
+https://etudes.tibonihoo.net/literate_musing/autocorrelations.html
+
+Original idea -- tap tempo (no update for out of range input)
+44100/512 = 86.1 in 1 sec
+8613 samples for 10 secs
+
+Low pass filter (FIR) npm install fili https://www.npmjs.com/package/fili
+
+
