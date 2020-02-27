@@ -124,7 +124,7 @@ class App extends Component {
     }
 
     currentPowerSpec = this.calcPower(fftr.forward(Windowing.hann(samples)));
-    console.log ('flux[0]');
+    // console.log ('flux[0]');
 
     flux[0] = this.calcFlux(lastPowerSpec, currentPowerSpec);
 
@@ -140,7 +140,7 @@ class App extends Component {
 
       flux[i] = this.calcFlux(lastPowerSpec, currentPowerSpec);
       lastPowerSpec = currentPowerSpec;
-      console.log ('flux[',i,']');
+      // console.log ('flux[',i,']');
     }
 
     console.log ('FFT completed');
@@ -156,13 +156,16 @@ class App extends Component {
   calcPower(fftresult){
     let N = fftresult.length; // power of two + 1
     let retval = [];
+    console.log('N = ', N);
 
     for (let i = 0; i < N/2; i++){
      if (i === 0) 
-       retval = fftresult[0]*fftresult[0];
+       retval = fftresult[0]*fftresult[0]; // DC
+     else if (i === N/2)
+       retval = fftresult[i]*fftresult[i]; // real only
      else
        retval = fftresult[i]*fftresult[i]
-              + fftresult[N-i]*fftresult[N-i];
+              + fftresult[N-i]*fftresult[N-i]; // real and imaginary
     }
 
     return retval;
