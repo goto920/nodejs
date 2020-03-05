@@ -1,11 +1,13 @@
 import React, {Component} from 'react';
-// import logo from './logo.svg';
 import './App.css';
-// import BufferLoader from './buffer-loader';
+import BufferLoader from './buffer-loader';
+import click1 from './cowbell_high.mp3';
+import click2 from './cowbell_mid.mp3';
 import packageJSON from '../package.json';
-// import clickSound from '';
 import {RFFT} from 'fftw-js';
 import Windowing from 'fft-windowing';
+import {autocorrelation} from 'autocorrelation';
+import Stats from 'statsjs';
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10);
 const homepage = 'https://goto920.github.io' + packageJSON.homepage.slice(0,-8);
@@ -13,12 +15,17 @@ const homepage = 'https://goto920.github.io' + packageJSON.homepage.slice(0,-8);
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 const audioCtx = new window.AudioContext()
 
+var click1Sample = undefined, click2Sample = undefined;
+
 class App extends Component {
   constructor (props){
     super(props);
     this.params = {
        inputAudio: undefined,
        outputAudio: undefined,
+       playing: undefined,
+       beginTime: undefined,
+       taps: [],
        peaks: undefined
     }
 
@@ -28,7 +35,9 @@ class App extends Component {
 
     this.loadFile = this.loadFile.bind(this);
     this.handlePlay = this.handlePlay.bind(this);
+    this.handleTap = this.handleTap.bind(this);
     this.analyze = this.analyze.bind(this);
+    this.addClick = this.addClick.bind(this);
     this.playAudio = this.playAudio.bind(this);
     this.calcPower = this.calcPower.bind(this);
     this.calcFlux = this.calcFlux.bind(this);
@@ -37,6 +46,17 @@ class App extends Component {
 
   componentDidMount () { // before render()
     window.addEventListener('beforeClosing', this.handleWindowClose);
+    let inputFiles = [];
+    inputFiles.push(click1); 
+    inputFiles.push(click2);
+    let bufferLoader =  new BufferLoader(
+      audioCtx, inputFiles, function (bufferList) {
+        click1Sample = bufferList[0];
+        click2Sample = bufferList[1];
+      }
+    );
+
+   bufferLoader.load()
   }
 
   componentWillUnmount () { // before closing app
@@ -44,7 +64,7 @@ class App extends Component {
   }
 
   render () {
-    const {loadFile, handlePlay} = this;
+    const {loadFile, handlePlay, handleTap} = this;
     const {startButtonStr} = this.state;
     return (
       <div className="App">
@@ -58,6 +78,9 @@ class App extends Component {
       <span>
           <button name='startPause' onClick={handlePlay}> 
           {startButtonStr}
+          </button> &nbsp;&nbsp;
+          <button name='tap' onClick={handleTap}> 
+          TapBar
           </button> &nbsp;&nbsp;
       </span>
       <hr />
@@ -82,7 +105,8 @@ class App extends Component {
        audioCtx.decodeAudioData(reader.result, 
         function(audioBuffer) {
           this.params.inputAudio = audioBuffer;
-          this.setState({startButtonStr: 'startAnalysis', currentTime: 0});
+          // this.setState({startButtonStr: 'startAnalysis'});
+          this.setState({startButtonStr: 'Play'});
         }.bind(this),
         function (error) { console.log ("Filereader error: " + error.err);})
     }.bind(this)
@@ -90,10 +114,34 @@ class App extends Component {
   }
 
   handlePlay (event) {
-    if (event.target.name !== 'startPause') return;
 
-    if (this.state.startButtonStr === 'startAnalysis') this.analyze();
-    if (this.state.startButtonStr === 'Play') this.playAudio();
+    if (event.target.name !== 'startPause') return;
+    if (this.state.startButtonStr === 'Play') {
+      this.playAudio(this.params.inputAudio);
+      this.setState({startButtonStr: 'Analyze'});
+    }
+
+    if (this.state.startButtonStr === 'Analyze') {
+      if (this.params.playing !== undefined) this.params.playing.stop();
+      this.params.playing = undefined;
+      this.setState({startButtonStr: 'Processing'});
+      console.log (this.params.taps); // debug
+      this.addClick();
+      this.setState({startButtonStr: 'PlayClick'});
+    }
+
+    if (this.state.startButtonStr === 'PlayClick') {
+      console.log('PlayClick');
+      this.playAudio(this.params.outputAudio);
+    }
+
+  }
+
+  handleTap (event) {
+    if (event.target.name !== 'tap') return;
+    if (this.params.beginTime === undefined) return;
+
+    this.params.taps.push(audioCtx.currentTime - this.params.beginTime);
   }
 
   analyze () {
@@ -104,6 +152,7 @@ class App extends Component {
     if (numberOfChannels === 2) {
       let left = inputAudio.getChannelData(0);
       let right = inputAudio.getChannelData(1);
+
       for (let i=0; i < length; i++){
            mono[i] = (left[i] + right[i])/2.0;
       }
@@ -143,29 +192,33 @@ class App extends Component {
       // console.log ('flux[',i,']');
     }
 
-    console.log ('FFT completed');
+    console.log ('FFT log power flux calculation completed');
 
     // Peak
     this.findPeaks(flux);
     // tempo, beat estimation
 
-    this.setState({startButtonStr: 'Play'});
+//    this.setState({startButtonStr: 'Play'});
 
   } // end analyze
 
-  calcPower(fftresult){
+  calcPower(fftresult){ // log power
+
     let N = fftresult.length; // power of two + 1
     let retval = [];
-    console.log('N = ', N);
+    let C = 1000.0/2; 
+    // console.log('N = ', N);
 
     for (let i = 0; i < N/2; i++){
-     if (i === 0) 
-       retval = fftresult[0]*fftresult[0]; // DC
-     else if (i === N/2)
-       retval = fftresult[i]*fftresult[i]; // real only
-     else
-       retval = fftresult[i]*fftresult[i]
-              + fftresult[N-i]*fftresult[N-i]; // real and imaginary
+      if (i === 0) 
+        retval[i] = fftresult[0]*fftresult[0]; // DC
+      else if (i === N/2)
+        retval[i] = fftresult[i]*fftresult[i]; // real only
+      else
+        retval[i] = fftresult[i]*fftresult[i]
+               + fftresult[N-i]*fftresult[N-i]; // real and imaginary
+
+      retval[i] = Math.log(1 + C*retval[i]);
     }
 
     return retval;
@@ -174,19 +227,20 @@ class App extends Component {
   calcFlux(last, current){
     let retval = {low: 0, mid: 0, high: 0, presence: 0};
     let low = 4; // 172Hz  Unit 44100/(2*512) = 43Hz
-    let mid = 20; // 860 Hz 
-    let high = 100; // 4300 Hz
+                 // 46.875*4 = 187Hz (at 48000 rate)
+    let mid = 20; // 860 Hz (937Hz)
+    let high = 100; // 4300 Hz (4687Hz)
 
-    for (let i = 1; i < current.length; i++){ // DC is ignored
+    for (let f = 1; f < current.length; f++){ // DC is ignored
          let diff; 
          if (last === undefined) 
-           diff = Math.max(0, current[i]);
+           diff = Math.max(0, current[f]);
          else  
-           diff = Math.max(0, current[i] - last[i]);
+           diff = Math.max(0, current[f] - last[f]);
 
-         if (i <= low)        retval.low += diff;
-         else if (i <= mid)   retval.mid += diff;
-         else if (i <= high)  retval.high += diff;
+         if (f <= low)        retval.low += diff;
+         else if (f <= mid)   retval.mid += diff;
+         else if (f <= high)  retval.high += diff;
          else                 retval.presence += diff;
     }
 
@@ -194,93 +248,206 @@ class App extends Component {
   }
 
   findPeaks(flux){
-    let t = 0.8, range = 2.0;
 
-    let av_low  = flux[0].low,  av2_low = 0;
-    let av_mid  = flux[0].mid,  av2_mid = 0;
-    let av_high = flux[0].high, av2_high = 0;
-    let av_presence = flux[0].presence, av2_presence = 0;
+    let onsets = [];
+    let t = 0.8, range = 2.0;
+    let av_low  = flux[0].low;
+    let av_mid  = flux[0].mid;
+    let av_high = flux[0].high;
+    let av_presence = flux[0].presence;
 
     console.log ('#', flux.length);
-/*
-    console.log (0, flux[0].low, flux[0].mid, 
-       flux[0].high, flux[0].presence, '#'); // debug
-*/
 
-    let max_low = 1, max_mid = 1, max_high = 1, max_presence = 1;
-    let low_last_index = 0, mid_last_index = 0, 
-        high_last_index = 0, presence_last_index = 0;
-
-    for (let i=1; i < flux.length; i++){
+    for (let i=0; i < flux.length; i++){
       let low=0, high=0, mid=0, presence=0;
 
-      // substract local average and log
-      if (flux[i].low <= range*av_low) low = 0; 
-      else {
-        low = Math.log10(1+flux[i].low - range*av_low);
-        if (low <= 0.5*max_low) low = 0;
-        if (low > max_low) max_low = low;
-      }
+      if (flux[i].low > range*av_low) low = flux[i].low;
+      if (flux[i].mid > range*av_mid) mid = flux[i].mid;
+      if (flux[i].high > range*av_high) high = flux[i].high;
+      if (flux[i].presence > range*av_presence) presence = flux[i].presence;
 
-      if (flux[i].mid <= range*av_mid) mid = 0; 
-      else {
-        mid = Math.log10(1+flux[i].mid - range*av_mid);
-        if (mid > max_mid) max_mid = mid;
-        else if (mid <= 0.5*max_mid) mid = 0;
-      }    
-
-      if (flux[i].high <= range*av_high) high = 0; 
-      else {
-        high = Math.log10(1+flux[i].high - range*av_high);
-        if (high > max_high) max_high = high;
-        else if (high <= 0.5*max_high) high = 0;
-      }
-
-      if (flux[i].presence <= range*av_presence) presence = 0; 
-      else {
-        presence = Math.log10(1 + flux[i].presence - range*av_presence);
-        if (presence > max_presence) max_presence = presence;
-        else if (presence <= 0.5*max_presence) presence = 0;
-      }
-
-      if (low > 0 && i - low_last_index > 15){ // 2XXbpm
-        let interval = i - low_last_index;
-        if (low_last_index === 0) 
-          console.log (i, low,  interval, '#initial'); // debug
-        else {
-          let bpm_low = (44100*60)/(512*interval);
-          console.log (i, low,  interval, '#bpm', bpm_low)  ; // debug
-        }
-        low_last_index = i;
-      }
-//        console.log (i, low, mid, high, presence, '#'); // debug
+      onsets[i] = {low: low, mid: mid, high: high, presence: presence};
 
       av_low = t*av_low + (1-t)*flux[i].low;
-      av2_low = t*av2_low 
-        + (1-t)*(flux[i].low - av_low)*(flux[i].low - av_low);
-
       av_mid = t*av_mid + (1-t)*flux[i].mid;
-      av2_mid = t*av2_mid
-        + (1-t)*(flux[i].mid - av_mid)*(flux[i].mid - av_mid);
-
       av_high = t*av_high + (1-t)*flux[i].high;
-      av2_high = t*av2_high
-        + (1-t)*(flux[i].high - av_high)*(flux[i].high - av_high);
-
       av_presence = t*av_presence + (1-t)*flux[i].presence;
-      av2_presence = t*av2_presence
-        + (1-t)*(flux[i].presence - av_presence)*(flux[i].presence - av_presence);
 
+    } // end for i
+
+    let signal = [];
+    let times = [];
+    let intervals = [];
+
+
+    for (let n = 0; n < onsets.length/512; n++) {
+// for low
+      signal = [];
+
+      for (let i=0; i < 512 && 512*n + i < onsets.length; i++){ 
+        signal[i] = onsets[512*n+i].low; 
+        // if (n === 0) console.log (i,signal[i]);
+      }
+
+      let auto = autocorrelation (signal);
+      if (n === 0) 
+       for (let i=0; i < auto.length; i++) 
+          console.log (i, auto[i], ' #');
+
+      for (let i=20, j=0; i <= 100 && i < auto.length; i++) 
+          if (auto[i] > 0.1) times[j++] = i;
+
+      intervals[0] = times[0];
+      for (let i=0, j=1; i < times.length - 1; i++) {
+          let tmp = times[i+1] - times[i];
+          if (tmp >= 20 && tmp <= 100) intervals[j++] = tmp;
+      // 258 to 52 bpm at 44100, 1024 window, 50% overlap
+      }
+
+//      let fixed = Stats(intervals).removeOutliers();
+//      let interval = fixed.max();
+      let interval = Stats(intervals).max();
+
+      let bpm  = 60/(interval*512/this.params.inputAudio.sampleRate);
+
+      let time = (512*512*n)/this.params.inputAudio.sampleRate;
+
+      console.log (intervals);
+      console.log ('max low interval: ',  
+                  interval, ' bpm: ', bpm, ' at: ', time);
+
+/*
+// mid
+    signal = [];
+    for (let i=0; i < 512; i++) signal[i] = flux[i].mid;
+    let mid_auto = autocorrelation (signal);
+
+    times = []
+    for (let i=20, j=0; i <=100 && i < mid_auto.length; i++) 
+      if (mid_auto[i] > 0.2) times[j++] = i;
+
+    intervals = []; intervals[0] = times[0];
+    for (let i=0, j=0; i < times.length - 1; i++) {
+      let tmp = times[i+1] - times[i];
+      if (tmp >= 20 && tmp <= 100) 
+      intervals[j++] = tmp;
+      // 258 to 52 bpm at 44100, 1024 window, 50% overlap
     }
+
+    fixed = Stats(intervals).removeOutliers();
+    let mid_interval = fixed.mean();
+    let mid_bpm  = 60/(mid_interval*512/this.params.inputAudio.sampleRate);
+
+    console.log (fixed.toArray());
+    console.log ('mean mid interval: ', mid_interval, ' bpm: ', mid_bpm);
+
+//  high 
+    signal = [];
+    for (let i=0; i < 512; i++) signal[i] = flux[i].high;
+
+    let high_auto = autocorrelation (signal);
+
+    times = []
+    for (let i=20, j=0; i <=100 && i < high_auto.length; i++) 
+      if (high_auto[i] > 0.2) times[j++] = i;
+
+    intervals = []; intervals[0] = times[0];
+    for (let i=0, j=0; i < times.length - 1; i++) {
+      let tmp = times[i+1] - times[i];
+      if (tmp >= 20 && tmp <= 100) 
+      intervals[j++] = tmp;
+      // 258 to 52 bpm at 44100, 1024 window, 50% overlap
+    }
+
+    fixed = Stats(intervals).removeOutliers();
+    let high_interval = fixed.mean();
+    let high_bpm  = 60/(high_interval*512/this.params.inputAudio.sampleRate);
+
+    console.log (fixed.toArray());
+    console.log ('mean high interval: ', high_interval, ' bpm: ', high_bpm);
+
+//  presence 
+    signal = [];
+    for (let i=0; i < 512; i++) signal[i] = flux[i].presence;
+
+    let presence_auto = autocorrelation (signal);
+
+    times = []
+    for (let i=20, j=0; i <=100 && i < presence_auto.length; i++) 
+      if (presence_auto[i] > 0.2) times[j++] = i;
+
+    intervals = []; intervals[0] = times[0];
+    for (let i=0, j=0; i < times.length - 1; i++) {
+      let tmp = times[i+1] - times[i];
+      if (tmp >= 20 && tmp <= 100) 
+      intervals[j++] = tmp;
+      // 258 to 52 bpm at 44100, 1024 window, 50% overlap
+    }
+
+    fixed = Stats(intervals).removeOutliers();
+    let presence_interval = fixed.max();
+    let presence_bpm  = 60/(presence_interval*512/this.params.inputAudio.sampleRate);
+
+    console.log (fixed.toArray());
+    console.log ('an presence interval: ', presence_interval, 
+       ' bpm: ', presence_bpm);
+   */
+   } // end for n 
+
+    // return results;
 
   }
 
-  playAudio(){
-    // console.log('playAudio');
-    let music = audioCtx.createBufferSource();
-    music.buffer = this.params.outputAudio;
+  playAudio(input){
+    this.params.playing = audioCtx.createBufferSource();
+    let music = this.params.playing;
+    music.buffer = input;
     music.connect(audioCtx.destination);
+    this.params.beginTime = audioCtx.currentTime;
     music.start();
+  }
+
+  addClick(){
+
+    const {inputAudio} = this.params;
+    const {sampleRate, length, duration, numberOfChannels} = inputAudio;
+    let outputAudio 
+       = audioCtx.createBuffer(numberOfChannels, length, sampleRate);
+    let clickAudio 
+       = audioCtx.createBuffer(1, length, sampleRate);
+
+    this.params.outputAudio = outputAudio;
+
+    let taps = this.params.taps;
+
+    for (let i=0; i < taps.length; i++){
+      clickAudio.copyToChannel(
+        click1Sample.getChannelData(0),0,
+        Math.round(taps[i] * sampleRate/512)
+      );
+    }
+
+    if (numberOfChannels === 2) {
+      let left = inputAudio.getChannelData(0);
+      let right = inputAudio.getChannelData(1);
+      let leftOut = outputAudio.getChannelData(0);
+      let rightOut = outputAudio.getChannelData(1);
+      let click = clickAudio.getChannelData(0);
+
+      for (let i = 0; i < left.length; i++){
+        leftOut[i] = left[i] + click[i]/2;
+        rightOut[i] = right[i] + click[i]/2;
+      }
+
+    } else if (numberOfChannels === 1){
+      let mono = inputAudio.getChannelData(0);
+      let monoOut = outputAudio.getChannelData(0);
+      for (let i = 0; i < mono.length; i++) {
+        monoOut[i] = mono[i];
+      }
+    }
+//    console.log(outputAudio.duration);
+
   }
 
 } // end class

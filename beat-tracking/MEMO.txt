@@ -69,3 +69,37 @@ Original idea -- tap tempo (no update for out of range input)
 Low pass filter (FIR) npm install fili https://www.npmjs.com/package/fili
 
 ++++++++++++
+
+自己相関 -- 2回?
+
+重み付き最小2乗
+複数回帰直線の同時推定
+Multiple linear regression with TensorFlow
+
+bpm range 50 -- 240
+60 bpm = 1.0 sec/beat
+120 bpm = 0.5 sec/beat
+240 bpm = 0.25 sec/beat
+
+1 sample = 512/44100 = 0.01161 sec 5168bpm
+20 samples: 258 bpm
+100 sample: 51.7 bpm
+sample range 20 -- 100
+
+100 sample
+
+++++++++++++++++
+Wavelet 
+https://mziccard.me/2015/05/28/beats-detection-algorithms-1/
+https://mziccard.me/2015/06/12/beats-detection-algorithms-2/
+
+4 coefficient wavelet family (DAUB4)
+
+++++++++++++++++
+マウスクリック -- ビート と 小節
+
++++++++++++++
+PhD 2018 Dittmar DrumsSeparation
+
+NMFD (Nonnegative matrix factor deconvolution)
+Wiener Filtering and Kernel Additive Modeling
