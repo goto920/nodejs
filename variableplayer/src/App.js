@@ -9,8 +9,9 @@ const homepage = 'https://goto920.github.io/demos/variableplayer/'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
-const audioCtx = new window.AudioContext()
-const gainNode =  audioCtx.createGain()
+var audioCtx;
+var gainNode;
+// =  audioCtx.createGain()
 var shifter = 0 // null
 
 class App extends Component {
@@ -52,6 +53,8 @@ class App extends Component {
   }
   
   componentDidMount () { // after render()
+    audioCtx = new window.AudioContext()
+    gainNode = audioCtx.createGain()
   }
 
   componentWillUnmount () { // before closing app
@@ -94,9 +97,9 @@ class App extends Component {
         <span className='slider'> 
          <center>
          -12<input type='range' name='pitchSliderSemi' min='-12' max='12'
-         value = {playPitchSemi} onChange={handlePitchSlider} />+12<br />
+         value = {playPitchSemi} onChange={handlePitchSlider} />12<br />
          -100<input type='range' name='pitchSliderCents' min='-100' max='100'
-         value = {playPitchCents} onChange={handlePitchSlider} />+100<br />
+         value = {playPitchCents} onChange={handlePitchSlider} />100<br />
          </center>
 
         </span>
@@ -150,6 +153,7 @@ class App extends Component {
 
       audioCtx.decodeAudioData(reader.result, 
         function(audioBuffer) {
+          this.params.audioBuffer = audioBuffer
           shifter = new PitchShifter(audioCtx, audioBuffer, 1024)
           shifter.tempo = this.state.playSpeed/100.0
           shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0)
@@ -234,6 +238,14 @@ fetchFile (event) {
   }
 
   handlePlay(event) { 
+
+// Unlock iOS 
+     let buffer = audioCtx.createBuffer(1,1,22050); 
+     let source = audioCtx.createBufferSource();
+     source.buffer = buffer;
+     source.connect (audioCtx.destination);
+     source.start();
+// End unlock
 
      if (event.target.name === 'startPause') {
 

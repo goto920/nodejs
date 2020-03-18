@@ -103,3 +103,56 @@ PhD 2018 Dittmar DrumsSeparation
 
 NMFD (Nonnegative matrix factor deconvolution)
 Wiener Filtering and Kernel Additive Modeling
+
+++++++++
+Comb filter 5845......pdf or siteseer
+REAL-TIME VISUAL BEAT TRACKING USING A COMB FILTER MATRIX (2016)
+
+a bank of comb filter resonators.
+the level of the tatum, defined by Bilmes [2] as the lowest metrical
+level present in a piece, the beat level and the bar level.
+
+In cases of syncopation whereby
+one event occurs at a usually unstressed metrical level,
+
+y t = αy t−T + (1 − α)x t . (period T)
+
+By visualising aspects of the algorithmic process,
+
+Following Eck [6], we make use of a ma-
+trix structure which retains phase information and can be
+used to represent multiple tempo and phase hypotheses in
+a single image.
+
+Figure 1. Onset detection function obtained processing a
+recording of drum parts by Led Zeppelin’s John Bonham.
+The median is the horizontal line through the middle of
+the onsets. Both the raw detection function and the output
+of pre-processing as described in section 2.1 are shown.
+
+median -- of what? window of 512 samples (11.6msec)
+
+matrix: tempo of period τ and phase θ by X(τ, θ ).
+
+X(τ, θ τ,t ) ← αx t + (1 − α)X(τ, θ τ,t ).
+range of t and theta?
+
+1.3 to 4 bpm bin, 160 to 80 (narrow) 
+alpha = 0.1
+
+Modified
+X(τ, θ τ,t ) ← αx(t)+(1−α) max{c τ (τ m )c θ (θ n )X(τ m , θ n )}
+(4)
+where c τ (·) and c θ (·) are weighting
+c τ (τ m ) = g(τ, τ m , σ τ ), where τ m is the period of an ad-
+jacent tempo, and c θ (θ n ) = g(θ , θ n , σ θ ),
+
+g(t, m, σ ) = e ^{− (t−m) 2/2σ 2} (5)
+
+We choose the values 3.5
+and 6 for σ τ and σ θ , the standard deviation of the weight-
+ing functions for tempo and phase respectively.
+
+
+.
+

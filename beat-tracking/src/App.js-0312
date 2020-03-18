@@ -24,9 +24,9 @@ class App extends Component {
        inputAudio: undefined,
        outputAudio: undefined,
        playing: undefined,
+       combFilterMatrix: [], // 2D array
        beginTime: undefined,
        taps: [],
-       tapBpm: undefined,
        testClick: [],
        tapLatency: 0,
        peaks: undefined
@@ -45,6 +45,7 @@ class App extends Component {
     this.calcPower = this.calcPower.bind(this);
     this.calcFlux = this.calcFlux.bind(this);
     this.calcMatrix = this.calcMatrix.bind(this);
+    this.findPeaks = this.findPeaks.bind(this);
   } // end constructor
 
   componentDidMount () { // before render()
@@ -82,9 +83,9 @@ class App extends Component {
           <button name='startPause' onClick={handlePlay}> 
           {startButtonStr}
           </button> &nbsp;&nbsp;
-          {startButtonStr === 'PlayAndTap' &&
-            <button name='tap' onClick={handleTap}> 
-            TapBeat </button> } &nbsp;&nbsp;
+          <button name='tap' onClick={handleTap}> 
+          TapBar
+          </button> &nbsp;&nbsp;
       </span>
       <hr />
         Version: {version}, &nbsp;
@@ -109,7 +110,7 @@ class App extends Component {
         function(audioBuffer) {
           this.params.inputAudio = audioBuffer;
           // this.setState({startButtonStr: 'TapTest'});
-          this.setState({startButtonStr: 'PlayAndTap'});
+          this.setState({startButtonStr: 'Play'});
           // this.setState({startButtonStr: 'startAnalysis'});
         }.bind(this),
         function (error) { console.log ("Filereader error: " + error.err);})
@@ -134,7 +135,7 @@ class App extends Component {
       this.params.taps = [];
     }
 
-    if (this.state.startButtonStr === 'PlayAndTap') {
+    if (this.state.startButtonStr === 'Play') {
       this.playAudio(this.params.inputAudio);
       this.setState({startButtonStr: 'Analyze'});
     }
@@ -147,18 +148,11 @@ class App extends Component {
       }
       this.setState({startButtonStr: 'Processing'});
       console.log (this.params.taps); // debug
-      let interval = this.params.taps[1] - this.params.taps[0];
-      for (let i = 2; i < this.params.taps.length; i++){
-        interval = 0.8*interval 
-            + 0.2*(this.params.taps[i] - this.params.taps[0])/i;
-      }
-      this.params.tapBpm = 60/interval;
-      console.log ('tapBpm ', this.params.tapBpm);
-      this.analyze();
-      this.setState({startButtonStr: 'PlayWithClick'});
+      this.addClick(this.params.inputAudio.sampleRate*0.19);
+      this.setState({startButtonStr: 'PlayClick'});
     }
 
-    if (this.state.startButtonStr === 'PlayWithClick') {
+    if (this.state.startButtonStr === 'PlayClick') {
       console.log('PlayClick');
       this.playAudio(this.params.outputAudio);
     }
@@ -228,9 +222,11 @@ class App extends Component {
 
     console.log ('FFT log power flux calculation completed');
 
-    this.calcMatrix(flux);
-
+    // Peak
+    this.findPeaks(flux);
     // tempo, beat estimation
+
+//    this.setState({startButtonStr: 'Play'});
 
   } // end analyze
 
@@ -257,7 +253,11 @@ class App extends Component {
   }
 
   calcFlux(last, current){
-    let retval = 0;
+    let retval = {all:0, low: 0, mid: 0, high: 0, presence: 0};
+    let low = 4; // 172Hz  Unit 44100/(2*512) = 43Hz
+                 // 46.875*4 = 187Hz (at 48000 rate)
+    let mid = 20; // 860 Hz (937Hz)
+    let high = 100; // 4300 Hz (4687Hz)
 
     for (let f = 1; f < current.length; f++){ // DC is ignored
          let diff; 
@@ -266,56 +266,173 @@ class App extends Component {
          else  
            diff = Math.max(0, current[f] - last[f]);
 
-         retval += diff;
+         retval.all += diff;
+         if (f <= low)        retval.low += diff;
+         else if (f <= mid)   retval.mid += diff;
+         else if (f <= high)  retval.high += diff;
+         else                 retval.presence += diff;
     }
 
     return retval;
   }
 
   calcMatrix (flux){
+    let av_all  = flux[0].all;
+  }
 
-    let matrix = new Array(100); // max 93
-        matrix[0] = [];
-    for (let i = 1; i < 100; i++) 
-        matrix[i] = new Array(i); // triangle
+  findPeaks(flux){
 
-    console.log('calcMatrix');
+    let onsets = [];
+    let t = 0.8, range = 2.0;
+    let av_all  = flux[0].all;
+    let av_low  = flux[0].low;
+    let av_mid  = flux[0].mid;
+    let av_high = flux[0].high;
+    let av_presence = flux[0].presence;
 
-// median filter on flux
-    for (let i = 0; i + 4 < flux.length; i++) { 
-      let median = Stats(flux.slice(i,i+4)).median();
-      if (flux[i+2] < median) flux[i+2] = 0;
-    } 
+    console.log ('#', flux.length);
 
-// 512 windows of 512 samples shift= 5.461 sec at 48kHz
-// 240bpm interval 60/240 = 0.25 sec (j = 23.4), 60bpm j 93.8)
+    for (let i=0; i < flux.length; i++){
+      let all=0, low=0, high=0, mid=0, presence=0;
 
-    for (let n = 0; 512*(n+1) < flux.length; n++) { // n: window #
-      let i = 512*n; // beginning of the window 
-      for (let interval = 23; interval < 94; interval++)
-        for (let phase = 0; phase < interval; phase ++)
-          for (let m = 0; phase + interval*m < 512 ; m++) {
-             if (m === 0) 
-               matrix[interval][phase] = flux[i + phase]; // initial
-             else 
-               matrix[interval][phase] = 0.9*matrix[interval][phase] 
-                                       + 0.1*flux[i + phase + interval*m];
-          } // end for m
-// find large values
-// debug output
-      if (n === 10){
-        for (let interval = 23; interval < 94; interval++){ 
-          let bpm = 60/(interval*512/this.params.inputAudio.sampleRate);
-          let max =  Stats(matrix[interval]).max();
-          let diff = max - Stats(matrix[interval]).q3(); 
-          console.log (interval, max, diff, bpm);
-        }
-      } // end if n
+      if (flux[i].all > range*av_low) all = flux[i].all;
+      if (flux[i].low > range*av_low) low = flux[i].low;
+      if (flux[i].mid > range*av_mid) mid = flux[i].mid;
+      if (flux[i].high > range*av_high) high = flux[i].high;
+      if (flux[i].presence > range*av_presence) presence = flux[i].presence;
 
-    } // end for n
+      onsets[i] = {all: all, low: low, mid: mid, high: high, presence: presence};
 
-    console.log('===END calcMatrix');
-  } // end function
+      av_all = t*av_all + (1-t)*flux[i].all;
+      av_low = t*av_low + (1-t)*flux[i].low;
+      av_mid = t*av_mid + (1-t)*flux[i].mid;
+      av_high = t*av_high + (1-t)*flux[i].high;
+      av_presence = t*av_presence + (1-t)*flux[i].presence;
+
+    } // end for i
+
+    let signal = [];
+    let times = [];
+    let intervals = [];
+
+
+    for (let n = 0; n < onsets.length/512; n++) {
+// for low
+      signal = [];
+
+      for (let i=0; i < 512 && 512*n + i < onsets.length; i++){ 
+        signal[i] = onsets[512*n+i].low; 
+        // if (n === 0) console.log (i,signal[i]);
+      }
+
+      let auto = autocorrelation (signal);
+      if (n === 0) 
+       for (let i=0; i < auto.length; i++) 
+          console.log (i, auto[i], ' #');
+
+      for (let i=20, j=0; i <= 100 && i < auto.length; i++) 
+          if (auto[i] > 0.1) times[j++] = i;
+
+      intervals[0] = times[0];
+      for (let i=0, j=1; i < times.length - 1; i++) {
+          let tmp = times[i+1] - times[i];
+          if (tmp >= 20 && tmp <= 100) intervals[j++] = tmp;
+      // 258 to 52 bpm at 44100, 1024 window, 50% overlap
+      }
+
+//      let fixed = Stats(intervals).removeOutliers();
+//      let interval = fixed.max();
+      let interval = Stats(intervals).max();
+
+      let bpm  = 60/(interval*512/this.params.inputAudio.sampleRate);
+
+      let time = (512*512*n)/this.params.inputAudio.sampleRate;
+
+      console.log (intervals);
+      console.log ('max low interval: ',  
+                  interval, ' bpm: ', bpm, ' at: ', time);
+
+/*
+// mid
+    signal = [];
+    for (let i=0; i < 512; i++) signal[i] = flux[i].mid;
+    let mid_auto = autocorrelation (signal);
+
+    times = []
+    for (let i=20, j=0; i <=100 && i < mid_auto.length; i++) 
+      if (mid_auto[i] > 0.2) times[j++] = i;
+
+    intervals = []; intervals[0] = times[0];
+    for (let i=0, j=0; i < times.length - 1; i++) {
+      let tmp = times[i+1] - times[i];
+      if (tmp >= 20 && tmp <= 100) 
+      intervals[j++] = tmp;
+      // 258 to 52 bpm at 44100, 1024 window, 50% overlap
+    }
+
+    fixed = Stats(intervals).removeOutliers();
+    let mid_interval = fixed.mean();
+    let mid_bpm  = 60/(mid_interval*512/this.params.inputAudio.sampleRate);
+
+    console.log (fixed.toArray());
+    console.log ('mean mid interval: ', mid_interval, ' bpm: ', mid_bpm);
+
+//  high 
+    signal = [];
+    for (let i=0; i < 512; i++) signal[i] = flux[i].high;
+
+    let high_auto = autocorrelation (signal);
+
+    times = []
+    for (let i=20, j=0; i <=100 && i < high_auto.length; i++) 
+      if (high_auto[i] > 0.2) times[j++] = i;
+
+    intervals = []; intervals[0] = times[0];
+    for (let i=0, j=0; i < times.length - 1; i++) {
+      let tmp = times[i+1] - times[i];
+      if (tmp >= 20 && tmp <= 100) 
+      intervals[j++] = tmp;
+      // 258 to 52 bpm at 44100, 1024 window, 50% overlap
+    }
+
+    fixed = Stats(intervals).removeOutliers();
+    let high_interval = fixed.mean();
+    let high_bpm  = 60/(high_interval*512/this.params.inputAudio.sampleRate);
+
+    console.log (fixed.toArray());
+    console.log ('mean high interval: ', high_interval, ' bpm: ', high_bpm);
+
+//  presence 
+    signal = [];
+    for (let i=0; i < 512; i++) signal[i] = flux[i].presence;
+
+    let presence_auto = autocorrelation (signal);
+
+    times = []
+    for (let i=20, j=0; i <=100 && i < presence_auto.length; i++) 
+      if (presence_auto[i] > 0.2) times[j++] = i;
+
+    intervals = []; intervals[0] = times[0];
+    for (let i=0, j=0; i < times.length - 1; i++) {
+      let tmp = times[i+1] - times[i];
+      if (tmp >= 20 && tmp <= 100) 
+      intervals[j++] = tmp;
+      // 258 to 52 bpm at 44100, 1024 window, 50% overlap
+    }
+
+    fixed = Stats(intervals).removeOutliers();
+    let presence_interval = fixed.max();
+    let presence_bpm  = 60/(presence_interval*512/this.params.inputAudio.sampleRate);
+
+    console.log (fixed.toArray());
+    console.log ('an presence interval: ', presence_interval, 
+       ' bpm: ', presence_bpm);
+   */
+   } // end for n 
+
+    // return results;
+
+  }
 
   playAudio(input){
 

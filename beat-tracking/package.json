@@ -2,7 +2,7 @@
   "name": "beat-tracking",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/demos/beat-tracking/20200227",
+  "homepage": "/demos/beat-tracking/20200318",
   "subversion": "00",
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
