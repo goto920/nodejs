@@ -27,6 +27,7 @@ class App extends Component {
        beginTime: undefined,
        taps: [],
        tapBpm: undefined,
+       estBpm: undefined,
        testClick: [],
        tapLatency: 0,
        peaks: undefined
@@ -82,7 +83,7 @@ class App extends Component {
           <button name='startPause' onClick={handlePlay}> 
           {startButtonStr}
           </button> &nbsp;&nbsp;
-          {startButtonStr === 'PlayAndTap' &&
+          {startButtonStr === 'Analyze' &&
             <button name='tap' onClick={handleTap}> 
             TapBeat </button> } &nbsp;&nbsp;
       </span>
@@ -153,6 +154,7 @@ class App extends Component {
             + 0.2*(this.params.taps[i] - this.params.taps[0])/i;
       }
       this.params.tapBpm = 60/interval;
+      this.params.estBpm = this.params.tapBpm;
       console.log ('tapBpm ', this.params.tapBpm);
       this.analyze();
       this.setState({startButtonStr: 'PlayWithClick'});
@@ -303,12 +305,16 @@ class App extends Component {
           } // end for m
 // find large values
 // debug output
-      if (n === 10){
+      if (n < 10){
         for (let interval = 23; interval < 94; interval++){ 
           let bpm = 60/(interval*512/this.params.inputAudio.sampleRate);
           let max =  Stats(matrix[interval]).max();
-          let diff = max - Stats(matrix[interval]).q3(); 
-          console.log (interval, max, diff, bpm);
+          let index = matrix[interval].indexOf(max);
+          if (this.params.estBpm !== undefined 
+            && bpm > this.params.estBpm - 5
+            && bpm < this.params.estBpm + 5) {
+            console.log (n, interval, index, max, bpm);
+          }
         }
       } // end if n
 

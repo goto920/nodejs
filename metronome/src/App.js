@@ -916,6 +916,13 @@ class App extends Component {
   } // end handleSetLists
 
   startStopDrums (event) {
+// Unlock iOS 
+     let buffer = context.createBuffer(1,1,22050); 
+     let source = context.createBufferSource();
+     source.buffer = buffer;
+     source.connect (context.destination);
+     source.start();
+// End unlock
     if (event.target.name === 'startStop') {
       if (this.state.loopStat.playing) {
         this.customPlay({target: {name: 'stop'}})
