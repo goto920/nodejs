@@ -41,8 +41,7 @@ class App extends Component {
       playPitchCents: 0, // percent for one semitone
       playVolume: 80, // in percent
       startButtonStr: 'loadFile!', 
-      loopButtonStr: 'LoopAB',
-      saveButtonStr: 'Save'
+      loopButtonStr: 'LoopAB'
     }
 
     this.setState = this.setState.bind(this)
@@ -94,7 +93,6 @@ class App extends Component {
 
             this.fakeDownload(this.params.exportBuffer);
             this.params.save = false;
-            this.setState({saveButtonStr: 'Save'});
           }
         }
     }
@@ -107,8 +105,7 @@ class App extends Component {
            handleTimeSlider, handlePlay, handleSaveA, handleSaveB, handleLoop} = this
     const {playingAt, timeA, timeB,
            playSpeed, playPitch, playPitchSemi, playPitchCents,
-           playVolume, startButtonStr, loopButtonStr, saveButtonStr} 
-           = this.state
+           playVolume, startButtonStr, loopButtonStr} = this.state
 
     let duration = 0;
     if (this.params.audioBuffer !== undefined) 
@@ -185,7 +182,7 @@ class App extends Component {
         ResetAB
         </button> <hr />
         <button name='save' onClick={handleSaveB}> 
-        {saveButtonStr}
+        SaveAfterPlayAll
         </button>
       </span>
       <hr />
@@ -540,7 +537,7 @@ fetchFile (event) {
     gainNode.connect(audioCtx.destination);
 
     let intervalId = setInterval(this.timer, 1000);
-    this.setState({intervalId: intervalId, saveButtonStr: 'Please Wait!'});
+    this.setState({intervalId: intervalId});
 
   } // end handleSaveB
 

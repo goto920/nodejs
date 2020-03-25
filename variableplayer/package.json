@@ -2,13 +2,15 @@
   "name": "variablespeedplayer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/demos/variableplayer/20200324",
+  "homepage": "/demos/variableplayer/20200325",
   "subversion": "00",
   "dependencies": {
-    "react": "^16.13.0",
-    "react-dom": "^16.13.0",
+    "audiobuffer-to-wav": "^1.0.0",
+    "file-saver": "^2.0.2",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "react-scripts": "3.3.1",
-    "soundtouchjs": "^0.1.7"
+    "soundtouchjs": "^0.1.9"
   },
   "scripts": {
     "start": "react-scripts start",
