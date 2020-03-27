@@ -17,6 +17,14 @@ var gainNode;
 // =  audioCtx.createGain()
 var shifter = null // null
 
+var iOS = false;
+if(  navigator.userAgent.match(/iPhone/i) 
+  || navigator.userAgent.match(/iPod/i)
+  || navigator.userAgent.match(/iPad/i)){
+  iOS = true;
+}
+
+
 class App extends Component {
 
   constructor (props){
@@ -35,6 +43,7 @@ class App extends Component {
 
     this.state = {
       playingAt: 0,
+      playingAtSlider: 0,
       timeA: 0,
       timeB: 0,
       playSpeed: 100, // in percent
@@ -80,7 +89,7 @@ class App extends Component {
     const {loadFile, 
            handleSpeedSlider, handlePitchSlider, handleVolumeSlider, 
            handleTimeSlider, handlePlay, handleSaveA, handleSaveB, handleLoop} = this
-    const {playingAt, timeA, timeB,
+    const {playingAt, playingAtSlider,timeA, timeB,
            playSpeed, playPitch, playPitchSemi, playPitchCents,
            playVolume, startButtonStr, loopButtonStr, saveButtonStr} 
            = this.state
@@ -143,7 +152,7 @@ class App extends Component {
         <center>
         0<input type='range' name='timeSlider'
         min='0' max={duration}
-        value = {playingAt} step='1'
+        value = {playingAtSlider} step='1'
         onChange={handleTimeSlider} />
         {Math.round(duration)}<br />
         </center>
@@ -202,7 +211,8 @@ class App extends Component {
       audioCtx.decodeAudioData(reader.result, 
         function(audioBuffer) {
           this.params.audioBuffer = audioBuffer
-          this.setState({startButtonStr: 'PlayFromA', playingAt: 0})
+          this.setState({startButtonStr: 'PlayFromA', 
+             playingAt: 0, playingAtSlider: 0})
           this.setState({timeA: 0})
           this.setState({timeB: audioBuffer.duration})
 //          console.log ("read")
@@ -250,6 +260,7 @@ class App extends Component {
 
      if (this.state.startButtonStr === 'PlayFromA') {
         this.setState({playingAt: event.target.value});
+        this.setState({playingAtSlider: this.state.playingAt});
      }
   }
 
@@ -306,6 +317,8 @@ class App extends Component {
          console.log ('timePlayed', detail.timePlayed);
          this.setState({playingAt: 
            parseFloat(this.state.timeA) + parseFloat(detail.timePlayed)});
+         if(!iOS) this.setState({playingAtSlider: this.state.playingAt})
+
          if (detail.percentagePlayed === 100){ 
            this.params.isPlaying = false;
            if (this.params.loop) this.handlePlay({target: {name: 'LoopAB'}});
@@ -323,7 +336,8 @@ class App extends Component {
 
        if (this.state.startButtonStr === 'Pause'){
          if (!this.params.isPlaying) return;
-         this.setState({timeA: this.state.playingAt});
+         this.setState({timeA: this.state.playingAtSlider});
+         this.setState({playingAt: this.state.playingAtSlider});
 
          if (shifter === null) return
 
@@ -365,6 +379,8 @@ class App extends Component {
        shifter.on('play', detail => {
          this.setState({playingAt: 
          parseFloat(this.state.timeA) + parseFloat(detail.timePlayed)});
+         if(!iOS) this.setState({playingAtSlider: this.state.playingAt})
+
          if (detail.percentagePlayed === 100) {
            shifter.disconnect();
            shifter.off(); 
@@ -395,6 +411,7 @@ class App extends Component {
 
         this.setState({startButtonStr: 'PlayFromA', 
           playingAt: 0, timeA: 0, timeB: audioBuffer.duration})
+        this.setState({playingAtSlider: this.state.playingAt});
 
      } // end if
 
@@ -444,11 +461,9 @@ class App extends Component {
        + '&p' + parseInt(this.state.playPitch*100)
        + '.wav';
     let blob = new Blob([toWav(audioBuffer)], {type: 'audio/wav'});
-
     saveAs(blob,outFileName);
 
     console.log('Output ', outFileName);
-
   }
 
   handleSaveB(event) { 
@@ -541,7 +556,7 @@ class App extends Component {
   handleLoop(event) {
 
     if (event.target.name === 'setA') {
-      this.setState ({timeA: this.state.playingAt});
+      this.setState ({timeA: this.state.playingAtSlider});
     }
     if (event.target.name === 'setB'){
       if (this.state.playingAt >=  this.state.timeA)
