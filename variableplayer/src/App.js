@@ -5,6 +5,7 @@ import {PitchShifter} from 'soundtouchjs'
 import packageJSON from '../package.json'
 import {saveAs} from 'file-saver';
 import * as toWav from 'audiobuffer-to-wav';
+// import {fetch as fetchPolyfill} from 'whatwg-fetch';
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
 const homepage = 'https://goto920.github.io/demos/variableplayer/'
@@ -24,6 +25,7 @@ class App extends Component {
     this.params = {
       filename: undefined,
       audioBuffer: undefined,
+      isPlaying: false,
       loop: false,
       exportDataL: undefined,
       exportDataR: undefined,
@@ -48,7 +50,6 @@ class App extends Component {
     this.setState = this.setState.bind(this)
     this.handleWindowClose = this.handleWindowClose.bind(this)
     this.loadFile = this.loadFile.bind(this)
-    this.fetchFile = this.fetchFile.bind(this)
     this.handleSpeedSlider = this.handleSpeedSlider.bind(this)
     this.handlePitchSlider = this.handlePitchSlider.bind(this)
     this.handleTimeSlider = this.handleTimeSlider.bind(this)
@@ -57,7 +58,6 @@ class App extends Component {
     this.handleSaveA = this.handleSaveA.bind(this);
     this.handleSaveB = this.handleSaveB.bind(this);
     this.fakeDownload = this.fakeDownload.bind(this);
-    this.timer = this.timer.bind(this);
     this.handleLoop = this.handleLoop.bind(this);
     
   } // end constructor
@@ -74,35 +74,10 @@ class App extends Component {
 
   componentWillUnmount () { // before closing app
     window.removeEventListener('beforeClosing', this.handleWindowClose)
-    clearInterval(this.state.intervalId);
   }
 
-  timer(){
-    if (shifter !== null ) {
-      this.setState({playingAt: 
-         parseFloat(this.state.timeA) + parseFloat(shifter.timePlayed)});
-      if (shifter.percentagePlayed === 100) 
-        if (this.params.loop)
-           this.handlePlay({target: {name: 'LoopAB'}});
-        else {
-          clearInterval(this.state.intervalId);
-          if (this.params.save){ 
-            this.params.exportBuffer.copyToChannel(
-               this.params.exportDataL,0,0)
-            this.params.exportBuffer.copyToChannel(
-               this.params.exportDataR,1,0)
-
-            this.fakeDownload(this.params.exportBuffer);
-            this.params.save = false;
-            this.setState({saveButtonStr: 'Save'});
-          }
-        }
-    }
-
-  } // end timer
-
   render() {
-    const {loadFile, fetchFile, 
+    const {loadFile, 
            handleSpeedSlider, handlePitchSlider, handleVolumeSlider, 
            handleTimeSlider, handlePlay, handleSaveA, handleSaveB, handleLoop} = this
     const {playingAt, timeA, timeB,
@@ -114,6 +89,24 @@ class App extends Component {
     if (this.params.audioBuffer !== undefined) 
        duration = this.params.audioBuffer.duration
 
+    let startBStyle; 
+    if (startButtonStr === 'Pause')
+      startBStyle = {color: 'green'}
+    else  
+      startBStyle = {}
+
+    let loopBStyle; 
+    if (loopButtonStr === 'StopLoop')
+      loopBStyle = {color: 'green'}
+    else  
+      loopBStyle = {}
+
+    let saveBStyle; 
+    if (saveButtonStr === 'Please Wait!')
+      saveBStyle = {color: 'green'}
+    else  
+      saveBStyle = {}
+
     return (
       <div className="App">
       Variable speed/pitch audio player<br /> 
@@ -124,12 +117,6 @@ class App extends Component {
         <input type='file' name='loadFile' 
         accept='audio/*' onChange={loadFile} /><br />
         </span>
-{/*
-        <span className='selectFile'>
-        URL and Enter <input type='url' name='fetchFile' 
-        accept='audio/*' onKeyPress={fetchFile} />
-        </span>
-*/}
       <hr />
 
       Speed(%): {playSpeed} <br />
@@ -176,15 +163,15 @@ class App extends Component {
       <hr />
 
       <span>
-        <button name='startPause' onClick={handlePlay}> 
+        <button name='startPause' onClick={handlePlay} style={startBStyle}> 
         {startButtonStr}
         </button> &nbsp;&nbsp;
-        <button name='LoopAB' onClick={handleLoop} >
+        <button name='LoopAB' onClick={handleLoop} style={loopBStyle}>
         {loopButtonStr}</button> &nbsp;&nbsp;
         <button name='reset' onClick={handlePlay}> 
         ResetAB
         </button> <hr />
-        <button name='save' onClick={handleSaveB}> 
+        <button name='save' onClick={handleSaveB} style={saveBStyle}> 
         {saveButtonStr}
         </button>
       </span>
@@ -227,33 +214,6 @@ class App extends Component {
    reader.readAsArrayBuffer(file)
 
  } // end loadFile()
-   
-fetchFile (event) {
-
-   if (event.target.name !== 'fetchFile') return
-
-   let code = event.keyCode || event.charCode 
-   if (code !== 13) return
-
-//   console.log ("Got enter")
-
-   let url = event.target.value 
-   this.setState({startButtonStr: 'loadFile!'})
-
-   if (shifter) { shifter.off() }
-   console.log('fetchFile: ' + url);
-
-   fetch(url)
-     .then(response => response.arrayBuffer())
-     .then(buffer => {
-       audioCtx.decodeAudioData(buffer, audioBuffer => {
-          this.params.audioBuffer = audioBuffer;
-          this.setState({startButtonStr: 'PlayFromA'});
-          this.setState({timeA: 0, timeB: audioBuffer.duration});
-       })  // end decode 
-     }) // end then
-
-} // end fetchFile()
 
 // UI handlers
   handleSpeedSlider(event) { 
@@ -317,6 +277,8 @@ fetchFile (event) {
      let timeA = this.state.timeA;
 
      if (event.target.name === 'LoopAB') {
+       if (this.params.isPlaying) return;
+
        if (timeB <= timeA) timeB = timeA + 10;
 
        let partialAudioBuffer = 
@@ -340,34 +302,41 @@ fetchFile (event) {
        shifter.tempo = this.state.playSpeed/100.0
        shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0)
 
+       shifter.on('play', detail => {
+         console.log ('timePlayed', detail.timePlayed);
+         this.setState({playingAt: 
+           parseFloat(this.state.timeA) + parseFloat(detail.timePlayed)});
+         if (detail.percentagePlayed === 100){ 
+           this.params.isPlaying = false;
+           if (this.params.loop) this.handlePlay({target: {name: 'LoopAB'}});
+         }
+       });
+
+       this.params.isPlaying = true;
        shifter.connect(gainNode)
        gainNode.connect(audioCtx.destination)
-
-       let intervalId = setInterval(this.timer, 1000);
-       this.setState({intervalId: intervalId});
 
      } // end ABloop
 
      if (event.target.name === 'startPause') {
 
-       if (this.state.startButtonStr === 'Pause'){
 
+       if (this.state.startButtonStr === 'Pause'){
+         if (!this.params.isPlaying) return;
          this.setState({timeA: this.state.playingAt});
-         clearInterval(this.state.intervalId);
 
          if (shifter === null) return
-          this.setState({PlayingAt: 
-            parseFloat(timeA) + parseFloat(shifter.timePlayed)});
 
           shifter.disconnect();
           shifter.off();
           shifter = null;
+          this.params.isPlaying = false;
           this.setState({ startButtonStr: 'PlayFromA' })
 
        } 
 
        if (this.state.startButtonStr === 'PlayFromA') {
-         if (this.state.loopButtonStr !== 'LoopAB') return;
+         if (this.params.isPlaying) return;
 
          let partialAudioBuffer = 
             audioCtx.createBuffer(2,
@@ -393,11 +362,21 @@ fetchFile (event) {
        shifter.tempo = this.state.playSpeed/100.0
        shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0)
 
+       shifter.on('play', detail => {
+         this.setState({playingAt: 
+         parseFloat(this.state.timeA) + parseFloat(detail.timePlayed)});
+         if (detail.percentagePlayed === 100) {
+           shifter.disconnect();
+           shifter.off(); 
+           shifter = null;
+           this.params.isPlaying = false;
+         }
+       });
+ 
+       this.params.isPlaying = true; 
        shifter.connect(gainNode)
        gainNode.connect(audioCtx.destination)
 
-       let intervalId = setInterval(this.timer, 1000);
-       this.setState({intervalId: intervalId});
        this.setState({startButtonStr: 'Pause'});
 
        }
@@ -406,11 +385,12 @@ fetchFile (event) {
 
      if (event.target.name === 'reset') {
 
+      if (!this.isPlaying) return;
+
         if (shifter) {
           shifter.disconnect();
           shifter.off();
           shifter = null; // null
-          clearInterval(this.state.intervalId);
         }
 
         this.setState({startButtonStr: 'PlayFromA', 
@@ -423,8 +403,8 @@ fetchFile (event) {
   handleSaveA(event) { 
 
     const {audioBuffer} = this.params;
-    if (this.state.startButtonStr !== 'PlayFromA'
-       || this.state.loopButtonStr !== 'LoopAB') return;
+
+    if (this.state.isPlayng) return;
 
     console.log ('handleSaveA');
 
@@ -437,8 +417,9 @@ fetchFile (event) {
     shifter.tempo = this.state.playSpeed/100.0;
     shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0);
   //  shifter.connect(gainNode); // offlineAudiocontext cannot use gainNode
-    shifter.connect(offlineCtx.destination);
 
+    this.params.isPlaying = true;
+    shifter.connect(offlineCtx.destination);
     offlineCtx.startRendering();
 
     offlineCtx.oncomplete = function(e) {
@@ -455,7 +436,7 @@ fetchFile (event) {
   }
 
   fakeDownload(audioBuffer){
-   // let blob = new Blob(, {type: 'audio/wav'})
+   // let blob = new Blob(, {type: 'audio/x-wav'})
     const words = this.params.filename.split('.');
     let outFileName = 
          words[0]
@@ -473,8 +454,7 @@ fetchFile (event) {
   handleSaveB(event) { 
 
     const {audioBuffer} = this.params;
-    if (this.state.startButtonStr !== 'PlayFromA'
-       || this.state.loopButtonStr !== 'LoopAB') return;
+    if (this.params.isPlaying) return;
     if (this.params.save) return;
 
     console.log ('handleSaveB');
@@ -489,7 +469,7 @@ fetchFile (event) {
     shifter = new PitchShifter(audioCtx, audioBuffer, bufferSize);
     shifter.tempo = this.state.playSpeed/100.0;
     shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0);
-    // shifter.connect(gainNode); // gainNode does not work for offline 
+    this.params.save = true;
 
     if (audioCtx.createJavaScriptNode) {
       saverNode = audioCtx.createJavaScriptNode(bufferSize,channels,channels);
@@ -535,12 +515,26 @@ fetchFile (event) {
 
     }.bind(this);
 
+    shifter.on('play', detail => {
+      this.setState({playingAt: 
+         parseFloat(this.state.timeA) + parseFloat(detail.timePlayed)});
+
+        if (detail.percentagePlayed === 100) {
+          this.params.exportBuffer.copyToChannel(this.params.exportDataL,0,0)
+          this.params.exportBuffer.copyToChannel(this.params.exportDataR,1,0)
+          this.fakeDownload(this.params.exportBuffer);
+          this.params.save = false;
+          this.setState({saveButtonStr: 'Save'});
+          this.params.isPlaying = false;
+        }
+     });
+
+    this.params.isPlaying = true;
     shifter.connect(saverNode);
     saverNode.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
-    let intervalId = setInterval(this.timer, 1000);
-    this.setState({intervalId: intervalId, saveButtonStr: 'Please Wait!'});
+    this.setState({saveButtonStr: 'Please Wait!'});
 
   } // end handleSaveB
 
@@ -559,7 +553,7 @@ fetchFile (event) {
     if (event.target.name === 'LoopAB'){
 
       if (this.state.loopButtonStr === 'LoopAB'){ 
-        if (this.state.startButtonStr !== 'PlayFromA') return;
+        if (this.params.isPlaying) return;
 
         if (shifter){
           shifter.disconnect();
@@ -572,14 +566,16 @@ fetchFile (event) {
 
       } 
       else if (this.state.loopButtonStr === 'StopLoop'){
+        if (!this.params.isPlaying) return;
 
         if (shifter){
           shifter.disconnect();
           shifter.off();
+          shifter = null;
         }
 
-        clearInterval(this.state.intervalId);
         this.params.loop = false;
+        this.params.isPlaying = false;
         this.setState ({loopButtonStr: 'LoopAB'});
       }
     }
