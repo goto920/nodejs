@@ -2,8 +2,8 @@
   "name": "variablespeedplayer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/demos/variableplayer/20200327",
-  "subversion": "00",
+  "homepage": "/demos/variableplayer/20200328",
+  "subversion": "-01",
   "dependencies": {
     "audiobuffer-to-wav": "^1.0.0",
     "file-saver": "^2.0.2",

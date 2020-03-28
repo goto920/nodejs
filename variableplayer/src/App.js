@@ -47,13 +47,13 @@ class App extends Component {
       timeA: 0,
       timeB: 0,
       playSpeed: 100, // in percent
-      playPitch: 0, // in semi-tone (real value)
+      playPitch: 0, // in semi-tone unit (real value)
       playPitchSemi: 0, // in semi-tone (integer part)
       playPitchCents: 0, // percent for one semitone
       playVolume: 80, // in percent
       startButtonStr: 'loadFile!', 
       loopButtonStr: 'LoopAB',
-      saveButtonStr: 'Save'
+      saveButtonStr: 'ExportWav'
     }
 
     this.setState = this.setState.bind(this)
@@ -111,7 +111,7 @@ class App extends Component {
       loopBStyle = {}
 
     let saveBStyle; 
-    if (saveButtonStr === 'Please Wait!')
+    if (saveButtonStr === 'AbortExport')
       saveBStyle = {color: 'green'}
     else  
       saveBStyle = {}
@@ -121,7 +121,7 @@ class App extends Component {
       Variable speed/pitch audio player<br /> 
       with soundtouchjs by KG
       <hr />
-      Input Audio (local file): <br />
+      1) Input Audio (local file): <br />
         <span className='selectFile'>
         <input type='file' name='loadFile' 
         accept='audio/*' onChange={loadFile} /><br />
@@ -136,7 +136,7 @@ class App extends Component {
          </center>
         </span>
       <hr />
-      Pitch (semi-tone): {playPitch} <br />
+      Pitch (semi-tone.cents): {playPitch} <br />
         <span className='slider'> 
          <center>
          -12<input type='range' name='pitchSliderSemi' min='-12' max='12'
@@ -172,17 +172,17 @@ class App extends Component {
       <hr />
 
       <span>
-        <button name='startPause' onClick={handlePlay} style={startBStyle}> 
+        2) <button name='startPause' onClick={handlePlay} style={startBStyle}> 
         {startButtonStr}
         </button> &nbsp;&nbsp;
         <button name='LoopAB' onClick={handleLoop} style={loopBStyle}>
         {loopButtonStr}</button> &nbsp;&nbsp;
-        <button name='reset' onClick={handlePlay}> 
+        <button name='reset' onClick={handleLoop}> 
         ResetAB
         </button> <hr />
-        <button name='save' onClick={handleSaveB} style={saveBStyle}> 
+        3) <button name='save' onClick={handleSaveB} style={saveBStyle}> 
         {saveButtonStr}
-        </button>
+        </button> (At playback speed, vol. 100%)
       </span>
       <hr />
         Version: {version}, &nbsp;
@@ -196,8 +196,10 @@ class App extends Component {
 ///////////////////////////////////////////////////
 
   loadFile (event) {
-   if (event.target.name !== 'loadFile') return
-   if (event.target.files.length === 0) return
+
+   if (event.target.name !== 'loadFile') return;
+   if (event.target.files.length === 0) return;
+   if (this.params.isPlaying) return;
 
    this.setState({totalTime: 0})
    this.setState({startButtonStr: 'loadFile!'})
@@ -215,7 +217,6 @@ class App extends Component {
              playingAt: 0, playingAtSlider: 0})
           this.setState({timeA: 0})
           this.setState({timeB: audioBuffer.duration})
-//          console.log ("read")
         }.bind(this),
         function (error) { console.log ("Filereader error: " + error.err) })
 
@@ -227,14 +228,16 @@ class App extends Component {
 
 // UI handlers
   handleSpeedSlider(event) { 
+     console.log('handleSpeedSlider');
      if (event.target.name !== 'speedSlider') return
      if (shifter) shifter.tempo = event.target.value/100.0
      this.setState({playSpeed: event.target.value})
   }
 
   handlePitchSlider(event) { 
+     console.log('handlePitchSlider');
 
-     let pitchSemi
+     let pitchSemi;
 
      if (event.target.name === 'pitchSliderSemi' ){
        pitchSemi = event.target.value*1.0 + this.state.playPitchCents/100.0
@@ -255,12 +258,13 @@ class App extends Component {
   }
 
   handleTimeSlider(event) { 
+     console.log('handleTimeSlider');
 
      if (event.target.name !== 'timeSlider') return
 
      if (this.state.startButtonStr === 'PlayFromA') {
-        this.setState({playingAt: event.target.value});
-        this.setState({playingAtSlider: this.state.playingAt});
+        let value = event.target.value;
+        this.setState({playingAt: value, playingAtSlider: value});
      }
   }
 
@@ -272,149 +276,115 @@ class App extends Component {
   }
 
   handlePlay(event) { 
-
      const {audioBuffer} = this.params;
-//     const {timeA, timeB} = this.state;
 
 // Unlock iOS 
+   if (iOS){
      let buffer = audioCtx.createBuffer(1,1,44100); 
      let source = audioCtx.createBufferSource();
      source.buffer = buffer;
      source.connect (audioCtx.destination);
      source.start();
+   }
 // End unlock
 
-     let timeB = this.state.timeB;
+// startPause or LoopAB
+   if (event.target.name === 'startPause' 
+    || event.target.name === 'LoopAB') {
+
      let timeA = this.state.timeA;
+     let timeB = this.state.timeB;
+     if (timeB <= timeA) timeB = timeA + 1;
 
-     if (event.target.name === 'LoopAB') {
+// Pause
+     if (this.state.startButtonStr === 'Pause'){
+       if (!this.params.isPlaying) return;
+
+       this.setState({timeA: this.state.playingAtSlider});
+       this.setState({playingAt: this.state.playingAtSlider});
+
+       if (shifter === null) return
+
+       shifter.disconnect(); shifter.off(); shifter = null;
+       this.params.isPlaying = false;
+       this.setState({ startButtonStr: 'PlayFromA' })
+       return;
+     } // end pause 
+
+// PlayFromA
+     if (event.target.name === 'startPause' 
+       && this.state.startButtonStr === 'PlayFromA') {
        if (this.params.isPlaying) return;
+       timeB = audioBuffer.duration;
+     }
 
-       if (timeB <= timeA) timeB = timeA + 10;
+// PlayFromA/LoopAB
+    if (this.state.startButtonStr === 'PlayFromA'
+       || this.state.loop) {
+      console.log ('Play AB', timeA, timeB);
 
-       let partialAudioBuffer = 
-          audioCtx.createBuffer(2,
-           (timeB-timeA)*audioBuffer.sampleRate, 
-           audioBuffer.sampleRate);
-       let left  = audioBuffer.getChannelData(0);
-       let right = audioBuffer.getChannelData(1);
+     let partialAudioBuffer = audioCtx.createBuffer(2,
+          (timeB - timeA) *audioBuffer.sampleRate, audioBuffer.sampleRate);
+     let left  = audioBuffer.getChannelData(0);
+     let right = audioBuffer.getChannelData(1);
 
-       left  = left.subarray(
-         timeA*audioBuffer.sampleRate, timeB*audioBuffer.sampleRate);
-         partialAudioBuffer.copyToChannel(left,0,0);
+     left  = left.subarray(timeA*audioBuffer.sampleRate, 
+           timeB*audioBuffer.sampleRate);
 
-       if (audioBuffer.numberOfChannels === 2) {
-         right = right.subarray(
-         timeA*audioBuffer.sampleRate, timeB*audioBuffer.sampleRate);
-         partialAudioBuffer.copyToChannel(right,1,0);
+     let tmp = partialAudioBuffer.getChannelData(0);
+     for (let sample=0; sample < left.length; sample++) 
+        tmp[sample] = left[sample];
+         //partialAudioBuffer.copyToChannel(left,0,0);
+
+     if (audioBuffer.numberOfChannels >= 2) {
+       tmp = partialAudioBuffer.getChannelData(0);
+       right = right.subarray(timeA*audioBuffer.sampleRate, 
+        timeB*audioBuffer.sampleRate);
+
+       for (let sample=0; sample < right.length; sample++) 
+         tmp[sample] = right[sample];
+        // partialAudioBuffer.copyToChannel(right,1,0);
+     }
+
+     shifter = new PitchShifter(audioCtx, partialAudioBuffer, 4096)
+     shifter.tempo = this.state.playSpeed/100.0
+     shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0)
+
+     shifter.on('play', detail => {
+       let setTime 
+           = parseFloat(this.state.timeA) + parseFloat(detail.timePlayed);
+       this.setState({playingAt: setTime}); 
+       // if(!iOS) 
+       this.setState({playingAtSlider: setTime})
+
+       if (detail.percentagePlayed === 100) {
+         shifter.disconnect();
+         shifter.off(); 
+         shifter = null;
+         this.params.isPlaying = false;
+         if (this.params.loop) 
+              this.handlePlay({target: {name: 'LoopAB'}});
        }
 
-       shifter = new PitchShifter(audioCtx, partialAudioBuffer, 4096)
-       shifter.tempo = this.state.playSpeed/100.0
-       shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0)
-
-       shifter.on('play', detail => {
-         console.log ('timePlayed', detail.timePlayed);
-         this.setState({playingAt: 
-           parseFloat(this.state.timeA) + parseFloat(detail.timePlayed)});
-         if(!iOS) this.setState({playingAtSlider: this.state.playingAt})
-
-         if (detail.percentagePlayed === 100){ 
-           this.params.isPlaying = false;
-           if (this.params.loop) this.handlePlay({target: {name: 'LoopAB'}});
-         }
-       });
-
-       this.params.isPlaying = true;
-       shifter.connect(gainNode)
-       gainNode.connect(audioCtx.destination)
-
-     } // end ABloop
-
-     if (event.target.name === 'startPause') {
-
-
-       if (this.state.startButtonStr === 'Pause'){
-         if (!this.params.isPlaying) return;
-         this.setState({timeA: this.state.playingAtSlider});
-         this.setState({playingAt: this.state.playingAtSlider});
-
-         if (shifter === null) return
-
-          shifter.disconnect();
-          shifter.off();
-          shifter = null;
-          this.params.isPlaying = false;
-          this.setState({ startButtonStr: 'PlayFromA' })
-
-       } 
-
-       if (this.state.startButtonStr === 'PlayFromA') {
-         if (this.params.isPlaying) return;
-
-         let partialAudioBuffer = 
-            audioCtx.createBuffer(2,
-             (audioBuffer.duration - this.state.timeA)
-              *audioBuffer.sampleRate, 
-              audioBuffer.sampleRate);
-         let left  = audioBuffer.getChannelData(0);
-         let right = audioBuffer.getChannelData(1);
-
-         left  = left.subarray(
-           this.state.timeA*audioBuffer.sampleRate, 
-           audioBuffer.duration*audioBuffer.sampleRate);
-           partialAudioBuffer.copyToChannel(left,0,0);
-
-         if (audioBuffer.numberOfChannels === 2) {
-           right = right.subarray(
-           this.state.timeA*audioBuffer.sampleRate, 
-           audioBuffer.duration*audioBuffer.sampleRate);
-           partialAudioBuffer.copyToChannel(right,1,0);
-         }
-
-       shifter = new PitchShifter(audioCtx, partialAudioBuffer, 4096)
-       shifter.tempo = this.state.playSpeed/100.0
-       shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0)
-
-       shifter.on('play', detail => {
-         this.setState({playingAt: 
-         parseFloat(this.state.timeA) + parseFloat(detail.timePlayed)});
-         if(!iOS) this.setState({playingAtSlider: this.state.playingAt})
-
-         if (detail.percentagePlayed === 100) {
-           shifter.disconnect();
-           shifter.off(); 
-           shifter = null;
-           this.params.isPlaying = false;
-         }
-       });
+     }); // end shifter.on
  
-       this.params.isPlaying = true; 
-       shifter.connect(gainNode)
-       gainNode.connect(audioCtx.destination)
+     this.params.isPlaying = true; 
+     shifter.connect(gainNode);
+     gainNode.connect(audioCtx.destination);
 
-       this.setState({startButtonStr: 'Pause'});
+     if (event.target.name === 'startPause' 
+         && this.state.startButtonStr === 'PlayFromA') 
+              this.setState({startButtonStr: 'Pause'});
 
-       }
+     console.log ('Play AB END');
+     return;
+   } // end playing
 
-     } 
+    return;
+  }
 
-     if (event.target.name === 'reset') {
 
-      if (!this.isPlaying) return;
-
-        if (shifter) {
-          shifter.disconnect();
-          shifter.off();
-          shifter = null; // null
-        }
-
-        this.setState({startButtonStr: 'PlayFromA', 
-          playingAt: 0, timeA: 0, timeB: audioBuffer.duration})
-        this.setState({playingAtSlider: this.state.playingAt});
-
-     } // end if
-
+    return;
   } // end handlePlay()
 
   handleSaveA(event) { 
@@ -453,7 +423,8 @@ class App extends Component {
   }
 
   fakeDownload(audioBuffer){
-   // let blob = new Blob(, {type: 'audio/x-wav'})
+    console.log('fakeDownload');
+
     const words = this.params.filename.split('.');
     let outFileName = 
          words[0]
@@ -463,16 +434,40 @@ class App extends Component {
     let blob = new Blob([toWav(audioBuffer)], {type: 'audio/wav'});
     saveAs(blob,outFileName);
 
-    console.log('Output ', outFileName);
+    console.log('fakeDownLoad end', outFileName);
   }
 
   handleSaveB(event) { 
+    console.log ('handleSaveB');
+
+    if (event.target.name !== 'save') return;
 
     const {audioBuffer} = this.params;
-    if (this.params.isPlaying) return;
-    if (this.params.save) return;
 
-    console.log ('handleSaveB');
+    if (this.state.saveButtonStr === 'AbortExport') {
+      shifter.disconnect();
+      shifter.off();
+      this.params.isPlaying = false;
+      this.setState({saveButtonStr: 'ExportWav'});
+      console.log ('handleSaveB: AbortExport');
+      return;
+    }
+
+    if (this.state.saveButtonStr !== 'ExportWav') return;
+
+    console.log ('handleSaveB: ExportWav', 'playing', this.params.isPlaying);
+
+    if (this.params.isPlaying) return;
+
+// Unlock iOS 
+   if (iOS){
+     let buffer = audioCtx.createBuffer(1,1,44100); 
+     let source = audioCtx.createBufferSource();
+     source.buffer = buffer;
+     source.connect (audioCtx.destination);
+     source.start();
+   }
+// End unlock
 
 // https://www.gmass.co/blog/record-audio-mobile-web-page-ios-android/
 // https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode/onaudioprocess
@@ -484,7 +479,6 @@ class App extends Component {
     shifter = new PitchShifter(audioCtx, audioBuffer, bufferSize);
     shifter.tempo = this.state.playSpeed/100.0;
     shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0);
-    this.params.save = true;
 
     if (audioCtx.createJavaScriptNode) {
       saverNode = audioCtx.createJavaScriptNode(bufferSize,channels,channels);
@@ -512,7 +506,6 @@ class App extends Component {
       let inputBuffer = event.inputBuffer;
       let outputBuffer = event.outputBuffer;
 
-
       for (let channel = 0; channel < inputBuffer.numberOfChannels; channel++){
          let inputData = inputBuffer.getChannelData(channel);
          let outputData = outputBuffer.getChannelData(channel);
@@ -531,16 +524,36 @@ class App extends Component {
     }.bind(this);
 
     shifter.on('play', detail => {
-      this.setState({playingAt: 
-         parseFloat(this.state.timeA) + parseFloat(detail.timePlayed)});
+      let setTime = 
+          parseFloat(this.state.timeA) + parseFloat(detail.timePlayed);
+      this.setState({playingAt: setTime}); 
+      // if(!iOS) 
+      this.setState({playingAtSlider: setTime});
 
-        if (detail.percentagePlayed === 100) {
+      if (detail.percentagePlayed === 100) {
+          shifter.disconnect(); shifter.off();
+
+/* Safari does not implement copyToChannel() */
+/*
           this.params.exportBuffer.copyToChannel(this.params.exportDataL,0,0)
           this.params.exportBuffer.copyToChannel(this.params.exportDataR,1,0)
-          this.fakeDownload(this.params.exportBuffer);
-          this.params.save = false;
-          this.setState({saveButtonStr: 'Save'});
-          this.params.isPlaying = false;
+*/
+
+       let tmp = this.params.exportBuffer.getChannelData(0);
+       for (let sample=0; sample < this.params.exportDataL.length; sample++) 
+           tmp[sample] = this.params.exportDataL[sample];
+
+       if (this.exportBuffer.numberOfChannels >= 2) {
+        tmp = this.params.exportBuffer.getChannelData(1);
+        for (let sample=0; sample < this.params.exportDataR.length; sample++) 
+           tmp[sample] = this.params.exportDataR[sample];
+
+       }
+
+         this.fakeDownload(this.params.exportBuffer);
+         this.params.save = false;
+         this.setState({saveButtonStr: 'ExportWav'});
+         this.params.isPlaying = false;
         }
      });
 
@@ -549,11 +562,14 @@ class App extends Component {
     saverNode.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
-    this.setState({saveButtonStr: 'Please Wait!'});
+    this.setState({saveButtonStr: 'AbortExport'});
+    console.log ('handleSaveB: ExportWav END');
 
+    return;
   } // end handleSaveB
 
   handleLoop(event) {
+    console.log ('handleLoop');
 
     if (event.target.name === 'setA') {
       this.setState ({timeA: this.state.playingAtSlider});
@@ -568,6 +584,8 @@ class App extends Component {
     if (event.target.name === 'LoopAB'){
 
       if (this.state.loopButtonStr === 'LoopAB'){ 
+        console.log ('handleLoop: LoopAB', 'playing', this.params.isPlaying);
+
         if (this.params.isPlaying) return;
 
         if (shifter){
@@ -581,6 +599,8 @@ class App extends Component {
 
       } 
       else if (this.state.loopButtonStr === 'StopLoop'){
+        console.log ('handleLoop: StopLoop',  
+                 'playing', this.params.isPlaying);
         if (!this.params.isPlaying) return;
 
         if (shifter){
@@ -594,6 +614,22 @@ class App extends Component {
         this.setState ({loopButtonStr: 'LoopAB'});
       }
     }
+
+// reset
+    if (event.target.name === 'reset') {
+      console.log ('handleLoop: reset')
+
+      if (shifter) { shifter.disconnect(); shifter.off(); shifter = null; }
+      this.setState({startButtonStr: 'PlayFromA', 
+          playingAt: 0, timeA: 0, timeB: this.params.audioBuffer.duration})
+      this.setState({playingAtSlider: 0});
+
+      this.params.loop = false;
+      this.params.isPlaying = false;
+      this.setState ({loopButtonStr: 'LoopAB'});
+
+    return;
+   } // end reset
   }
  
 } // end class
