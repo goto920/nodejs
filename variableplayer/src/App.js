@@ -431,7 +431,7 @@ class App extends Component {
        + '&s' + parseInt(this.state.playSpeed)
        + '&p' + parseInt(this.state.playPitch*100)
        + '.wav';
-    let blob = new Blob([toWav(audioBuffer)], {type: 'audio/wav'});
+    let blob = new Blob([toWav(audioBuffer)], {type: 'audio/vnd.wav'});
     saveAs(blob,outFileName);
 
     console.log('fakeDownLoad end', outFileName);
@@ -542,18 +542,18 @@ class App extends Component {
        for (let sample=0; sample < this.params.exportDataL.length; sample++) 
            tmp[sample] = this.params.exportDataL[sample];
 
-       if (this.exportBuffer.numberOfChannels >= 2) {
+       if (this.params.exportBuffer.numberOfChannels >= 2) {
         tmp = this.params.exportBuffer.getChannelData(1);
         for (let sample=0; sample < this.params.exportDataR.length; sample++) 
            tmp[sample] = this.params.exportDataR[sample];
-
        }
 
          this.fakeDownload(this.params.exportBuffer);
          this.params.save = false;
          this.setState({saveButtonStr: 'ExportWav'});
          this.params.isPlaying = false;
-        }
+
+       } // end 100%
      });
 
     this.params.isPlaying = true;
