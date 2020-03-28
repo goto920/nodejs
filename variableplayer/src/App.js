@@ -524,8 +524,7 @@ class App extends Component {
     }.bind(this);
 
     shifter.on('play', detail => {
-      let setTime = 
-          parseFloat(this.state.timeA) + parseFloat(detail.timePlayed);
+      let setTime = parseFloat(detail.timePlayed);
       this.setState({playingAt: setTime}); 
       // if(!iOS) 
       this.setState({playingAtSlider: setTime});
