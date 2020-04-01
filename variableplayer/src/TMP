@@ -1,0 +1,64 @@
+
+     let partialAudioBuffer = audioCtx.createBuffer(2,
+          (timeB - timeA) *audioBuffer.sampleRate, audioBuffer.sampleRate);
+     let left  = audioBuffer.getChannelData(0);
+     let right = audioBuffer.getChannelData(1);
+
+     left  = left.subarray(timeA*audioBuffer.sampleRate, 
+           timeB*audioBuffer.sampleRate);
+
+     let tmp = partialAudioBuffer.getChannelData(0);
+     for (let sample=0; sample < left.length; sample++) 
+        tmp[sample] = left[sample];
+
+     if (audioBuffer.numberOfChannels >= 2) {
+       tmp = partialAudioBuffer.getChannelData(1);
+       right = right.subarray(timeA*audioBuffer.sampleRate, 
+        timeB*audioBuffer.sampleRate);
+
+       for (let sample=0; sample < right.length; sample++) 
+         tmp[sample] = right[sample];
+     }
+
+
+// create PitchShifter and Play
+     if (shifter) { shifter.disconnect(); shifter.off(); shifter= null;}
+     shifter = new PitchShifter(audioCtx, partialAudioBuffer, 4096)
+     shifter.tempo = this.state.playSpeed/100.0
+     shifter.pitch = Math.pow(2.0,this.state.playPitch/12.0)
+
+     shifter.on('play', detail => {
+
+       let setTime =  parseFloat(timeA) + parseFloat(detail.timePlayed);
+       this.setState({playingAt: setTime});
+       // if (!iOS) 
+       this.setState({playingAtSlider: setTime}); 
+
+       if (detail.percentagePlayed >= 100) {
+
+         shifter.disconnect(); shifter.off(); shifter = null;
+         this.params.isPlaying = false;
+
+         if (this.state.startButtonStr === 'Pause') {
+           this.setState({startButtonStr: 'PlayOnce'}); 
+         }
+
+         if (this.params.loop){
+           // this.handlePlay({target: {name: 'LoopAB'}});
+           console.log ('Play AB END');
+         } 
+
+
+         return;
+       }
+
+     }); // end shifter.on
+ 
+    shifter.connect(gainNode);
+    gainNode.connect(audioCtx.destination); // start play
+    audioCtx.resume();
+
+    this.params.isPlaying = true; 
+    this.setState({startButtonStr: 'Pause'});
+
+    return;

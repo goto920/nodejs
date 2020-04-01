@@ -56,8 +56,12 @@
   padding: 8px;
   border: 1px solid #832420;
   border-radius: 2px;
-  width: 50px;
+  width: 60px;
   color: #fff;
-  font-size: 15px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.selector select {
   cursor: pointer;
 }
