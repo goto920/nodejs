@@ -6,12 +6,9 @@ Runs on Windows/macOS/Linux/Android/iOS
 
 Based on [SoundTouchJS](https://github.com/cutterbl/SoundTouchJS)
 
-##User guide/executable link
+## User guide/executable link [English](https://goto920.github.io/demos/variableplayer/)   [日本語](https://goto920.github.io/demos/variableplayer/)
 
-[English](https://goto920.github.io/demos/variableplayer/)
-[日本語](https://goto920.github.io/demos/variableplayer/)
-
-##Feature
+## Feature
 
 - Same program (just 700kB) works on various devices.
 - No installation required. Runs offline.
@@ -20,5 +17,5 @@ Based on [SoundTouchJS](https://github.com/cutterbl/SoundTouchJS)
 - Local download of modified sound as a wav file 
 
 Note: Upon download on iOS 12 browser will open blob window with "unknown" and users should save the file as filename.wav. iOS 13 may not have the problem.
-
+Sound quality is not very good for big change in speed or pitch.
 
