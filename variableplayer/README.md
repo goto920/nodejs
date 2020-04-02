@@ -6,7 +6,7 @@ Runs on Windows/macOS/Linux/Android/iOS
 
 Based on [SoundTouchJS](https://github.com/cutterbl/SoundTouchJS)
 
-## User guide/executable link [English](https://goto920.github.io/demos/variableplayer/)   [日本語](https://goto920.github.io/demos/variableplayer/index-jp.html)
+## User guide/executable url:  [English](https://goto920.github.io/demos/variableplayer/)   [日本語](https://goto920.github.io/demos/variableplayer/index-jp.html)
 
 ## Feature
 
