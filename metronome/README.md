@@ -4,6 +4,8 @@ Written in JavaScript, Node.js, React, Web Audio API
 
 Runs on Windows/macOS/Linux/Android/iOS
 
+Special module used: (waaclock)[https://www.npmjs.com/package/waaclock]
+
 ## User guide/executable url:  [English](https://goto920.github.io/demos/metronome2/)   [日本語](https://goto920.github.io/demos/metronome2/index-jp.html)
 
 - Same program (just 700kB) works on various devices.
