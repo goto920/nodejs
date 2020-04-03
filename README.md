@@ -2,12 +2,19 @@
 
 Programming practice for nodejs and react application
 
-1. metronome -- simple metronome using React and Web Audio API
+1. Pure JavaScript Applications
 
-Demos and performance test results: https://goto920.github.io/
+- [metronome](metronome)      -- simple metronome using React and Web Audio API
+- [presentimer](presentimer)    -- presentation timer (keep time of talk and Q and A)
+- [variableplayer](variableplayer) -- variable pitch/speed player
+
 
 -----------------------
-2. feedbackBooster -- user interface for Feedback Booster written in Java
+2. feedbackBooster 
+
+- User Interface for Feedback Booster written in Java
+- Java program runs on the JavaScript express server 
+- JavaScript Client
 
 client -- UI Only
    client/src -- client Javascript source code
@@ -33,19 +40,19 @@ PC (Linux/Windows etc.) with Java VM (java command) -- audio Interface
                                                         taped on E. Guitar  
                                                         (headphone for test)
 
-1) compile Java code (or use FeedbackBoosterNoGUI.jar)
+1. compile Java code (or use FeedbackBoosterNoGUI.jar)
 
    npm run javac
 
-2) set up client Javascript file
+2. set up client Javascript file
  
    npm run bundle
 
-3) start web server
+3. start web server
 
    npm start
 
-4) start web browser 
+4. start web browser 
 
    https://localhost:3000/
    https://ipV4address:3000/
@@ -54,10 +61,10 @@ PC (Linux/Windows etc.) with Java VM (java command) -- audio Interface
 
    Add exception for the self-signed server certificate
 
-5) login with admin, admin (first time) 
+5. login with admin, admin (first time) 
    (or JSON Web Token)
 
-6) start application
+6. start application
 
    Select Input port and Output port
    Player control: bypass or process (the program starts on the server)
