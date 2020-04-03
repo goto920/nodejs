@@ -20,3 +20,5 @@ Note: Upon download on iOS 12 browser will open blob window with "unknown" and u
 Sound quality is not very good for big change in speed or pitch. 
 
 Download begins after playback because soundtouchJS does not work with OfflineAudioContext so far.
+
+![ScreenShot](https://goto920.github.io/demos/variableplayer/player-eng.png)
