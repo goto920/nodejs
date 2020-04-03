@@ -28,7 +28,7 @@ var clock
 // = undefined
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
-const homepage = 'https://goto920.github.io/presentationTimer.html'
+const homepage = 'https://goto920.github.io/demos/presentimer/'
 
 class App extends Component {
   constructor (props) {
