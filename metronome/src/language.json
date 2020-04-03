@@ -29,7 +29,7 @@
      "SongList": "SongList",
      "Current": "Current",
      "selectOp": "select op",
-     "url": "https://goto920.github.io/guide.html",
+     "url": "https://goto920.github.io/demos/metronome2/",
      "guide": "User guide and updates"
       },
   "ja": {
@@ -63,7 +63,7 @@
      "customTable": "カスタムループ表",
      "d_a": "消去/(最後に)追加",
      "rewind": "巻き戻し",
-     "url": "https://goto920.github.io/guide-jp.html",
+     "url": "https://goto920.github.io/demos/metronome2/index-jp.html",
      "guide": "ユーザガイドと更新"
       }
 }

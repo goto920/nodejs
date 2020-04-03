@@ -92,7 +92,7 @@ class App extends Component {
       drumsOn: false,
       drumPatternNo: this.params.default_drumPatternNo,
       voiceOn: false,
-      voice: 'male',
+      voice: 'female',
       swingVal: 1.5,
       evenVol: 1.0,
       increment: 0,
@@ -622,7 +622,7 @@ class App extends Component {
         </span>) : ''}
 
         <hr />
-      (Version: {version}) <a href={m.url} target='_blank'>{m.guide}</a><br />
+      (Version: {version}) <a href={m.url} target='_blank' rel='noopener noreferrer'>{m.guide}</a><br />
         <hr />
       </div>
     )
