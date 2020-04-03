@@ -28,4 +28,4 @@ Special module used: [waaclock](https://www.npmjs.com/package/waaclock)
 - Multiple set lists: with preset clicks/drum pattern or custom loop at specified bpm
 - Custom loop: with preset clicks/drum patterns 
 
-
+![ScreenShot](https://goto920.github.io/demos/variableplayer/player-eng.png)
