@@ -1,0 +1,68 @@
+0) edit README.md
+
+1) public/
+
+  favicon.ico  (replace)
+  index.html (<title>XXXXX</title>)
+  manifest.json (edit)
+++++++++
+  "short_name": "XXXXXXXXXXXXXXX",
+  "name": "XXXXXXXXXXXXXXXXX",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+++++++++
+  *.png (rm)
+  robots.txt (OK)
+
+2) src/ (main part)
+
+App.js (the program)
+  // import logo
+  // remove function App()
+
+App.css (edit)
+
+class App extends Component {
+  constructor (props){ }
+  componentDidMount ()
+  componentWillUnmount ()
+  render() {
+  }
+ and handlers and other functions
+}
+
+3) package.json
+
+My way
+{
+  "name": "variablespeedplayer",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "/demos/variableplayer/20200401",
+  "subversion": "-08",
+// date in homepage and subversion are used in App.js
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Program details
+
+import {Component} from 'react';
+import './App.cs';
+import packageJSON from '../package.json';
+import messages from './language.json'; // EN and JP messages
+// dependency (npm install)
+import * as toWav from 'audiobuffer-to-wav'; 
+import {saveAs} from 'file-saver';
+// fourier transform, stats
+
+// Global variables
+const window.AudioContext;
+const version, homepage
+var audioCtx, offlineCtx
+var iOS (true/false)
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
