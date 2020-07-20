@@ -7,8 +7,9 @@ import messages from './language.json'; // US and JA message
 import * as toWav from 'audiobuffer-to-wav';
 import {saveAs} from 'file-saver';
 // FFT
-import {RFFT} from 'fftw-js';
-import Windowing from 'fft-windowing';
+// import {RFFT} from 'fftw-js';
+//import Windowing from 'fft-windowing';
+import Effector from './effectorClass.js';
 
 // Global variables
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-11);
@@ -21,6 +22,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 var audioCtx = null;
 var offlineCtx = null;
 var gainNode = null;
+var effector = null;
 
 var iOS = false;
 if(  navigator.userAgent.match(/iPhone/i) 
@@ -38,7 +40,10 @@ class App extends Component {
     this.params = {
       inputAudio: null,
       filename: null,
+      currentSource: null,
       isPlaying: false,
+      effectNode: null,
+      fftShift: 512
     }
 
     this.state = {
@@ -54,6 +59,7 @@ class App extends Component {
     this.handleVolumeSlider = this.handleVolumeSlider.bind(this);
     this.handlePlay = this.handlePlay.bind(this);
     this.handleSave = this.handleSave.bind(this);
+    this.fakeDownload = this.fakeDownload.bind(this);
   }
 
   handleWindowClose(event) { 
@@ -63,6 +69,7 @@ class App extends Component {
   componentDidMount () { // after render()
     audioCtx = new window.AudioContext();
     gainNode = audioCtx.createGain();
+    effector = new Effector(audioCtx, this.fftShift);
     window.addEventListener('beforeClosing', this.handleWindowClose);
   }
  
@@ -93,7 +100,7 @@ class App extends Component {
           accept='audio/*' onChange={this.loadFile} /><br />
        </span>
        <hr />
-       Time: {this.state.playingAt} <br />
+       Time: {this.state.playingAt.toFixed(2)} <br />
         <span className='slider'> 
         <center>
         000 <input type='range' name='timeSlider' min='0' max={duration}
@@ -115,7 +122,8 @@ class App extends Component {
        <span>
        <button name='startPause' onClick={this.handlePlay} 
           style={startBStyle}>{this.state.startButtonStr}
-        </button>
+       </button> &nbsp;&nbsp;
+       <button name='rewind' onClick={this.handlePlay}>Rewind</button>
        </span>
        <hr />
         Version: {version}, &nbsp;
@@ -168,38 +176,146 @@ class App extends Component {
     let vol = parseInt(e.target.value);
     gainNode.gain.value = vol/100.0;
     this.setState({playVolume: vol});
+    return;
   }
 
   handleTimeSlider(e){
-    if (this.params.isPlaying) return;
+  //  if (this.params.isPlaying) return;
+
     if (e.target.name !== 'timeSlider') return;
 
     this.setState({playingAt: parseFloat(e.target.value)});
   }
 
   handlePlay(e){
+        let source = null;
+
+   if (e.target.name === 'startPause') {
+
+     if (this.state.startButtonStr === 'Play'){
+
+       if (this.params.isPlaying) return;
+           this.params.isPlaying = true;
 
 // unlock iOS
-    if(iOS) {
-      let buffer = audioCtx.createBuffer(1,1,44100); 
-      let source = audioCtx.createBufferSource();
-      source.buffer = buffer;
-      source.connect (audioCtx.destination);
-      source.start();
+       if(iOS) {
+         let buffer = audioCtx.createBuffer(1,1,44100); 
+         source = audioCtx.createBufferSource();
+         source.buffer = buffer;
+         source.connect (audioCtx.destination);
+         source.start();
+       } 
+// End unlock iOS
+
+// Playing
+       source = audioCtx.createBufferSource();
+       this.params.currentSource = source;
+       // console.log(this.params.inputAudio.duration, 'sec');
+       source.buffer = this.params.inputAudio;
+
+// Create effectNode
+       let effectNode;
+       let channels = this.params.inputAudio.numberOfChannels;
+       let bufferSize = this.params.fftShift; // 1024 window half step
+       if (audioCtx.createJavaScriptNode) {
+          effectNode 
+           = audioCtx.createJavaScriptNode(bufferSize,channels,channels);
+          console.log ('createJavaScriptNode');
+       } else if (audioCtx.createScriptProcessor) {
+         effectNode = audioCtx.createScriptProcessor(bufferSize, 
+          channels,channels);
+        } // end if audioCtx
+        this.params.effectNode = effectNode;
+
+// Connect
+        source.connect(effectNode)
+        effectNode.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        source.start(0,this.state.playingAt);
+
+
+        effectNode.onaudioprocess = function(e) {
+
+          let inputBuffer = e.inputBuffer;
+          let outputBuffer = e.outputBuffer;
+          effector.copy(inputBuffer, outputBuffer);
+
+/*
+          for (let channel = 0; channel < inputBuffer.numberOfChannels; 
+              channel++){
+            let inputData = inputBuffer.getChannelData(channel); 
+            let outputData = outputBuffer.getChannelData(channel); 
+
+            if (AudioBuffer.prototype.copyToChannel){
+               outputBuffer.copyToChannel(inputData, channel,0);
+            } else {
+              for (let sample = 0; sample < inputBuffer.length; sample++)
+                outputData[sample] = inputData[sample];
+            } // end if AudioBuffer.proto
+
+          } // end for channel
+*/
+        
+          this.setState({playingAt: this.state.playingAt 
+              + inputBuffer.length/inputBuffer.sampleRate});
+
+          return; 
+        }.bind(this) // end onaudioprocess function(e)
+
+        this.setState({startButtonStr: 'Pause'});
+        return;
+      } // end Play
+
+      if (this.state.startButtonStr === 'Pause'){
+
+        if (!this.params.isPlaying) return;
+
+        this.params.currentSource.disconnect();
+        this.params.effectNode.disconnect();
+        this.params.effectNode.onaudioprrocess = null;
+        gainNode.disconnect();
+        this.params.currentSource.stop();
+        this.setState({startButtonStr: 'Play'});
+        this.params.isPlaying = false;
+
+        return;
+      } // end Pause
+
+    } // end startPause
+
+    if (e.target.name === 'rewind') {
+      if (this.params.isPlaying) return;
+      this.setState({playingAt: 0});
+      return;
     }
-// End unlock
+
   } // end handlePlay()
 
   handleSave(e){
+/*
     if(iOS) {
       let buffer = audioCtx.createBuffer(1,1,44100); 
       let source = audioCtx.createBufferSource();
       source.buffer = buffer;
       source.connect (audioCtx.destination);
-      source.start();
     }
-  }
-  
-}
+*/
+
+  } // end handleSave
+
+  fakeDownload(audioBuffer){
+
+    const words = this.params.filename.split('.');
+    let outFileName = 
+         words[0]
+       + '&s' + parseInt(this.state.playSpeed)
+       + '&p' + parseInt(this.state.playPitch*100)
+       + '.wav';
+    let blob = new Blob([toWav(audioBuffer)], {type: 'audio/vnd.wav'});
+    saveAs(blob,outFileName);
+
+  } // end fakeDownload
+ 
+} // end class
 
 export default App;

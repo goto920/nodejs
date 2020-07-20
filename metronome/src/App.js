@@ -97,6 +97,7 @@ class App extends Component {
       evenVol: 1.0,
       increment: 0,
       perBars: 0,
+      masterVol: 75,
 
       showMore: false,
       showAdvanced: false,
@@ -130,6 +131,7 @@ class App extends Component {
     this.handleWindowClose = this.handleWindowClose.bind(this)
     this.saveSetLists = this.saveSetLists.bind(this)
     this.findNumByName = this.findNumByName.bind(this)
+    this.handleVolume = this.handleVolume.bind(this)
 
     this.tickEvents = []
     this.sound = {}
@@ -585,6 +587,14 @@ class App extends Component {
     <option value='32'>32</option> <option value='64'>64</option>
     <option value='128'>128</option> <option value='256'>256</option>
   </select> ({m.bars})</span><hr />
+        <span className='bpm-slider'>
+          Vol: {this.state.masterVol}<br />
+            0 <input type='range' name='volumeSlider'
+            min='0' max='150' value={this.state.masterVol} step='1'
+            onChange={this.handleVolume} /> 150
+        </span>
+        <hr />
+
         {m.moreFeatures}: <span className='loopButton'>
           <button name='showMore' onClick={handleMenu}>
             {showMore ? m.hide : m.show} {/* no {} for m.hide,show */}
@@ -1042,12 +1052,12 @@ class App extends Component {
     } // end random mute
 
     let source = []
-    let master = 1.0
+    let master = this.state.masterVol/100;
 
     if (triplet) {
-      if (count % 3 !== 2) master = evenVol
+      if (count % 3 !== 2) master = this.state.masterVol/100 * evenVol
     } else {
-      if (count % 2 === 0) master = evenVol
+      if (count % 2 === 0) master = this.state.masterVol/100 * evenVol
     }
 
     if (currentPattern.type === 'drumkit') { // last note is always voice
@@ -1075,7 +1085,7 @@ class App extends Component {
       source[lastIndex].connect(gainNode[lastIndex])
       gainNode[lastIndex].connect(context.destination)
       if (!muteStat){
-        gainNode[lastIndex].gain.value = 0.5
+        gainNode[lastIndex].gain.value = 0.5 * this.state.masterVol/100
         source[lastIndex].start(deadline)
       }
     }
@@ -1496,6 +1506,12 @@ class App extends Component {
 
     return -1
   }
+
+  handleVolume (e){
+    if (e.target.name !== 'volumeSlider') return;
+    this.setState({masterVol: parseInt(e.target.value)});
+  }
+
 } // end App
 
 export default App
