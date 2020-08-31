@@ -17,7 +17,7 @@
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
     "nodemon": "^2.0.4",
-    "webpack": "^4.43.0"
+    "webpack": "^4.44.1"
   },
   "dependencies": {
     "bcrypt": "^5.0.0",
@@ -27,6 +27,6 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "^3.4.1"
+    "react-scripts": "^3.4.3"
   }
 }
