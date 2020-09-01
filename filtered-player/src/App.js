@@ -20,7 +20,7 @@ var m = usText; // default
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
 var audioCtx = null;
-var offlineCtx = null;
+// var offlineCtx = null;
 var gainNode = null;
 var effector = null;
 
@@ -69,7 +69,7 @@ class App extends Component {
   componentDidMount () { // after render()
     audioCtx = new window.AudioContext();
     gainNode = audioCtx.createGain();
-    effector = new Effector(audioCtx, this.fftShift);
+    effector = new Effector(audioCtx, this.params.fftShift);
     window.addEventListener('beforeClosing', this.handleWindowClose);
   }
  
@@ -217,13 +217,15 @@ class App extends Component {
        let effectNode;
        let channels = this.params.inputAudio.numberOfChannels;
        let bufferSize = this.params.fftShift; // 1024 window half step
+
        if (audioCtx.createJavaScriptNode) {
           effectNode 
            = audioCtx.createJavaScriptNode(bufferSize,channels,channels);
-          console.log ('createJavaScriptNode');
+           console.log ('createJavaScriptNode');
        } else if (audioCtx.createScriptProcessor) {
          effectNode = audioCtx.createScriptProcessor(bufferSize, 
           channels,channels);
+          console.log ('createScriptProcessor');
         } // end if audioCtx
         this.params.effectNode = effectNode;
 
@@ -233,29 +235,14 @@ class App extends Component {
         gainNode.connect(audioCtx.destination);
         source.start(0,this.state.playingAt);
 
-
         effectNode.onaudioprocess = function(e) {
 
           let inputBuffer = e.inputBuffer;
           let outputBuffer = e.outputBuffer;
-          effector.copy(inputBuffer, outputBuffer);
 
-/*
-          for (let channel = 0; channel < inputBuffer.numberOfChannels; 
-              channel++){
-            let inputData = inputBuffer.getChannelData(channel); 
-            let outputData = outputBuffer.getChannelData(channel); 
+//          effector.copy(inputBuffer, outputBuffer);
+          effector.process(inputBuffer, outputBuffer);
 
-            if (AudioBuffer.prototype.copyToChannel){
-               outputBuffer.copyToChannel(inputData, channel,0);
-            } else {
-              for (let sample = 0; sample < inputBuffer.length; sample++)
-                outputData[sample] = inputData[sample];
-            } // end if AudioBuffer.proto
-
-          } // end for channel
-*/
-        
           this.setState({playingAt: this.state.playingAt 
               + inputBuffer.length/inputBuffer.sampleRate});
 

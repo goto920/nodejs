@@ -2,32 +2,25 @@ import {RFFT} from 'fftw-js';
 import Windowing from 'fft-windowing';
 
 class Effector {
-  constructor(audioCtx, shiftSize){
+  constructor(audioCtx,shiftSize){
     this.audioCtx = audioCtx;
-    this.fftr = new RFFT(2*shiftSize);
+    this.shiftSize = shiftSize;
+    this.rfft = new RFFT(2*shiftSize);
+
+    this.lastShift = [];
+      this.lastShift[0] = new Float32Array(shiftSize).fill(0);
+      this.lastShift[1] = new Float32Array(shiftSize).fill(0);
 
     this.fftBuffer = []; 
-    for (let channel = 0; channel < 2; channel++){
-      this.fftBuffer[channel] = [];
-      for (let i=0; i < 17; i++){
-        this.fftBuffer[channel][i] = {
-          fftCoef: new Float32Array(),
-          percCoef: new Float32Array(),
-          pan: new Float32Array(),
-          panAmp: new Float32Array()
-        }
-      } 
-    }
+    for (let i=0; i <= 17; i++){
+      this.fftBuffer[i] = {
+        fftCoefL: new Float32Array(shiftSize*2),
+        fftCoefR: new Float32Array(shiftSize*2)
+      }
+    } 
 
-    this.inputBuffer = [];
-      for (let channel = 0; channel < 2; channel++)
-         this.inputBuffer[channel] = new Float32Array();
-
-    this.outputBuffer = [];
-      for (let channel = 0; channel < 2; channel++)
-        this.outputBuffer[channel] = new Float32Array();
-
-    this.process = this.process.bind(this);
+    this.fftCalc = this.fftCalc.bind(this);
+    this.fftFilter = this.fftFilter.bind(this);
   }
 
   copy(inputBuffer, outputBuffer){
@@ -49,23 +42,76 @@ class Effector {
 
   process(inputBuffer, outputBuffer){
     let channels = inputBuffer.numberOfChannels;
+    if (channels !== 2) return;
+    // console.log('process');
 
-    for (let channel = 0; channel < inputBuffer.numberOfChannels;
-        channel++){
+    let fftWindowInput = [];
+       fftWindowInput[0] = new Float32Array(this.shiftSize*2);
+       fftWindowInput[1] = new Float32Array(this.shiftSize*2);
+
+    for (let channel = 0; channel < inputBuffer.numberOfChannels; channel++){
       let inputData = inputBuffer.getChannelData(channel);
-      let outputData = outputBuffer.getChannelData(channel);
-      this.pushData(inputData,channel);
-      outputData = this.popData(channel); 
+
+      if (inputBuffer.length < this.shiftSize){
+         let zeros = new Float32Array(this.shiftSize - inputBuffer.length).fill(0);
+         for (let sample = 0; sample < this.shiftSize; sample++) 
+            fftWindowInput[channel][sample] = inputData[sample];
+         for (let sample = this.shiftSize; sample < this.shiftSize*2; sample++)
+            fftWindowInput[channel][sample] = zeros[sample];
+      } else { 
+         for (let sample = 0; sample < this.shiftSize; sample++) 
+           fftWindowInput[channel][sample] = this.lastShift[channel];
+         for (let sample = this.shiftSize; sample < this.shiftSize*2; sample++)
+           fftWindowInput[channel][sample] = inputData[sample];
+      }
+
     }
 
+    let fftObj = this.fftCalc(fftWindowInput);
+    let fftCoef = this.fftFilter(fftObj);
+    let pcmData = []; 
+       pcmData[0] = this.rfft.inverse(fftCoef[0]);
+       pcmData[1] = this.rfft.inverse(fftCoef[1]);
+
+    for (let channel = 0; channel < inputBuffer.numberOfChannels; channel++){
+      let outputData = outputBuffer.getChannelData(channel);
+
+      for (let sample = 0; sample < this.shiftSize; sample++)
+         outputData[sample] 
+         = this.lastShift[channel][sample] + pcmData[channel][sample]; 
+
+      this.lastShift[channel] = fftWindowInput[channel];
+    }
+
+    // console.log('end');
+
   }
 
-  pushData(input, channel){
-    this.inputBuffer[channel].push(input);
+  fftCalc (fftWindowInput){
+    // console.log('fftCalc');
+
+    let fft = [];
+      fft[0] = this.rfft.forward(Windowing.hann(fftWindowInput[0]));
+      fft[1] = this.rfft.forward(Windowing.hann(fftWindowInput[1]));
+
+    let fftObj = {
+      fftL: fft[0],
+      fftR: fft[1],
+      pan: 0,
+      panAmp: 0,
+      percCoefL: 0,
+      percCoefR: 0,
+    }   
+
+    // console.log('fftCalc end');
+    return fftObj;
   }
 
-  popData(input, channel){
-
+  fftFilter (fftObj){
+    let retval = [];
+      retval[0] = fftObj.fftL;
+      retval[1] = fftObj.fftR;
+    return retval;
   }
 
 }
