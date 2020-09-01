@@ -43,8 +43,7 @@ class App extends Component {
       currentSource: null,
       isPlaying: false,
       effectNode: null,
-      fftShift: 512,
-      counter: 0
+      fftShift: 512
     }
 
     this.state = {
@@ -244,17 +243,8 @@ class App extends Component {
 //          effector.copy(inputBuffer, outputBuffer);
           effector.process(inputBuffer, outputBuffer);
 
-          if (this.params.counter % 10 === 0) {
-            this.setState(
-           {playingAt: (this.params.counter*inputBuffer.length)
-             /inputBuffer.sampleRate});
-          }
-          this.params.counter++;
-
-/*
-            this.setState({playingAt: this.state.playingAt 
-              + (this.params.counter*inputBuffer.length)/inputBuffer.sampleRate});
-*/
+          this.setState({playingAt: this.state.playingAt 
+              + inputBuffer.length/inputBuffer.sampleRate});
 
           return; 
         }.bind(this) // end onaudioprocess function(e)

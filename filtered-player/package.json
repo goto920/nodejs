@@ -10,7 +10,6 @@
     "@testing-library/user-event": "^12.0.11",
     "audiobuffer-to-wav": "^1.0.0",
     "fft-windowing": "^0.1.4",
-    "fftw-js": "^0.1.4",
     "file-saver": "^2.0.2",
     "kissfft-js": "^0.1.8",
     "react": "^16.13.1",

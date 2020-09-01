@@ -49,7 +49,6 @@ class Effector {
   process(inputBuffer, outputBuffer){
     let channels = inputBuffer.numberOfChannels;
     if (channels !== 2) return;
-    // console.log('process');
 
     let fftWindowInput = [];
        fftWindowInput[0] = new Float32Array(this.shiftSize*2);
@@ -60,15 +59,15 @@ class Effector {
 
       if (inputBuffer.length < this.shiftSize){
          let zeros = new Float32Array(this.shiftSize - inputBuffer.length).fill(0);
-         for (let sample = 0; sample < this.shiftSize; sample++) 
-            fftWindowInput[channel][sample] = inputData[sample];
-         for (let sample = this.shiftSize; sample < this.shiftSize*2; sample++)
-            fftWindowInput[channel][sample] = zeros[sample];
+         for (let sample = 0; sample < inputBuffer.length; sample++) 
+           fftWindowInput[channel][sample] = inputData[sample];
+         for (let sample = inputBuffer.length; sample < this.shiftSize*2; sample++)
+           fftWindowInput[channel][sample] = zeros[sample];
       } else { 
          for (let sample = 0; sample < this.shiftSize; sample++) 
-           fftWindowInput[channel][sample] = this.lastInput[channel];
-         for (let sample = this.shiftSize; sample < this.shiftSize*2; sample++)
-           fftWindowInput[channel][sample] = inputData[sample];
+           fftWindowInput[channel][sample] = this.lastInput[channel][sample];
+         for (let sample = 0; sample < this.shiftSize; sample++) 
+           fftWindowInput[channel][sample + this.shiftSize] = inputData[sample];
       }
 
       for (let sample = 0; sample < this.shiftSize; sample++) 
@@ -79,27 +78,25 @@ class Effector {
     let fftCoef = this.fftFilter(fftObj);
     let pcmData = []; 
        pcmData[0] = this.rfft.inverse(fftCoef[0]); // this.shiftSize*2  
-       pcmData[1] = this.rfft.inverse(fftCoef[1]);
+       pcmData[1] = this.rfft.inverse(fftCoef[1]); // this.shiftSize*2  
 
     for (let channel = 0; channel < inputBuffer.numberOfChannels; channel++){
       let outputData = outputBuffer.getChannelData(channel);
 
       for (let sample = 0; sample < this.shiftSize; sample++)
          outputData[sample] = this.lastOut[channel][sample] 
-           + pcmData[channel][sample];
+           + pcmData[channel][sample]/this.shiftSize;
 
       for (let sample = 0; sample < this.shiftSize; sample++)
-         this.lastOut[channel][sample] = pcmData[channel][sample + this.shiftSize];
+         this.lastOut[channel][sample] 
+           = pcmData[channel][sample + this.shiftSize]/this.shiftSize;
       // store latter half of fft inverse output
 
     }
 
-    // console.log('end');
-
   }
 
   fftCalc (fftWindowInput){
-    // console.log('fftCalc');
 
     let fft = [];
       fft[0] = this.rfft.forward(Windowing.hann(fftWindowInput[0]));
@@ -114,7 +111,6 @@ class Effector {
       percCoefR: 0,
     }   
 
-    // console.log('fftCalc end');
     return fftObj;
   }
 
