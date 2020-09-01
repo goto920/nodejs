@@ -72,17 +72,13 @@ FFT Window 1024, Shift window/2 = 512 samples
 add 512 zeros at the beginning and the end.
 Hann window
 
-Static variable
+Static variable -- class (this.variable)
 
-function foo() {
-
-    if( typeof foo.counter == 'undefined' ) {
+of  function foo() {
         foo.counter = 0;
-    }
-    foo.counter++;
-    document.write(foo.counter+"<br />");
 }
 
 audioContext.createScripttProcesssor --> AudioWorklet (No Safari support yet)
 https://www.g200kg.com/jp/docs/webaudio/scriptproc.html
 
+kissfft-js (fftw-js) -- inverse 1/N
