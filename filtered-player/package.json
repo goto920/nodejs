@@ -12,9 +12,10 @@
     "fft-windowing": "^0.1.4",
     "fftw-js": "^0.1.4",
     "file-saver": "^2.0.2",
+    "kissfft-js": "^0.1.8",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1"
+    "react-scripts": "^3.4.3"
   },
   "scripts": {
     "start": "react-scripts start",
