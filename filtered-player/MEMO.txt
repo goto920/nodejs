@@ -82,3 +82,10 @@ audioContext.createScripttProcesssor --> AudioWorklet (No Safari support yet)
 https://www.g200kg.com/jp/docs/webaudio/scriptproc.html
 
 kissfft-js (fftw-js) -- inverse 1/N
+
+JavaScript FIFO buffer
+   fifo.js (fifo-buffer) -- too simple
+
+array?
+
+

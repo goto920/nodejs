@@ -3,11 +3,14 @@ import {FFTR} from 'kissfft-js';
 import Windowing from 'fft-windowing';
 
 class Effector {
+
   constructor(audioCtx,shiftSize){
     this.audioCtx = audioCtx;
     this.shiftSize = shiftSize;
 //    this.rfft = new RFFT(2*shiftSize); // fftw-js
     this.rfft = new FFTR(2*shiftSize); // kissfft-js
+
+    this.fftCoefBuffer = []; // up to 17
 
     this.lastInput = [];
       this.lastInput[0] = new Float32Array(shiftSize).fill(0);
@@ -17,16 +20,9 @@ class Effector {
       this.lastOut[0] = new Float32Array(shiftSize).fill(0);
       this.lastOut[1] = new Float32Array(shiftSize).fill(0);
 
-    this.fftBuffer = []; 
-    for (let i=0; i <= 17; i++){
-      this.fftBuffer[i] = {
-        fftCoefL: new Float32Array(shiftSize*2),
-        fftCoefR: new Float32Array(shiftSize*2)
-      }
-    } 
-
     this.fftCalc = this.fftCalc.bind(this); // forward FFT 
     this.calcPan = this.calcPan.bind(this); // Pan calculation
+    this.calcPerc = this.calcPerc.bind(this);
     this.fftFilter = this.fftFilter.bind(this);
   }
 
@@ -102,23 +98,40 @@ class Effector {
     let fftCoef = [];
       fftCoef[0] = this.rfft.forward(Windowing.hann(fftWindowInput[0]));
       fftCoef[1] = this.rfft.forward(Windowing.hann(fftWindowInput[1]));
+    // 0: Left, 1: Right
+
+    let power = [];
+      power[0] = new Float32Array(this.siftSize+1)
+      power[1] = new Float32Array(this.siftSize+1)
+    
+    for (let freqBin = 0; freqBin <= this.shiftSize; freqBin++){
+      power[0] = fftCoef[0][2*freqBin]* fftCoef[0][2*freqBin]
+               + fftCoef[0][2*freqBin+1]* fftCoef[0][2*freqBin+1]
+      power[1] = fftCoef[1][2*freqBin]* fftCoef[1][2*freqBin]
+               + fftCoef[1][2*freqBin+1]* fftCoef[1][2*freqBin+1]
+    }
+
+    this.fftCoefBuffer.push({ fftCoef: fftCoef, power: power});
 
     let retval = this.calcPan(fftCoef);
+    let retval2 = this.calcPerc(this.fftCoefBuffer); 
 
     let fftObj = {
       fftL: fftCoef[0],
       fftR: fftCoef[1],
       pan: retval.pan,
       panAmp: retval.panAmp,
-      percCoefL: 0,
-      percCoefR: 0,
+      percL: retval2.percL,
+      percR: retval2.percR
     }   
 
     return fftObj;
   }
 
   calcPan (fftCoef){
-    let numCoef = fftCoef.length/2; // length = N + 2 for kiss fft
+
+    const fft = fftCoef.fft;
+    let numCoef = fft.length/2; // length = N + 2 for kiss fft
     let pan = new Float32Array(numCoef);
     let panAmp = new Float32Array(numCoef);
 /*
@@ -129,28 +142,24 @@ class Effector {
 
     for(let bin = 0; bin < numCoef; bin++){
       let base = 2*bin; 
-      let innerProd = fftCoef[0][base]*fftCoef[1][base]
-                      + fftCoef[0][base+1]*fftCoef[1][base+1]
-      let crossProd = fftCoef[0][base]*fftCoef[1][base+1]
-                      + fftCoef[0][base+1]*fftCoef[1][base]
+
+      let innerProd = fft[0][base]*fft[1][base]
+                      + fft[0][base+1]*fft[1][base+1]
+
+      let crossProd = fft[0][base]*fft[1][base+1]
+                      + fft[0][base+1]*fft[1][base]
+
       let abs = Math.sqrt(
-       Math.pow(fftCoef[0][base] + fftCoef[1][base],2)
-       + Math.pow(fftCoef[0][base+1] + fftCoef[1][base+1],2)
+       Math.pow(fft[0][base] + fft[1][base],2)
+       + Math.pow(fft[0][base+1] + fft[1][base+1],2)
       );
 
-      let absL = Math.sqrt(
-       fftCoef[0][base]*fftCoef[0][base] 
-       + fftCoef[0][base+1]*fftCoef[0][base+1]
-      );
-
-      let absR = Math.sqrt(
-        fftCoef[1][base]*fftCoef[1][base] 
-       + fftCoef[1][base+1]*fftCoef[1][base+1]
-      );
+      let absL = Math.sqrt(fftCoef.power[0][bin]);
+      let absR = Math.sqrt(fftCoef.power[1][bin]);
 
       let absLR = Math.sqrt(
-        Math.pow(fftCoef[0][base] - fftCoef[1][base],2)
-        + Math.pow(fftCoef[0][base+1] - fftCoef[1][base+1],2)
+        Math.pow(fft[0][base] - fft[1][base],2)
+        + Math.pow(fft[0][base+1] - fft[1][base+1],2)
       );
 
       let frac = 0; 
@@ -182,12 +191,57 @@ class Effector {
 
     } // end for bin
 
-    let retval = {
-      pan: pan,
-      panAmp: panAmp
+    return { pan: pan, panAmp: panAmp }
+  }
+
+
+  calcPerc(fftCoefBuffer){
+
+    const median = arr => {
+      const mid = Math.floor(arr.length / 2),
+      nums = [...arr].sort((a, b) => a - b);
+      return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+    };
+
+    let percL = new Float32Array(this.shiftSize+1).fill(0); // +1 for DC
+    let percR = new Float32Array(this.shiftSize+1).fill(0); 
+      // also used as power
+
+    let index=0;
+    let buflen = fftCoefBuffer.length;
+
+    if (buflen < 9) index = buflen - 1;
+    else if (buflen < 17) index = buflen - 9;
+    else index = 8;
+
+    for (let freqBin = 0; freqBin <= this.shiftSize; freqBin++){
+      let from = Math.max(0, index - 9);
+      let to =  Math.min(index + 9, this.shuftSize + 1); // to (not incl.) 
+      let pMedianL = median(fftCoefBuffer.power[0].slice(from, to));
+      let pMedianR = median(fftCoefBuffer.power[1].slice(from, to));
+
+      let powerArrayL = [];
+      let powerArrayR = [];
+
+      for (let timeBin = 0; timeBin < buflen; timeBin++){ // buflen (max 17)
+        powerArrayL.push(fftCoefBuffer.power[0][freqBin]);
+        powerArrayR.length = 0;
+        powerArrayR.push(fftCoefBuffer.power[0][freqBin]);
+      }
+
+      let hMedianL = median(powerArrayL);
+      let hMedianR = median(powerArrayR);
+
+      percL[freqBin] = (pMedianL*pMedianL)/
+         (pMedianL*pMedianL + hMedianL*hMedianL);
+      percR[freqBin] = (pMedianR*pMedianR)/
+         (pMedianR*pMedianR + hMedianR*hMedianR);
+
     }
 
-    return retval;
+    if (buflen >= 17) fftCoefBuffer.splice(0,1);
+
+    return {percL: percL, percR: percR};
   }
 
   fftFilter (fftObj){
