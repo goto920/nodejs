@@ -25,7 +25,8 @@ class Effector {
       }
     } 
 
-    this.fftCalc = this.fftCalc.bind(this);
+    this.fftCalc = this.fftCalc.bind(this); // forward FFT 
+    this.calcPan = this.calcPan.bind(this); // Pan calculation
     this.fftFilter = this.fftFilter.bind(this);
   }
 
@@ -98,20 +99,95 @@ class Effector {
 
   fftCalc (fftWindowInput){
 
-    let fft = [];
-      fft[0] = this.rfft.forward(Windowing.hann(fftWindowInput[0]));
-      fft[1] = this.rfft.forward(Windowing.hann(fftWindowInput[1]));
+    let fftCoef = [];
+      fftCoef[0] = this.rfft.forward(Windowing.hann(fftWindowInput[0]));
+      fftCoef[1] = this.rfft.forward(Windowing.hann(fftWindowInput[1]));
+
+    let retval = this.calcPan(fftCoef);
 
     let fftObj = {
-      fftL: fft[0],
-      fftR: fft[1],
-      pan: 0,
-      panAmp: 0,
+      fftL: fftCoef[0],
+      fftR: fftCoef[1],
+      pan: retval.pan,
+      panAmp: retval.panAmp,
       percCoefL: 0,
       percCoefR: 0,
     }   
 
     return fftObj;
+  }
+
+  calcPan (fftCoef){
+    let numCoef = fftCoef.length/2; // length = N + 2 for kiss fft
+    let pan = new Float32Array(numCoef);
+    let panAmp = new Float32Array(numCoef);
+/*
+ Note: frequency-domain data is stored from dc up to 2pi. 
+ so cx_out[0] is the dc bin of the FFT and cx_out[nfft/2] is 
+ the Nyquist bin (if exists)
+*/
+
+    for(let bin = 0; bin < numCoef; bin++){
+      let base = 2*bin; 
+      let innerProd = fftCoef[0][base]*fftCoef[1][base]
+                      + fftCoef[0][base+1]*fftCoef[1][base+1]
+      let crossProd = fftCoef[0][base]*fftCoef[1][base+1]
+                      + fftCoef[0][base+1]*fftCoef[1][base]
+      let abs = Math.sqrt(
+       Math.pow(fftCoef[0][base] + fftCoef[1][base],2)
+       + Math.pow(fftCoef[0][base+1] + fftCoef[1][base+1],2)
+      );
+
+      let absL = Math.sqrt(
+       fftCoef[0][base]*fftCoef[0][base] 
+       + fftCoef[0][base+1]*fftCoef[0][base+1]
+      );
+
+      let absR = Math.sqrt(
+        fftCoef[1][base]*fftCoef[1][base] 
+       + fftCoef[1][base+1]*fftCoef[1][base+1]
+      );
+
+      let absLR = Math.sqrt(
+        Math.pow(fftCoef[0][base] - fftCoef[1][base],2)
+        + Math.pow(fftCoef[0][base+1] - fftCoef[1][base+1],2)
+      );
+
+      let frac = 0; 
+      if (absL < absR){
+        if (innerProd < 0) {
+          frac = 0;
+          panAmp[bin] = (absLR - absL)/abs;
+        } else if (innerProd <= absR*absR) {
+          frac = innerProd/(absR*absR); 
+          panAmp[bin] = Math.max (absL, absLR) - Math.abs(crossProd)/absR; 
+        } else {
+          frac = 1;
+          panAmp[bin] = absL - absLR;
+        }
+        pan[bin] = (1-frac)/(1+frac);
+      } else { // absL >= absR
+        if (innerProd < 0) {
+          frac = 0;
+          panAmp[bin] = (absLR - absR)/abs;
+        } else if (innerProd <= absL*absL) {
+          frac = innerProd/(absL*absL); 
+          panAmp[bin] = Math.max (absR, absLR) - Math.abs(crossProd)/absL; 
+        } else {
+          frac = 1;
+          panAmp[bin] = absR - absLR;
+        }
+        pan[bin] = (frac-1)/(1+frac);
+      }
+
+    } // end for bin
+
+    let retval = {
+      pan: pan,
+      panAmp: panAmp
+    }
+
+    return retval;
   }
 
   fftFilter (fftObj){
