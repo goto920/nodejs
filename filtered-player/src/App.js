@@ -46,6 +46,8 @@ class App extends Component {
       fftShift: 512
     }
 
+    this.counter = 0;
+
     this.state = {
       ja: false,
       playingAt: 0, 
@@ -95,6 +97,7 @@ class App extends Component {
        {this.state.ja ? 'En(US)' : '日本語'}</button> 
        </span>
        <hr />
+       Select stereo audio file<br/>
        <span className='selectFile'>
        <input type='file' name='loadFile' 
           accept='audio/*' onChange={this.loadFile} /><br />
@@ -240,11 +243,14 @@ class App extends Component {
           let inputBuffer = e.inputBuffer;
           let outputBuffer = e.outputBuffer;
 
-//          effector.copy(inputBuffer, outputBuffer);
+//          effector.copy(inputBuffer, outputBuffer); // for test
           effector.process(inputBuffer, outputBuffer);
 
-          this.setState({playingAt: this.state.playingAt 
-              + inputBuffer.length/inputBuffer.sampleRate});
+          this.counter++;
+          let update = 20;
+          if (this.counter % update === 0) 
+             this.setState({playingAt: this.state.playingAt 
+             + (update*inputBuffer.length)/inputBuffer.sampleRate});
 
           return; 
         }.bind(this) // end onaudioprocess function(e)

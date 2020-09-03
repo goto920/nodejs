@@ -8,26 +8,27 @@ class Effector {
     this.audioCtx = audioCtx;
     this.shiftSize = shiftSize;
 
-//    this.rfft = new RFFT(2*shiftSize); // fftw-js
-    this.rfft = new FFTR(2*shiftSize); // kissfft-js
+//    this.rfft = new RFFT(2*this.shiftSize); // fftw-js
+    this.rfft = new FFTR(2*this.shiftSize); // kissfft-js
 
     this.fftCoefBuffer = []; // up to 17
 
     this.lastInput = [];
-      this.lastInput[0] = new Float32Array(shiftSize).fill(0);
-      this.lastInput[1] = new Float32Array(shiftSize).fill(0);
+    this.lastInput[0] = new Float32Array(shiftSize).fill(0);
+    this.lastInput[1] = new Float32Array(shiftSize).fill(0);
 
     this.lastOut = [];
-      this.lastOut[0] = new Float32Array(shiftSize).fill(0);
-      this.lastOut[1] = new Float32Array(shiftSize).fill(0);
+    this.lastOut[0] = new Float32Array(shiftSize).fill(0);
+    this.lastOut[1] = new Float32Array(shiftSize).fill(0);
 
-    this.fftCalc = this.fftCalc.bind(this); // forward FFT 
+    this.calcFFT = this.calcFFT.bind(this); // forward FFT 
+    this.justFFT = this.justFFT.bind(this); // forward FFT 
     this.calcPan = this.calcPan.bind(this); // Pan calculation
     this.calcPerc = this.calcPerc.bind(this);
     this.fftFilter = this.fftFilter.bind(this);
   }
 
-  copy(inputBuffer, outputBuffer){
+  copy(inputBuffer, outputBuffer){ // for test
 
     for (let channel = 0; channel < inputBuffer.numberOfChannels;
            channel++){
@@ -45,65 +46,81 @@ class Effector {
   }
 
   process(inputBuffer, outputBuffer){
-    let channels = inputBuffer.numberOfChannels;
-    if (channels !== 2) return;
 
+    if (inputBuffer.numberOfChannels !== 2) return;
+
+// prepare input
+// FFT window = 2*this.shiftSize window = 2*this.shiftSize
+// channel: 0(left), 1(right)
     let fftWindowInput = [];
        fftWindowInput[0] = new Float32Array(this.shiftSize*2);
        fftWindowInput[1] = new Float32Array(this.shiftSize*2);
 
-    for (let channel = 0; channel < inputBuffer.numberOfChannels; channel++){
+    for (let channel = 0; channel <= 1 ; channel++){
+
       let inputData = inputBuffer.getChannelData(channel);
 
-      if (inputBuffer.length < this.shiftSize){
-         let zeros = new Float32Array(this.shiftSize - inputBuffer.length).fill(0);
-         for (let sample = 0; sample < inputBuffer.length; sample++) 
-           fftWindowInput[channel][sample] = inputData[sample];
-         for (let sample = inputBuffer.length; sample < this.shiftSize*2; sample++)
-           fftWindowInput[channel][sample] = zeros[sample];
-      } else { 
-         for (let sample = 0; sample < this.shiftSize; sample++) 
-           fftWindowInput[channel][sample] = this.lastInput[channel][sample];
-         for (let sample = 0; sample < this.shiftSize; sample++) 
-           fftWindowInput[channel][sample + this.shiftSize] = inputData[sample];
+      for (let sample = 0; sample < 2*this.shiftSize; sample++){ 
+        if (sample < this.shiftSize) 
+          fftWindowInput[channel][sample] = this.lastInput[channel][sample];
+        else if (sample < this.shiftSize + inputData.length) 
+          fftWindowInput[channel][sample] = inputData[sample - this.shiftSize];
+        else fftWindowInput[channel][sample] = 0;
       }
 
       for (let sample = 0; sample < this.shiftSize; sample++) 
-        this.lastInput[channel][sample] = inputData[sample]; 
-    }
+        this.lastInput[channel][sample] 
+          = fftWindowInput[channel][this.shiftSize + sample];
 
-    let fftObj = this.fftCalc(fftWindowInput);
+    } // end for channel
+
+    let fftObj = this.calcFFT(fftWindowInput);
     let fftCoef = this.fftFilter(fftObj);
-    let pcmData = []; 
-       pcmData[0] = this.rfft.inverse(fftCoef[0]); // this.shiftSize*2  
-       pcmData[1] = this.rfft.inverse(fftCoef[1]); // this.shiftSize*2  
+//    let fftCoef = this.justFFT(fftWindowInput); // test
 
-    for (let channel = 0; channel < inputBuffer.numberOfChannels; channel++){
+    let pcmData = []; // this.shiftSize*2  
+       pcmData[0] = this.rfft.inverse(fftCoef[0]).slice(); 
+       pcmData[1] = this.rfft.inverse(fftCoef[1]).slice();
+
+    for (let channel = 0; channel <= 1; channel++){
       let outputData = outputBuffer.getChannelData(channel);
 
       for (let sample = 0; sample < this.shiftSize; sample++)
          outputData[sample] = this.lastOut[channel][sample] 
-           + pcmData[channel][sample]/this.shiftSize;
+           + pcmData[channel][sample]/(2*this.shiftSize);
 
       for (let sample = 0; sample < this.shiftSize; sample++)
          this.lastOut[channel][sample] 
-           = pcmData[channel][sample + this.shiftSize]/this.shiftSize;
+           = pcmData[channel][this.shiftSize + sample]/(2*this.shiftSize);
       // store latter half of fft inverse output
 
     }
 
+    return;
   }
 
-  fftCalc (fftWindowInput){
+  justFFT (fftWindowInput){
+
+     // console.log(fftWindowInput[0]);
 
     let fftCoef = [];
-      fftCoef[0] = this.rfft.forward(Windowing.hann(fftWindowInput[0]));
-      fftCoef[1] = this.rfft.forward(Windowing.hann(fftWindowInput[1]));
+    fftCoef[0] = this.rfft.forward(Windowing.hann(fftWindowInput[0])).slice();
+    fftCoef[1] = this.rfft.forward(Windowing.hann(fftWindowInput[1])).slice();
+
+    return fftCoef;
+  }
+
+  calcFFT (fftWindowInput){
+
+    let fftCoef = [];
+    fftCoef[0] = this.rfft.forward(Windowing.hann(fftWindowInput[0])).slice();
+    fftCoef[1] = this.rfft.forward(Windowing.hann(fftWindowInput[1])).slice();
     // 0: Left, 1: Right
 
     let power = [];
       power[0] = new Float32Array(this.shiftSize+1)
       power[1] = new Float32Array(this.shiftSize+1)
+    // 0: Left, 1: Right
     
     for (let freqBin = 0; freqBin <= this.shiftSize; freqBin++){
       power[0][freqBin] = fftCoef[0][2*freqBin]* fftCoef[0][2*freqBin]
@@ -115,19 +132,16 @@ class Effector {
     this.fftCoefBuffer.push ({fftCoef: fftCoef, power: power});
 
     let retval = this.calcPan(fftCoef, power);
-
     let retval2 = this.calcPerc(this.fftCoefBuffer); 
 
-    let fftObj = {
+    return {
       fftL: fftCoef[0],
       fftR: fftCoef[1],
-      pan: retval.pan,
+      pan:  retval.pan,
       panAmp: retval.panAmp,
       percL: retval2.percL,
       percR: retval2.percR
-    }   
-
-    return fftObj;
+    };   
   }
 
   calcPan (fftCoef, power){
@@ -248,9 +262,12 @@ class Effector {
   }
 
   fftFilter (fftObj){
+  //   let zero = new Float32Array(fftObj.fftL.length).fill(0);
+
     let retval = [];
       retval[0] = fftObj.fftL;
       retval[1] = fftObj.fftR;
+
     return retval;
   }
 
