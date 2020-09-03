@@ -7,11 +7,12 @@ class Effector {
   constructor(audioCtx,shiftSize){
     this.audioCtx = audioCtx;
     this.shiftSize = shiftSize;
+    this.sampleRate = 44100; // default
 
 //    this.rfft = new RFFT(2*this.shiftSize); // fftw-js
     this.rfft = new FFTR(2*this.shiftSize); // kissfft-js
 
-    this.fftCoefBuffer = []; // up to 17
+    this.fftObjBuffer = []; // up to 17
 
     this.lastInput = [];
     this.lastInput[0] = new Float32Array(shiftSize).fill(0);
@@ -21,12 +22,40 @@ class Effector {
     this.lastOut[0] = new Float32Array(shiftSize).fill(0);
     this.lastOut[1] = new Float32Array(shiftSize).fill(0);
 
+    this.filterChain = []; 
+       // fromPan, fromFreq, toPan, toFreq, action 
+       // ('T': through, 'M': mute, 'P': percussive, 'H': harmonic)
+
     this.calcFFT = this.calcFFT.bind(this); // forward FFT 
     this.justFFT = this.justFFT.bind(this); // forward FFT 
     this.calcPan = this.calcPan.bind(this); // Pan calculation
     this.calcPerc = this.calcPerc.bind(this);
     this.fftFilter = this.fftFilter.bind(this);
+
+    this.setSampleRate = this.setSampleRate.bind(this);
+    this.addFilter = this.addFilter.bind(this);
+    this.clearAllFilter = this.clearAllFilter.bind(this);
+
   }
+
+  setSampleRate(rate){ this.sampleRate = rate; }
+
+  addFilter(fromPan, fromFreq, toPan, toFreq, action){ 
+
+    let fromFreqIndex = Math.min(this.shiftSize, 
+            Math.round(this.shiftSize*(2*fromFreq/this.sampleRate)));
+    let toFreqIndex = Math.min(this.shiftSize, 
+            Math.round(this.shiftSize*(2*toFreq/this.sampleRate)));
+
+    this.filterChain.push({
+      fromPan: fromPan, fromFreqIndex: fromFreqIndex,
+      toPan: toPan, toFreqIndex: toFreqIndex,
+      action: action
+    });
+
+  }
+
+  clearAllFilter(){ this.filterChain.length = 0; }
 
   copy(inputBuffer, outputBuffer){ // for test
 
@@ -75,14 +104,29 @@ class Effector {
     } // end for channel
 
     let fftObj = this.calcFFT(fftWindowInput);
-    let fftCoef = this.fftFilter(fftObj);
+    // fftObj is null until the buffer has 17 fftObj's
+
+// decode FFT
+    let pcmData = []; // this.shiftSize*2  
+
 //    let fftCoef = this.justFFT(fftWindowInput); // test
 
-    let pcmData = []; // this.shiftSize*2  
+    if (fftObj != null) {
+      let fftCoef = this.fftFilter(fftObj);
+
        pcmData[0] = this.rfft.inverse(fftCoef[0]).slice(); 
        pcmData[1] = this.rfft.inverse(fftCoef[1]).slice();
 
-    for (let channel = 0; channel <= 1; channel++){
+       console.log(pcmData[0]);
+
+    } else {
+       // console.log ('fftObj is null');
+       pcmData[0] = new Float32Array(this.shiftSize*2 + 2).fill(0);
+       pcmData[1] = new Float32Array(this.shiftSize*2 + 2).fill(0);
+    }
+
+// Add two outputs in overlapped hann window 
+    for(let channel = 0; channel <= 1; channel++){
       let outputData = outputBuffer.getChannelData(channel);
 
       for (let sample = 0; sample < this.shiftSize; sample++)
@@ -129,49 +173,57 @@ class Effector {
                + fftCoef[1][2*freqBin+1]* fftCoef[1][2*freqBin+1]
     }
 
-    this.fftCoefBuffer.push ({fftCoef: fftCoef, power: power});
-
-    let retval = this.calcPan(fftCoef, power);
-    let retval2 = this.calcPerc(this.fftCoefBuffer); 
-
-    return {
-      fftL: fftCoef[0],
-      fftR: fftCoef[1],
-      pan:  retval.pan,
-      panAmp: retval.panAmp,
-      percL: retval2.percL,
-      percR: retval2.percR
+    let fftObj = { 
+      fftCoef: fftCoef,
+      pan:  [],
+      panAmp: [],
+      power: power,
+      percL: [],
+      percR: []
     };   
-  }
 
-  calcPan (fftCoef, power){
+    this.calcPan(fftObj);
 
-    const fft = fftCoef;
-    let numCoef = fft.length/2; // length = N + 2 for kiss fft
+    this.fftObjBuffer.push(fftObj);
+
+    return this.calcPerc(this.fftObjBuffer); 
+
+  } // end calcFFT
+
+  calcPan (fftObj) {
+
+    const fft = fftObj.fftCoef;
+    let numCoef = fft[0].length/2;
     let pan = new Float32Array(numCoef);
     let panAmp = new Float32Array(numCoef);
+
 /*
   Note: frequency-domain data is stored from dc up to 2pi. 
   so cx_out[0] is the dc bin of the FFT and cx_out[nfft/2] is 
   the Nyquist bin (if exists)
 */
 
+//    console.log('numCoef', numCoef);
+
     for(let freqBin = 0; freqBin < numCoef; freqBin++){
+
       let base = 2*freqBin; 
 
       let innerProd = fft[0][base]*fft[1][base]
                       + fft[0][base+1]*fft[1][base+1]
 
-      let crossProd = fft[0][base]*fft[1][base+1]
-                      + fft[0][base+1]*fft[1][base]
+      let crossProd = fft[0][base]*fft[1][base+1] // Don't forget minus
+                      - fft[0][base+1]*fft[1][base]
 
       let abs = Math.sqrt(
-       Math.pow(fft[0][base] + fft[1][base],2)
+         Math.pow(fft[0][base] + fft[1][base],2)
        + Math.pow(fft[0][base+1] + fft[1][base+1],2)
       );
 
-      let absL = Math.sqrt(power[0][freqBin]);
-      let absR = Math.sqrt(power[1][freqBin]);
+      let absL = Math.sqrt( 
+          Math.pow(fft[0][base],2) + Math.pow(fft[0][base+1],2));
+      let absR = Math.sqrt(
+          Math.pow(fft[1][base],2) + Math.pow(fft[1][base+1],2));
 
       let absLR = Math.sqrt(
         Math.pow(fft[0][base] - fft[1][base],2)
@@ -185,33 +237,42 @@ class Effector {
           panAmp[freqBin] = (absLR - absL)/abs;
         } else if (innerProd <= absR*absR) {
           frac = innerProd/(absR*absR); 
-          panAmp[freqBin] = Math.max (absL, absLR) - Math.abs(crossProd)/absR; 
+          panAmp[freqBin] = Math.max(absL,absLR) - Math.abs(crossProd)/absR; 
         } else {
           frac = 1;
           panAmp[freqBin] = absL - absLR;
         }
         pan[freqBin] = (1-frac)/(1+frac);
+        // console.log('bin, fracA', freqBin, frac);
+
       } else { // absL >= absR
         if (innerProd < 0) {
           frac = 0;
           panAmp[freqBin] = (absLR - absR)/abs;
         } else if (innerProd <= absL*absL) {
           frac = innerProd/(absL*absL); 
-          panAmp[freqBin] = Math.max (absR, absLR) - Math.abs(crossProd)/absL; 
+          panAmp[freqBin] = Math.max(absR,absLR) - Math.abs(crossProd)/absL; 
         } else {
           frac = 1;
           panAmp[freqBin] = absR - absLR;
         }
         pan[freqBin] = (frac-1)/(1+frac);
       }
+    // console.log('bin, fracB', freqBin, frac);
+
+       if (isNaN(pan[freqBin])) pan[freqBin] = 0;
+       if (isNaN(panAmp[freqBin])) panAmp[freqBin] = 0;
 
     } // end for freqBin
 
-    return { pan: pan, panAmp: panAmp }
+    fftObj.pan = pan;
+    fftObj.panAmp = panAmp;
+
+    return;
   }
 
 
-  calcPerc(fftCoefBuffer){
+  calcPerc(fftObjBuffer){
 
     const median = arr => {
       const mid = Math.floor(arr.length / 2),
@@ -219,21 +280,22 @@ class Effector {
       return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
     };
 
-    let percL = new Float32Array(this.shiftSize+1).fill(0); // +1 for DC
-    let percR = new Float32Array(this.shiftSize+1).fill(0); 
+    let buflen = fftObjBuffer.length;
+    console.log ('buflen', buflen);
+
+    if (buflen < 17) return null; // not enough dat
+
+    let percL = new Float32Array(this.shiftSize+1).fill(0.5); // +1 for DC
+    let percR = new Float32Array(this.shiftSize+1).fill(0.5); 
       // also used as power
 
-    let index=0;
-    let buflen = fftCoefBuffer.length;
-
-    if (buflen < 9) index = buflen - 1;
-    else if (buflen < 17) index = buflen - 9;
-    else index = 8;
+    const index = 8;
+    const power = fftObjBuffer[index].power;
 
     for (let freqBin = 0; freqBin <= this.shiftSize; freqBin++){
       let from = Math.max(0, freqBin - 9);
       let to =  Math.min(freqBin + 9, this.shiftSize + 1); // to (not incl.) 
-      let power = fftCoefBuffer[index].power;
+      let power = fftObjBuffer[index].power;
       let pMedianL = median(power[0].slice(from,to));
       let pMedianR = median(power[1].slice(from,to));
 
@@ -241,9 +303,9 @@ class Effector {
       let powerArrayR = [];
 
       for (let time = 0; time < buflen; time++){ // buflen (max 17)
-        powerArrayL.push(fftCoefBuffer[time].power[0][freqBin]);
+        powerArrayL.push(fftObjBuffer[time].power[0][freqBin]);
         powerArrayR.length = 0;
-        powerArrayR.push(fftCoefBuffer[time].power[1][freqBin]);
+        powerArrayR.push(fftObjBuffer[time].power[1][freqBin]);
       }
 
       let hMedianL = median(powerArrayL);
@@ -251,24 +313,74 @@ class Effector {
 
       percL[freqBin] = (pMedianL*pMedianL)/
          (pMedianL*pMedianL + hMedianL*hMedianL);
+      if (isNaN(percL[freqBin])) percL[freqBin] = 0.5;
       percR[freqBin] = (pMedianR*pMedianR)/
          (pMedianR*pMedianR + hMedianR*hMedianR);
+      if (isNaN(percR[freqBin])) percR[freqBin] = 0.5;
 
     }
 
-    if (buflen >= 17) fftCoefBuffer.splice(0,1);
+    fftObjBuffer[index].percL = percL;
+    fftObjBuffer[index].percR = percR;
 
-    return {percL: percL, percR: percR};
+    let retval = fftObjBuffer[index];
+
+    if (buflen >= 17) fftObjBuffer.splice(0,1);
+
+    return retval;
   }
 
   fftFilter (fftObj){
-  //   let zero = new Float32Array(fftObj.fftL.length).fill(0);
 
-    let retval = [];
-      retval[0] = fftObj.fftL;
-      retval[1] = fftObj.fftR;
+    const fftL = fftObj.fftCoef[0];
+    const fftR = fftObj.fftCoef[1];
+    const percL = fftObj.percL;
+    const percR = fftObj.percR;
+    let outL = fftL.slice();
+    let outR = fftR.slice();
 
-    return retval;
+    for (let i = 0; i < this.filterChain.length; i++){
+      let filter = this.filterChain[i];
+      let action = filter.action;
+
+      for (let f = filter.fromFreqIndex; f <= filter.toFreqIndex; f++){
+
+        if (fftObj.pan[f] < filter.fromPan 
+          || fftObj.pan[f] > filter.toPan) continue;
+
+        switch (action) {
+          case 'T': // original signal
+            outL[2*f] = fftL[2*f]; outL[2*f+1] = fftL[2*f + 1];
+            outR[2*f] = fftR[2*f]; outR[2*f+1] = fftR[2*f + 1];
+          break;
+
+          case 'M': // mute
+            outL[2*f] = outL[2*f+1] = 0; // real, image
+            outR[2*f] = outR[2*f+1] = 0; // real, image
+          break;
+
+          case 'P':
+            outL[2*f] = fftL[2*f]*percL[f];
+            outL[2*f+1] = fftL[2*f+1]*percL[f];
+            outR[2*f] = fftR[2*f]*percR[f]; 
+            outR[2*f+1] = fftR[2*f+1]*percR[f];
+          break;
+          case 'H':
+            outL[2*f] = fftL[2*f]*(1-percL[f]);
+            outL[2*f+1] = fftL[2*f+1]*(1-percL[f]);
+            outR[2*f] = fftR[2*f]*(1-percR[f]); 
+            outR[2*f+1] = fftR[2*f+1]*(1-percR[f]);
+          break;
+
+          default:
+            console.log('Filter undef action', action);
+        }
+
+      }
+
+    }
+
+    return [outL, outR];
   }
 
 }

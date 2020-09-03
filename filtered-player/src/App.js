@@ -224,7 +224,7 @@ class App extends Component {
        if (audioCtx.createJavaScriptNode) {
           effectNode 
            = audioCtx.createJavaScriptNode(bufferSize,channels,channels);
-           console.log ('createJavaScriptNode');
+          console.log ('createJavaScriptNode');
        } else if (audioCtx.createScriptProcessor) {
          effectNode = audioCtx.createScriptProcessor(bufferSize, 
           channels,channels);
@@ -238,6 +238,13 @@ class App extends Component {
         gainNode.connect(audioCtx.destination);
         source.start(0,this.state.playingAt);
 
+        effector.setSampleRate(this.params.inputAudio.sampleRate);
+
+//        effector.addFilter(-1,0,1,40000,'M');
+//        effector.addFilter(-0.2,300,0.2,40000,'M');
+//          effector.addFilter(-1,0,1,40000,'P');
+//          effector.addFilter(-1,0,1,40000,'H');
+
         effectNode.onaudioprocess = function(e) {
 
           let inputBuffer = e.inputBuffer;
@@ -248,9 +255,16 @@ class App extends Component {
 
           this.counter++;
           let update = 20;
-          if (this.counter % update === 0) 
+          if (this.counter % update === 0) { 
              this.setState({playingAt: this.state.playingAt 
              + (update*inputBuffer.length)/inputBuffer.sampleRate});
+          }
+
+          if (this.counter*inputBuffer.length 
+                >= this.params.inputAudio.length){
+            effectNode.disconnect();
+            effectNode.onaudioprocess = null;
+          }
 
           return; 
         }.bind(this) // end onaudioprocess function(e)
