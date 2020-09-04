@@ -210,7 +210,7 @@ class App extends Component {
   }
 
   handleTimeSlider(e){
-  //  if (this.params.isPlaying) return;
+    if (this.params.isPlaying) return;
 
     if (e.target.name !== 'timeSlider') return;
 
@@ -282,6 +282,7 @@ class App extends Component {
         } // end if audioCtx
         this.params.effectNode = effectNode;
 
+
 // Connect
         source.connect(effectNode)
         effectNode.connect(gainNode);
@@ -307,6 +308,13 @@ class App extends Component {
 //          effector.copy(inputBuffer, outputBuffer); // for test
           effector.process(inputBuffer, outputBuffer);
 
+          if (this.state.playingAt*inputBuffer.sampleRate >= modified.length){
+            source.stop();
+            effectNode.disconnect();
+            effectNode.onaudioprocess = null;
+            effector = null;
+          }
+
           this.counter++;
           let update = 20;
           if (this.counter % update === 0) { 
@@ -314,12 +322,6 @@ class App extends Component {
              + (update*inputBuffer.length)/inputBuffer.sampleRate});
           }
 
-          if (this.counter*inputBuffer.length >= modified.length){
-            effectNode.disconnect();
-            effectNode.onaudioprocess = null;
-            effector = null;
-            source.stop();
-          }
 
           return; 
         }.bind(this) // end onaudioprocess function(e)
