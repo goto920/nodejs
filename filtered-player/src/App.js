@@ -71,7 +71,6 @@ class App extends Component {
   componentDidMount () { // after render()
     audioCtx = new window.AudioContext();
     gainNode = audioCtx.createGain();
-    effector = new Effector(audioCtx, this.params.fftShift);
     window.addEventListener('beforeClosing', this.handleWindowClose);
   }
  
@@ -197,8 +196,10 @@ class App extends Component {
 
      if (this.state.startButtonStr === 'Play'){
 
-       if (this.params.isPlaying) return;
-           this.params.isPlaying = true;
+       if (this.params.isPlaying 
+          || this.params.inputAudio.numberOfChannels != 2) return;
+
+       this.params.isPlaying = true;
 
 // unlock iOS
        if(iOS) {
@@ -213,10 +214,31 @@ class App extends Component {
 // Playing
        source = audioCtx.createBufferSource();
        this.params.currentSource = source;
-       // console.log(this.params.inputAudio.duration, 'sec');
-       source.buffer = this.params.inputAudio;
+
+       // add 0.5 sec (sampleRate/2) at the beginning and the end
+       let original = this.params.inputAudio;
+       let modified = audioCtx.createBuffer(
+           original.numberOfChannels, 
+           original.length + original.sampleRate,
+           original.sampleRate
+       ); 
+
+       for (let channel = 0; channel < modified.numberOfChannels; channel++){
+         let from = original.getChannelData(channel);
+         let to = modified.getChannelData(channel);
+         for (let sample = 0; sample < modified.sampleRate/2; sample++) 
+            to[sample] = 0;
+         for (let sample = modified.sampleRate/2; 
+            sample < original.length; sample++) 
+            to[sample] = from[sample - modified.sampleRate/2];
+         for (let sample = original.length; sample < modified.length; sample++)
+            to[sample] = 0; 
+       }
+
+       source.buffer = modified;
 
 // Create effectNode
+       effector = new Effector(audioCtx, this.params.fftShift, modified);
        let effectNode;
        let channels = this.params.inputAudio.numberOfChannels;
        let bufferSize = this.params.fftShift; // 1024 window half step
@@ -238,12 +260,11 @@ class App extends Component {
         gainNode.connect(audioCtx.destination);
         source.start(0,this.state.playingAt);
 
-        effector.setSampleRate(this.params.inputAudio.sampleRate);
-
+// add filters (GUI)
 //        effector.addFilter(-1,0,1,40000,'M');
 //        effector.addFilter(-0.2,300,0.2,40000,'M');
-//          effector.addFilter(-1,0,1,40000,'P');
-//          effector.addFilter(-1,0,1,40000,'H');
+//        effector.addFilter(-1,0,1,40000,'P');
+//        effector.addFilter(-1,0,1,40000,'H');
 
         effectNode.onaudioprocess = function(e) {
 
@@ -260,10 +281,11 @@ class App extends Component {
              + (update*inputBuffer.length)/inputBuffer.sampleRate});
           }
 
-          if (this.counter*inputBuffer.length 
-                >= this.params.inputAudio.length){
+          if (this.counter*inputBuffer.length >= modified.length){
             effectNode.disconnect();
             effectNode.onaudioprocess = null;
+            effector = null;
+            source.stop();
           }
 
           return; 

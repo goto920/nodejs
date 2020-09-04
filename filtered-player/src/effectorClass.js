@@ -4,10 +4,10 @@ import Windowing from 'fft-windowing';
 
 class Effector {
 
-  constructor(audioCtx,shiftSize){
+  constructor(audioCtx,shiftSize,inputAudio){
     this.audioCtx = audioCtx;
     this.shiftSize = shiftSize;
-    this.sampleRate = 44100; // default
+    this.sampleRate = inputAudio.sampleRate;
 
 //    this.rfft = new RFFT(2*this.shiftSize); // fftw-js
     this.rfft = new FFTR(2*this.shiftSize); // kissfft-js
@@ -32,13 +32,10 @@ class Effector {
     this.calcPerc = this.calcPerc.bind(this);
     this.fftFilter = this.fftFilter.bind(this);
 
-    this.setSampleRate = this.setSampleRate.bind(this);
     this.addFilter = this.addFilter.bind(this);
     this.clearAllFilter = this.clearAllFilter.bind(this);
 
   }
-
-  setSampleRate(rate){ this.sampleRate = rate; }
 
   addFilter(fromPan, fromFreq, toPan, toFreq, action){ 
 
@@ -290,14 +287,13 @@ class Effector {
       // also used as power
 
     const index = 8;
-    const power = fftObjBuffer[index].power;
+    const fftObj = fftObjBuffer[index];
 
     for (let freqBin = 0; freqBin <= this.shiftSize; freqBin++){
       let from = Math.max(0, freqBin - 9);
       let to =  Math.min(freqBin + 9, this.shiftSize + 1); // to (not incl.) 
-      let power = fftObjBuffer[index].power;
-      let pMedianL = median(power[0].slice(from,to));
-      let pMedianR = median(power[1].slice(from,to));
+      let pMedianL = median(fftObj.power[0].slice(from,to));
+      let pMedianR = median(fftObj.power[1].slice(from,to));
 
       let powerArrayL = [];
       let powerArrayR = [];
@@ -323,7 +319,13 @@ class Effector {
     fftObjBuffer[index].percL = percL;
     fftObjBuffer[index].percR = percR;
 
-    let retval = fftObjBuffer[index];
+    let retval = { 
+      fftCoef: [fftObj.fftCoef[0].slice(), fftObj.fftCoef[1].slice()],
+      pan:  fftObj.pan.slice(),
+      panAmp: fftObj.panAmp.slice(),
+      power: [fftObj.power[0].slice(), fftObj.power[1].slice()],
+      perc: [percL.slice(), percR.slice()]
+    };   
 
     if (buflen >= 17) fftObjBuffer.splice(0,1);
 
@@ -334,8 +336,8 @@ class Effector {
 
     const fftL = fftObj.fftCoef[0];
     const fftR = fftObj.fftCoef[1];
-    const percL = fftObj.percL;
-    const percR = fftObj.percR;
+    const percL = fftObj.perc[0];
+    const percR = fftObj.perc[1];
     let outL = fftL.slice();
     let outR = fftR.slice();
 
