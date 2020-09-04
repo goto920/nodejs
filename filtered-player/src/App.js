@@ -61,6 +61,7 @@ class App extends Component {
     this.handleVolumeSlider = this.handleVolumeSlider.bind(this);
     this.handlePlay = this.handlePlay.bind(this);
     this.handleSave = this.handleSave.bind(this);
+    this.selectFilter = this.selectFilter.bind(this);
     this.fakeDownload = this.fakeDownload.bind(this);
   }
 
@@ -96,10 +97,24 @@ class App extends Component {
        {this.state.ja ? 'En(US)' : '日本語'}</button> 
        </span>
        <hr />
-       Select stereo audio file<br/>
+       Select stereo audio file (from local strage or cloud)<br/>
        <span className='selectFile'>
        <input type='file' name='loadFile' 
           accept='audio/*' onChange={this.loadFile} /><br />
+       </span>
+       <hr />
+       <span className='selector'>
+       Select filter: &nbsp;
+       <select name='selectFilter' defaultValue='bypass' 
+        onChange={this.selectFilter}>
+       <option value='bypass'>bypass</option>
+       <option value='drumCover'>drumCover</option>
+       <option value='karaokeMale'>karaokeMale</option>
+       <option value='karaokeFemale'>karaokeFemale</option>
+       <option value='percussive'>percussive</option>
+       <option value='harmonic'>harmonic</option>
+       <option value='customWithGUI'>customWithGUI</option>
+       </select>
        </span>
        <hr />
        Time: {this.state.playingAt.toFixed(2)} <br />
@@ -197,7 +212,7 @@ class App extends Component {
      if (this.state.startButtonStr === 'Play'){
 
        if (this.params.isPlaying 
-          || this.params.inputAudio.numberOfChannels != 2) return;
+          || this.params.inputAudio.numberOfChannels !== 2) return;
 
        this.params.isPlaying = true;
 
@@ -260,11 +275,16 @@ class App extends Component {
         gainNode.connect(audioCtx.destination);
         source.start(0,this.state.playingAt);
 
-// add filters (GUI)
+// test filters (GUI)
 //        effector.addFilter(-1,0,1,40000,'M');
 //        effector.addFilter(-0.2,300,0.2,40000,'M');
 //        effector.addFilter(-1,0,1,40000,'P');
 //        effector.addFilter(-1,0,1,40000,'H');
+//        effector.presetFilter('karaokeMale');
+//        effector.presetFilter('drumCover');
+//        effector.presetFilter('percussive');
+//        effector.presetFilter('harmonic');
+//        effector.presetFilter('bypass');
 
         effectNode.onaudioprocess = function(e) {
 
@@ -320,6 +340,21 @@ class App extends Component {
     }
 
   } // end handlePlay()
+
+  selectFilter(e){
+    if (e.target.name !== 'selectFilter') return;
+ 
+    switch(e.target.value){
+      case 'bypass': case 'drumCover': case 'karaokeMale': 
+      case 'karaokeFemale': case 'percussive': case 'harmonic':
+         effector.presetFilter(e.target.value);
+       break;
+      case 'customWithGUI': 
+         effector.presetFilter('bypass');
+         break; // not implemented
+      default:
+    }
+  }
 
   handleSave(e){
 /*

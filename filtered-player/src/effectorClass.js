@@ -35,6 +35,8 @@ class Effector {
     this.addFilter = this.addFilter.bind(this);
     this.clearAllFilter = this.clearAllFilter.bind(this);
 
+    this.presetFilter = this.presetFilter.bind(this);
+
   }
 
   addFilter(fromPan, fromFreq, toPan, toFreq, action){ 
@@ -69,6 +71,36 @@ class Effector {
 
     } // end for channel
     return;
+  }
+
+  presetFilter(type){
+     this.clearAllFilter();
+     // console.log('filter: ', type);
+
+     switch (type){
+       case 'bypass': break;
+       case 'drumCover':
+         this.addFilter(-1,0,1,30000,"H");
+         this.addFilter(-0.1,220,0.1,4000,"T");
+         this.addFilter(-1.0,220,-0.9,4000,"T");
+         this.addFilter(0.9,220,1.0,4000,"T");
+       break;
+       case 'karaokeMale':
+         this.addFilter(-1,0,1,30000,"T");
+         this.addFilter(-0.1,220,0.1,8000,"M");
+       break;
+       case 'karaokeFemale':
+         this.addFilter(-1,0,1,30000,"T");
+         this.addFilter(-0.1,350,0.1,8000,"M");
+       break;
+       case 'percussive':
+         this.addFilter(-1,0,1,30000,"P");
+       break;
+       case 'harmonic':
+         this.addFilter(-1,0,1,30000,"H");
+       break;
+       default:
+     }
   }
 
   process(inputBuffer, outputBuffer){
@@ -108,13 +140,13 @@ class Effector {
 
 //    let fftCoef = this.justFFT(fftWindowInput); // test
 
-    if (fftObj != null) {
+    if (fftObj !== null) {
       let fftCoef = this.fftFilter(fftObj);
 
        pcmData[0] = this.rfft.inverse(fftCoef[0]).slice(); 
        pcmData[1] = this.rfft.inverse(fftCoef[1]).slice();
 
-       console.log(pcmData[0]);
+       // console.log(pcmData[0]);
 
     } else {
        // console.log ('fftObj is null');
@@ -278,7 +310,7 @@ class Effector {
     };
 
     let buflen = fftObjBuffer.length;
-    console.log ('buflen', buflen);
+    // console.log ('buflen', buflen);
 
     if (buflen < 17) return null; // not enough dat
 
@@ -338,6 +370,7 @@ class Effector {
     const fftR = fftObj.fftCoef[1];
     const percL = fftObj.perc[0];
     const percR = fftObj.perc[1];
+
     let outL = fftL.slice();
     let outR = fftR.slice();
 
