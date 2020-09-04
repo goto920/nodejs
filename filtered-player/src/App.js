@@ -43,7 +43,9 @@ class App extends Component {
       currentSource: null,
       isPlaying: false,
       effectNode: null,
-      fftShift: 512
+      fftShift: 512,
+      filterType: 'bypass',
+      vocalWidth: 0.2
     }
 
     this.counter = 0;
@@ -104,7 +106,7 @@ class App extends Component {
        </span>
        <hr />
        <span className='selector'>
-       Select filter: &nbsp;
+       Filter: &nbsp;
        <select name='selectFilter' defaultValue='bypass' 
         onChange={this.selectFilter}>
        <option value='bypass'>bypass</option>
@@ -114,6 +116,17 @@ class App extends Component {
        <option value='percussive'>percussive</option>
        <option value='harmonic'>harmonic</option>
        <option value='customWithGUI'>customWithGUI</option>
+       </select> 
+       &nbsp; vocalWidth: &nbsp;
+       <select name='vocalWidth' defaultValue='0.2' 
+        onChange={this.selectFilter}>
+       <option value='0.1'>0.1</option>
+       <option value='0.2'>0.2</option>
+       <option value='0.3'>0.3</option>
+       <option value='0.4'>0.4</option>
+       <option value='0.5'>0.5</option>
+       <option value='0.6'>0.6</option>
+       <option value='0.7'>0.7</option>
        </select>
        </span>
        <hr />
@@ -342,30 +355,36 @@ class App extends Component {
   } // end handlePlay()
 
   selectFilter(e){
-    if (e.target.name !== 'selectFilter') return;
- 
-    switch(e.target.value){
-      case 'bypass': case 'drumCover': case 'karaokeMale': 
-      case 'karaokeFemale': case 'percussive': case 'harmonic':
-         effector.presetFilter(e.target.value);
-       break;
-      case 'customWithGUI': 
-         effector.presetFilter('bypass');
-         break; // not implemented
-      default:
+
+    if (e.target.name === 'selectFilter' && effector !== null) {
+
+      switch(e.target.value){
+        case 'drumCover': 
+        case 'karaokeMale': 
+        case 'karaokeFemale': 
+          effector.presetFilter(e.target.value, this.params.vocalWidth);
+        break;
+        case 'percussive': case 'harmonic':
+          effector.presetFilter(e.target.value, 0);
+        break;
+        case 'bypass': 
+        case 'customWithGUI': 
+          effector.presetFilter('bypass', 0);
+        break; // customWithGUI not implemented
+        default:
+      }
+      this.params.filterType = e.target.value;
+    } 
+
+    if (e.target.name === 'vocalWidth' 
+       && effector !== null && this.params.filterType !== null) {
+       this.params.vocalWidth = parseFloat(e.target.value);
+       effector.presetFilter(this.params.filterType, this.params.vocalWidth);
     }
+
   }
 
-  handleSave(e){
-/*
-    if(iOS) {
-      let buffer = audioCtx.createBuffer(1,1,44100); 
-      let source = audioCtx.createBufferSource();
-      source.buffer = buffer;
-      source.connect (audioCtx.destination);
-    }
-*/
-
+  handleSave(e){ // offline processing (may work for this)
   } // end handleSave
 
   fakeDownload(audioBuffer){

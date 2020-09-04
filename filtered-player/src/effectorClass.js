@@ -73,25 +73,28 @@ class Effector {
     return;
   }
 
-  presetFilter(type){
-     this.clearAllFilter();
-     // console.log('filter: ', type);
+  presetFilter(type, option){
 
+     this.clearAllFilter();
+     console.log('filter, option ', type, option);
+
+     let width;
      switch (type){
        case 'bypass': break;
        case 'drumCover':
+         width = option;
          this.addFilter(-1,0,1,30000,"H");
-         this.addFilter(-0.1,220,0.1,4000,"T");
+         this.addFilter(-width/2,220,width/2,4000,"T");
          this.addFilter(-1.0,220,-0.9,4000,"T");
          this.addFilter(0.9,220,1.0,4000,"T");
        break;
        case 'karaokeMale':
-         this.addFilter(-1,0,1,30000,"T");
-         this.addFilter(-0.1,220,0.1,8000,"M");
+         width = option;
+         this.addFilter(-width/2,220,width/2,8000,"M");
        break;
        case 'karaokeFemale':
-         this.addFilter(-1,0,1,30000,"T");
-         this.addFilter(-0.1,350,0.1,8000,"M");
+         width = option;
+         this.addFilter(-width/2,350,width/2,8000,"M");
        break;
        case 'percussive':
          this.addFilter(-1,0,1,30000,"P");
