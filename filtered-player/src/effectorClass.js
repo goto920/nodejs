@@ -4,10 +4,9 @@ import Windowing from 'fft-windowing';
 
 class Effector {
 
-  constructor(audioCtx,shiftSize,inputAudio){
-    this.audioCtx = audioCtx;
+  constructor(shiftSize,sampleRate){
     this.shiftSize = shiftSize;
-    this.sampleRate = inputAudio.sampleRate;
+    this.sampleRate = sampleRate;
 
 //    this.rfft = new RFFT(2*this.shiftSize); // fftw-js
     this.rfft = new FFTR(2*this.shiftSize); // kissfft-js

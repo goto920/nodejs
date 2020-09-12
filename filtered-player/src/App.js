@@ -20,7 +20,6 @@ var m = usText; // default
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
 var audioCtx = null;
-// var offlineCtx = null;
 var gainNode = null;
 var effector = null;
 
@@ -54,7 +53,9 @@ class App extends Component {
       ja: false,
       playingAt: 0, 
       playVolume: 80,
-      startButtonStr: 'loadFile!' // Start/Pause
+      startButtonStr: 'startPlay', // Start/Pause
+      testButtonStr: 'test60sec', // test60sec
+      saveButtonStr: 'Save' // convert all and save/ abort
     }
 
     this.loadFile = this.loadFile.bind(this);
@@ -62,6 +63,7 @@ class App extends Component {
     this.handleTimeSlider = this.handleTimeSlider.bind(this);
     this.handleVolumeSlider = this.handleVolumeSlider.bind(this);
     this.handlePlay = this.handlePlay.bind(this);
+    this.handleOffline = this.handleOffline.bind(this);
     this.handleSave = this.handleSave.bind(this);
     this.selectFilter = this.selectFilter.bind(this);
     this.fakeDownload = this.fakeDownload.bind(this);
@@ -156,6 +158,14 @@ class App extends Component {
        <button name='rewind' onClick={this.handlePlay}>Rewind</button>
        </span>
        <hr />
+       <span>
+       <button name='testPlay' onClick={this.handleOffline} 
+          style={startBStyle}>{this.state.testButtonStr}
+       </button> &nbsp;&nbsp;
+       <button name='saveAll' onClick={this.handleOffline}>
+       {this.state.saveButtonStr}</button>
+       </span>
+       <hr />
         Version: {version}, &nbsp;
         <a href={m.homepage} 
          target="_blank" rel="noopener noreferrer">{m.guide}</a>
@@ -179,6 +189,7 @@ class App extends Component {
           this.params.inputAudio = audioBuffer;
           this.setState({playingAt: 0});
           this.setState({startButtonStr: 'Play'});
+          effector = new Effector(this.params.fftShift,audioBuffer.sampleRate);
         }.bind(this),
           function (error) { console.log ("Filereader error: " + error.err) 
         }
@@ -218,11 +229,11 @@ class App extends Component {
   }
 
   handlePlay(e){
-        let source = null;
+    let source = null;
 
-   if (e.target.name === 'startPause') {
+    if (e.target.name === 'startPause') {
 
-     if (this.state.startButtonStr === 'Play'){
+      if (this.state.startButtonStr === 'Play'){
 
        if (this.params.isPlaying 
           || this.params.inputAudio.numberOfChannels !== 2) return;
@@ -266,7 +277,7 @@ class App extends Component {
        source.buffer = modified;
 
 // Create effectNode
-       effector = new Effector(audioCtx, this.params.fftShift, modified);
+       // effector = new Effector(audioCtx, this.params.fftShift, modified);
        let effectNode;
        let channels = this.params.inputAudio.numberOfChannels;
        let bufferSize = this.params.fftShift; // 1024 window half step
@@ -300,6 +311,7 @@ class App extends Component {
 //        effector.presetFilter('harmonic');
 //        effector.presetFilter('bypass');
 
+        this.counter = 0;
         effectNode.onaudioprocess = function(e) {
 
           let inputBuffer = e.inputBuffer;
@@ -313,6 +325,7 @@ class App extends Component {
             effectNode.disconnect();
             effectNode.onaudioprocess = null;
             effector = null;
+            return;
           }
 
           this.counter++;
@@ -356,6 +369,7 @@ class App extends Component {
 
   } // end handlePlay()
 
+
   selectFilter(e){
 
     if (e.target.name === 'selectFilter' && effector !== null) {
@@ -386,17 +400,92 @@ class App extends Component {
 
   }
 
+  handleOffline(e){
+
+    if (e.target.name === 'testPlay') {
+
+       let original = this.params.inputAudio;
+       let modified = audioCtx.createBuffer(
+           original.numberOfChannels, 
+           original.length + original.sampleRate,
+           original.sampleRate
+       ); 
+
+       for (let channel = 0; channel < modified.numberOfChannels; channel++){
+         let from = original.getChannelData(channel);
+         let to = modified.getChannelData(channel);
+         for (let sample = 0; sample < modified.sampleRate/2; sample++) 
+            to[sample] = 0;
+         for (let sample = modified.sampleRate/2; 
+            sample < original.length; sample++) 
+            to[sample] = from[sample - modified.sampleRate/2];
+         for (let sample = original.length; sample < modified.length; sample++)
+            to[sample] = 0; 
+       }
+
+
+// Process offline
+      let inputBuffer =  audioCtx.createBuffer(
+         modified.numberOfChannels, this.params.fftShift, modified.sampleRate);
+      let outputBuffer =  audioCtx.createBuffer(
+         modified.numberOfChannels, this.params.fftShift, modified.sampleRate);
+      let processedOut =  audioCtx.createBuffer(
+         modified.numberOfChannels, modified.length, modified.sampleRate);
+
+      this.counter = 0;
+      for (let chunk = 0; chunk < modified.length; 
+        chunk += this.params.fftShift) {
+
+        let leftIn = inputBuffer.getChannelData(0);
+        let rightIn = inputBuffer.getChannelData(1);
+
+
+        let sourceL = modified.getChannelData(0);
+        let sourceR = modified.getChannelData(1);
+
+        for (let sample = 0; sample < this.params.fftShift; sample++){
+          leftIn[sample] = sourceL[chunk + sample];
+          rightIn[sample] = sourceR[chunk + sample];
+        }
+
+        // effector.copy(inputBuffer, outputBuffer); // test
+        effector.process(inputBuffer, outputBuffer); // test
+
+        let leftOut = outputBuffer.getChannelData(0);
+        let rightOut = outputBuffer.getChannelData(1);
+        let processedLeft = processedOut.getChannelData(0);
+        let processedRight = processedOut.getChannelData(1);
+
+        for (let sample = 0; sample < this.params.fftShift; sample++){
+          processedLeft[chunk + sample] = leftOut[sample];
+          processedRight[chunk + sample] = rightOut[sample];
+        }
+
+        this.counter++;
+        let update = 20;
+        if (this.counter % update === 0) { 
+           // let doNothing = function() {}
+           // setTimeout(doNothing,1000);
+           this.setState({playingAt: this.state.playingAt 
+           + (update*inputBuffer.length)/inputBuffer.sampleRate});
+           console.log(this.counter);
+        }
+
+    } // end for chunk
+
+    this.fakeDownload(processedOut);
+
+   } // end if testPlay
+
+  } 
+
   handleSave(e){ // offline processing (may work for this)
   } // end handleSave
 
   fakeDownload(audioBuffer){
 
     const words = this.params.filename.split('.');
-    let outFileName = 
-         words[0]
-       + '&s' + parseInt(this.state.playSpeed)
-       + '&p' + parseInt(this.state.playPitch*100)
-       + '.wav';
+    let outFileName = words[0] + '-modified.wav';
     let blob = new Blob([toWav(audioBuffer)], {type: 'audio/vnd.wav'});
     saveAs(blob,outFileName);
 
