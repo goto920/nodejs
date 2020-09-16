@@ -18,8 +18,6 @@ const usText = messages.us;
 var m = usText; // default
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
-window.OfflineAudioContext = window.OfflineAudioContext 
-     || window.webkitOfflineAudioContext;
 
 var audioCtx = null;
 var gainNode = null;
@@ -160,11 +158,14 @@ class App extends Component {
        </button> &nbsp;&nbsp;
        <button name='rewind' onClick={this.handlePlay}>Rewind
        </button> &nbsp;&nbsp;
+       <button name='test60sec' onClick={this.handlePlay}>
+       {this.state.testButtenStr}</button>
        </span>
        <hr />
        <span>
-       <button name='testPlay' onClick={this.handleOffline} >
-       testPlay</button> &nbsp;&nbsp;
+       <button name='testPlay' onClick={this.handleOffline} 
+          style={startBStyle}>{this.state.testButtonStr}
+       </button> &nbsp;&nbsp;
        <button name='saveAll' onClick={this.handleOffline}>
        {this.state.saveButtonStr}</button>
        </span>
@@ -280,6 +281,7 @@ class App extends Component {
        source.buffer = modified;
 
 // Create effectNode
+       // effector = new Effector(audioCtx, this.params.fftShift, modified);
        let effectNode;
        let channels = this.params.inputAudio.numberOfChannels;
        let bufferSize = this.params.fftShift; // 1024 window half step
@@ -422,61 +424,76 @@ class App extends Component {
 
     if (e.target.name === 'testPlay') {
 
-      let offlineCtx = new OfflineAudioContext(
-        this.params.inputAudio.numberOfChannels, 
-        this.params.inputAudio.length, 
-        this.params.inputAudio.sampleRate
-      );
+       let original = this.params.inputAudio;
+       let modified = audioCtx.createBuffer(
+           original.numberOfChannels, 
+           original.length + original.sampleRate,
+           original.sampleRate
+       ); 
 
-      let source = offlineCtx.createBufferSource();     
-      source.buffer = this.params.inputAudio;
-      let effectNode 
-         = offlineCtx.createScriptProcessor(512,2,0);
-      source.connect(effectNode);
-      effectNode.connect(offlineCtx.destination);
+       for (let channel = 0; channel < modified.numberOfChannels; channel++){
+         let from = original.getChannelData(channel);
+         let to = modified.getChannelData(channel);
+         for (let sample = 0; sample < modified.sampleRate/2; sample++) 
+            to[sample] = 0;
+         for (let sample = modified.sampleRate/2; 
+            sample < original.length; sample++) 
+            to[sample] = from[sample - modified.sampleRate/2];
+         for (let sample = original.length; sample < modified.length; sample++)
+            to[sample] = 0; 
+       }
 
-/* To store the result */
-      let output 
-        = audioCtx.createBuffer(2, this.params.inputAudio.length, 
-          this.params.inputAudio.sampleRate);
-      let leftOut = output.getChannelData(0);
-      let rightOut = output.getChannelData(1);
 
-      let offset = 0;
-      effectNode.onaudioprocess = function(e) {
-         let input = e.inputBuffer; // input is OK
-         let leftIn = input.getChannelData(0);
-         let rightIn = input.getChannelData(1);
-     
-         // let output = e.outputBuffer; // does not work as expected
-         let processed = audioCtx.createBuffer(2,input.length,input.sampleRate);
-         effector.process(input,processed);
-         let processedL = processed.getChannelData(0);
-         let processedR = processed.getChannelData(1);
+// Process offline
+      let inputBuffer =  audioCtx.createBuffer(
+         modified.numberOfChannels, this.params.fftShift, modified.sampleRate);
+      let outputBuffer =  audioCtx.createBuffer(
+         modified.numberOfChannels, this.params.fftShift, modified.sampleRate);
+      let processedOut =  audioCtx.createBuffer(
+         modified.numberOfChannels, modified.length, modified.sampleRate);
 
-         for (let i = 0; i < input.length; i++){
-            leftOut[offset + i] = processedL[i]; 
-            rightOut[offset + i] = processedR[i];
-         }
+      this.counter = 0;
+      for (let chunk = 0; chunk < modified.length; 
+        chunk += this.params.fftShift) {
 
-         if (offset/512 % 20 === 0)  
-            this.setState({playingAt: offset/input.sampleRate});
+        let leftIn = inputBuffer.getChannelData(0);
+        let rightIn = inputBuffer.getChannelData(1);
 
-         offset += 512;
 
-      }.bind(this);
+        let sourceL = modified.getChannelData(0);
+        let sourceR = modified.getChannelData(1);
 
-      source.start();
-      offlineCtx.startRendering();
-      offlineCtx.oncomplete = function(e) {
-        // e.renderedBuffer; // useless (bug?)
-        let source = audioCtx.createBufferSource();
-        source.buffer = output;
-        source.connect(gainNode); 
-        gainNode.connect(audioCtx.destination);
-        source.start();
-        // this.fakeDownload(output);
-      }.bind(this);
+        for (let sample = 0; sample < this.params.fftShift; sample++){
+          leftIn[sample] = sourceL[chunk + sample];
+          rightIn[sample] = sourceR[chunk + sample];
+        }
+
+        // effector.copy(inputBuffer, outputBuffer); // test
+        effector.process(inputBuffer, outputBuffer); // test
+
+        let leftOut = outputBuffer.getChannelData(0);
+        let rightOut = outputBuffer.getChannelData(1);
+        let processedLeft = processedOut.getChannelData(0);
+        let processedRight = processedOut.getChannelData(1);
+
+        for (let sample = 0; sample < this.params.fftShift; sample++){
+          processedLeft[chunk + sample] = leftOut[sample];
+          processedRight[chunk + sample] = rightOut[sample];
+        }
+
+        this.counter++;
+        let update = 20;
+        if (this.counter % update === 0) { 
+           // let doNothing = function() {}
+           // setTimeout(doNothing,1000);
+           this.setState({playingAt: this.state.playingAt 
+           + (update*inputBuffer.length)/inputBuffer.sampleRate});
+           console.log(this.counter);
+        }
+
+    } // end for chunk
+
+    this.fakeDownload(processedOut);
 
    } // end if testPlay
 
