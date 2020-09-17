@@ -83,9 +83,19 @@ https://www.g200kg.com/jp/docs/webaudio/scriptproc.html
 
 kissfft-js (fftw-js) -- inverse 1/N
 
-JavaScript FIFO buffer
-   fifo.js (fifo-buffer) -- too simple
+++++++++++++
+OfflineAudioContext
 
-array?
-
+effectNode = OfflineAudioContext.createScriptProcessor (or JavaScriptProcessor)
+onaudioprocess (input, output) 
+  -- output does not work 
+  -- renderedBuffer is just a garbage
+++++++++++++++++++
+effector.js 
+-- data must be copied in some part
++++++++++++++++++++
+double slider (npm install double-slider)
+react-compound-slider 
+react-dual-range-slider
+rc-slider
 

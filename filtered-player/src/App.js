@@ -10,6 +10,9 @@ import {saveAs} from 'file-saver';
 // import {RFFT} from 'fftw-js';
 //import Windowing from 'fft-windowing';
 import Effector from './effectorClass.js';
+// import Slider, {Range} from 'rc-slider';
+import {Range} from 'rc-slider';
+import 'rc-slider/assets/index.css';
 
 // Global variables
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-11);
@@ -46,8 +49,6 @@ class App extends Component {
       isPlaying: false,
       effectNode: null,
       fftShift: 512,
-      filterType: 'bypass',
-      vocalWidth: 0.2
     }
 
     this.counter = 0;
@@ -55,6 +56,9 @@ class App extends Component {
     this.state = {
       ja: false,
       playingAt: 0, 
+      A: 0, B: 0,
+      filterType: 'bypass',
+      centerWidth: 0.2,
       playVolume: 80,
       startButtonStr: 'startPlay', // Start/Pause
       testButtonStr: 'test60sec', // test60sec
@@ -64,12 +68,14 @@ class App extends Component {
     this.loadFile = this.loadFile.bind(this);
     this.handleLang = this.handleLang.bind(this);
     this.handleTimeSlider = this.handleTimeSlider.bind(this);
+    this.handleTimeRange = this.handleTimeRange.bind(this);
     this.handleVolumeSlider = this.handleVolumeSlider.bind(this);
     this.handlePlay = this.handlePlay.bind(this);
     this.handleOffline = this.handleOffline.bind(this);
     this.handleSave = this.handleSave.bind(this);
     this.selectFilter = this.selectFilter.bind(this);
     this.fakeDownload = this.fakeDownload.bind(this);
+    // this.addOneSec = this.addOneSec(this);
   }
 
   handleWindowClose(event) { 
@@ -96,6 +102,8 @@ class App extends Component {
     let startBStyle = {};
     if (this.state.startButtonStr === 'Pause') startBStyle = {color: 'green'};
 
+    const rangeStyle = {width: '85%', cursor: 'pointer'};
+
     return(
       <div className="App">
        {m.title}
@@ -104,14 +112,14 @@ class App extends Component {
        {this.state.ja ? 'En(US)' : '日本語'}</button> 
        </span>
        <hr />
-       Select stereo audio file (from local strage or cloud)<br/>
+       1) Select stereo audio file (local/cloud)<br/>
        <span className='selectFile'>
        <input type='file' name='loadFile' 
           accept='audio/*' onChange={this.loadFile} /><br />
        </span>
        <hr />
        <span className='selector'>
-       Filter: &nbsp;
+       2) Filter: &nbsp;
        <select name='selectFilter' defaultValue='bypass' 
         onChange={this.selectFilter}>
        <option value='bypass'>bypass</option>
@@ -120,11 +128,11 @@ class App extends Component {
        <option value='karaokeFemale'>karaokeFemale</option>
        <option value='percussive'>percussive</option>
        <option value='harmonic'>harmonic</option>
-       <option value='customWithGUI'>customWithGUI</option>
-       </select> 
-       &nbsp; vocalWidth: &nbsp;
-       <select name='vocalWidth' defaultValue='0.2' 
-        onChange={this.selectFilter}>
+{/*       <option value='customWithGUI'>customWithGUI</option> */}
+       </select><br />centerWidth: &nbsp; 
+       <select name='centerWidth' defaultValue='0.2' 
+        value = {this.state.centerWidth}
+        onChange={this.selectFilter} >
        <option value='0.1'>0.1</option>
        <option value='0.2'>0.2</option>
        <option value='0.3'>0.3</option>
@@ -133,26 +141,21 @@ class App extends Component {
        <option value='0.6'>0.6</option>
        <option value='0.7'>0.7</option>
        </select>
+       &nbsp; Range: {-this.state.centerWidth/2} -- {this.state.centerWidth/2}
        </span>
        <hr />
-       Time: {this.state.playingAt.toFixed(2)} <br />
-        <span className='slider'> 
+        <span>
+        3) Time Range: {this.state.A.toFixed(2)} -- {this.state.B.toFixed(2)}
         <center>
-        000 <input type='range' name='timeSlider' min='0' max={duration}
-        value = {this.state.playingAt} step='1'
-        onChange={this.handleTimeSlider} /> &nbsp;
-        {Math.round(duration)}<br />
+        <Range style = {rangeStyle} min={0} max={duration} 
+           value = {[this.state.A,this.state.B]} 
+           onChange={this.handleTimeRange}
+           />
         </center>
+        Total: {duration.toFixed(2)} sec &nbsp;&nbsp; 
+        Current: {this.state.playingAt.toFixed(2)}
         </span>
-       <hr />
-        Vol: {this.state.playVolume} <br />
-        <span className='slider'> 
-         <center>
-         000 <input type='range' name='volumeSlider' min='0' max='150'
-         value = {this.state.playVolume} 
-           onChange={this.handleVolumeSlider} /> 150<br />
-         </center>
-        </span>
+{/*
        <hr />
        <span>
        <button name='startPause' onClick={this.handlePlay} 
@@ -161,17 +164,28 @@ class App extends Component {
        <button name='rewind' onClick={this.handlePlay}>Rewind
        </button> &nbsp;&nbsp;
        </span>
+*/}
        <hr />
        <span>
-       <button name='testPlay' onClick={this.handleOffline} >
+       4) <button name='testPlay' onClick={this.handleOffline} >
        testPlay</button> &nbsp;&nbsp;
        <button name='saveAll' onClick={this.handleOffline}>
        {this.state.saveButtonStr}</button>
        </span>
        <hr />
+        Playback Vol: {this.state.playVolume} <br />
+        <span className='slider'> 
+         <center>
+         000 <input type='range' name='volumeSlider' min='0' max='150'
+         value = {this.state.playVolume} 
+           onChange={this.handleVolumeSlider} /> 150<br />
+         </center>
+        </span>
+       <hr />
         Version: {version}, &nbsp;
         <a href={m.homepage} 
          target="_blank" rel="noopener noreferrer">{m.guide}</a>
+       <hr />
       </div>
     );
   } // end render()
@@ -190,9 +204,16 @@ class App extends Component {
       audioCtx.decodeAudioData(reader.result, 
         function(audioBuffer) {
           this.params.inputAudio = audioBuffer;
-          this.setState({playingAt: 0});
-          this.setState({startButtonStr: 'Play'});
-          effector = new Effector(this.params.fftShift,audioBuffer.sampleRate);
+
+          if (audioBuffer.numberOfChannels === 2){
+            this.setState({playingAt: 0});
+            this.setState({startButtonStr: 'Play'});
+            this.setState({A: 0, B: audioBuffer.duration});
+            effector = null;
+            effector 
+              = new Effector(this.params.fftShift,audioBuffer.sampleRate);
+          }
+
         }.bind(this),
           function (error) { console.log ("Filereader error: " + error.err) 
         }
@@ -229,6 +250,12 @@ class App extends Component {
     if (e.target.name !== 'timeSlider') return;
 
     this.setState({playingAt: parseFloat(e.target.value)});
+  }
+
+  handleTimeRange(value){
+    if (this.params.isPlaying) return;
+
+    this.setState({A: parseFloat(value[0]), B: parseFloat(value[1])});
   }
 
   handlePlay(e){
@@ -292,9 +319,8 @@ class App extends Component {
          effectNode = audioCtx.createScriptProcessor(bufferSize, 
           channels,channels);
           console.log ('createScriptProcessor');
-        } // end if audioCtx
-        this.params.effectNode = effectNode;
-
+       } // end if audioCtx
+       this.params.effectNode = effectNode;
 
 // Connect
         source.connect(effectNode)
@@ -325,6 +351,8 @@ class App extends Component {
 //          effector.copy(inputBuffer, outputBuffer); // for test
           effector.process(inputBuffer, outputBuffer);
 // save data
+
+/*
          let leftOut = outputBuffer.getChannelData(0);
          let rightOut = outputBuffer.getChannelData(1);
          let processedLeft = this.params.outputAudio.getChannelData(0);
@@ -335,14 +363,14 @@ class App extends Component {
            processedLeft[offset + sample] = leftOut[sample];
            processedRight[offset + sample] = rightOut[sample];
          }
-
+*/
 
          if (this.state.playingAt*inputBuffer.sampleRate >= modified.length){
             source.stop();
             effectNode.disconnect();
             effectNode.onaudioprocess = null;
-            effector = null;
-            this.fakeDownload(this.params.outputAudio);
+            // effector = null;
+            // this.fakeDownload(this.params.outputAudio);
             return;
           }
 
@@ -396,7 +424,7 @@ class App extends Component {
         case 'drumCover': 
         case 'karaokeMale': 
         case 'karaokeFemale': 
-          effector.presetFilter(e.target.value, this.params.vocalWidth);
+          effector.presetFilter(e.target.value, this.params.centerWidth);
         break;
         case 'percussive': case 'harmonic':
           effector.presetFilter(e.target.value, 0);
@@ -407,13 +435,13 @@ class App extends Component {
         break; // customWithGUI not implemented
         default:
       }
-      this.params.filterType = e.target.value;
+      this.setState({filterType: e.target.value});
     } 
 
-    if (e.target.name === 'vocalWidth' 
-       && effector !== null && this.params.filterType !== null) {
-       this.params.vocalWidth = parseFloat(e.target.value);
-       effector.presetFilter(this.params.filterType, this.params.vocalWidth);
+    if (e.target.name === 'centerWidth' 
+       && effector !== null && this.state.filterType !== null) {
+       effector.presetFilter(this.state.filterType, parseFloat(e.target.value));
+       this.setState({centerWidth: parseFloat(e.target.value)});
     }
 
   }
@@ -422,35 +450,48 @@ class App extends Component {
 
     if (e.target.name === 'testPlay') {
 
+      let modified 
+        = this.addOneSec(this.params.inputAudio,
+           this.state.A*this.params.inputAudio.sampleRate,
+           this.state.B*this.params.inputAudio.sampleRate);
+
       let offlineCtx = new OfflineAudioContext(
-        this.params.inputAudio.numberOfChannels, 
-        this.params.inputAudio.length, 
-        this.params.inputAudio.sampleRate
+        modified.numberOfChannels, modified.length, modified.sampleRate
       );
 
       let source = offlineCtx.createBufferSource();     
-      source.buffer = this.params.inputAudio;
-      let effectNode 
-         = offlineCtx.createScriptProcessor(512,2,0);
+      source.buffer = modified;
+
+       let effectNode = null;
+       if (offlineCtx.createJavaScriptNode){ 
+         effectNode = offlineCtx.createJavaScriptNode(this.params.fftShift,2,2);
+       } else if (offlineCtx.createScriptProcessor) {
+         effectNode = offlineCtx.createScriptProcessor(this.params.fftShift,2,2)
+       } else {
+         console.log ('offlineCtx scriptprocessor not supported');
+         effectNode = null;
+       }  // end if audioCtx
+       this.params.effectNode = effectNode;
+
       source.connect(effectNode);
       effectNode.connect(offlineCtx.destination);
 
 /* To store the result */
       let output 
-        = audioCtx.createBuffer(2, this.params.inputAudio.length, 
-          this.params.inputAudio.sampleRate);
+        = audioCtx.createBuffer(modified.numberOfChannels, 
+           modified.length, modified.sampleRate);
       let leftOut = output.getChannelData(0);
       let rightOut = output.getChannelData(1);
 
       let offset = 0;
       effectNode.onaudioprocess = function(e) {
          let input = e.inputBuffer; // input is OK
-         let leftIn = input.getChannelData(0);
-         let rightIn = input.getChannelData(1);
-     
          // let output = e.outputBuffer; // does not work as expected
+
          let processed = audioCtx.createBuffer(2,input.length,input.sampleRate);
+
          effector.process(input,processed);
+
          let processedL = processed.getChannelData(0);
          let processedR = processed.getChannelData(1);
 
@@ -459,10 +500,10 @@ class App extends Component {
             rightOut[offset + i] = processedR[i];
          }
 
-         if (offset/512 % 20 === 0)  
+         if (offset/this.params.fftShift % 20 === 0)  
             this.setState({playingAt: offset/input.sampleRate});
 
-         offset += 512;
+         offset += this.params.fftShift;
 
       }.bind(this);
 
@@ -475,12 +516,35 @@ class App extends Component {
         source.connect(gainNode); 
         gainNode.connect(audioCtx.destination);
         source.start();
-        // this.fakeDownload(output);
+        this.fakeDownload(output);
       }.bind(this);
 
    } // end if testPlay
 
   } 
+
+  addOneSec(inputAudio, begin, end) { // begin, end in sample number
+
+    let modified = audioCtx.createBuffer(
+           inputAudio.numberOfChannels, 
+           (end - begin) + inputAudio.sampleRate,
+           inputAudio.sampleRate
+    );
+
+    let inL = inputAudio.getChannelData(0);
+    let inR = inputAudio.getChannelData(1);
+    let outL = modified.getChannelData(0);
+    let outR = modified.getChannelData(1);
+
+    let offset = inputAudio.sampleRate/2;
+    for (let i = 0; i < offset; i++){ outL[i] = 0; outR[i] = 0; }
+    for (let i = begin; i < end; i++){
+      outL[offset + i] = inL[i]; outR[offset + i] = inR[i]; }
+    for (let i = 0; i < offset; i++){ 
+      outL[offset + end + i] = 0; outR[offset + end + i] = 0;}
+
+    return modified;
+  }
 
   handleSave(e){ // offline processing (may work for this)
     if (this.params.outputAudio !== null)

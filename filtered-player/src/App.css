@@ -14,7 +14,8 @@
 }
 
 .slider input {
-    width: 80%;
+/*  width: 80%; */
+    width: 70%;
 /*  width: 60%; */
   margin: auto;
   cursor: pointer;
