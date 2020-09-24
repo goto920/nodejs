@@ -61,8 +61,10 @@ class App extends Component {
       centerWidth: 0.2,
       playVolume: 80,
       startButtonStr: 'startPlay', // Start/Pause
-      testButtonStr: 'test60sec', // test60sec
-      saveButtonStr: 'Save' // convert all and save/ abort
+      processButtonStr: 'NotReady', 
+       // NotReady/Process/Abort/Play
+      saveButtonStr: 'NotReady' 
+       // NotReady/Save/Abort
     }
 
     this.loadFile = this.loadFile.bind(this);
@@ -167,8 +169,13 @@ class App extends Component {
 */}
        <hr />
        <span>
-       4) <button name='testPlay' onClick={this.handleOffline} >
-       testPlay</button> &nbsp;&nbsp;
+       4) Process Range: &nbsp; 
+          <button name='processOffline' onClick={this.handleOffline} >
+       {this.state.processButtonStr}</button> &nbsp;&nbsp;
+       </span> 
+       <hr />
+       <span>
+       5) Process and SaveAll: &nbsp;
        <button name='saveAll' onClick={this.handleOffline}>
        {this.state.saveButtonStr}</button>
        </span>
@@ -209,6 +216,8 @@ class App extends Component {
             this.setState({playingAt: 0});
             this.setState({startButtonStr: 'Play'});
             this.setState({A: 0, B: audioBuffer.duration});
+            this.setState({processButtonStr: 'Process', 
+                           saveButtonStr: 'SaveAll'});
             effector = null;
             effector 
               = new Effector(this.params.fftShift,audioBuffer.sampleRate);
@@ -448,12 +457,18 @@ class App extends Component {
 
   handleOffline(e){
 
-    if (e.target.name === 'testPlay') {
+    if (e.target.name === 'process' || e.target.name === 'saveAll') {
 
-      let modified 
-        = this.addOneSec(this.params.inputAudio,
+      let modified = null; 
+      if (e.target.name === 'saveAll') {
+        modified = this.addOneSec(this.params.inputAudio, 
+           0, 
+           this.params.inputAudio.length);
+      } else { 
+        modified = this.addOneSec(this.params.inputAudio,
            this.state.A*this.params.inputAudio.sampleRate,
            this.state.B*this.params.inputAudio.sampleRate);
+      }
 
       let offlineCtx = new OfflineAudioContext(
         modified.numberOfChannels, modified.length, modified.sampleRate
@@ -516,7 +531,7 @@ class App extends Component {
         source.connect(gainNode); 
         gainNode.connect(audioCtx.destination);
         source.start();
-        this.fakeDownload(output);
+        if (e.target.name === 'saveAll') this.fakeDownload(output);
       }.bind(this);
 
    } // end if testPlay
