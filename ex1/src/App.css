@@ -7,5 +7,12 @@
   max-width: 375px; /* 最大幅(ピクセル) 小さめのスマートフォンでの表示を想定 */
   margin: 0 auto; /* マージン自動 */
   padding: 30px;
-  cursor: pointer; /* iPhone対応のため (ここに書く必要ないかも) */
+ /* cursor: pointer; */ /* iPhone対応のため (ここに書く必要ないかも) */
+}
+
+.slider input {
+    width: 70%;
+/*  width: 60%; */
+  margin: auto;
+  cursor: pointer;
 }

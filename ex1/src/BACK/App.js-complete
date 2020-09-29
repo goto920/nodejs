@@ -1,36 +1,48 @@
+// 後藤が今まで書いたプログラムは https://github.com/goto920/nodejs/ にある
+
 import React from 'react'; // reactの機能を取り込む (使う)
+// import logo from './logo.svg'; // 行内のコメントアウト (無効にする)
 import './App.css'; // このディレクトリ (フォルダ) にあるApp.css を読み込む
 
 class App extends React.Component { // classを定義 (文字コードはUTF-8)
   constructor(props){
-    super();
-    this.state = {tempC: 0, tempF: 32};
-    this.handleChange = this.handleChange.bind(this);
-  }
+    super(props);
 
-  handleChange(event){
-    if (event.target.name === "tempCset"){
-      this.setState({tempC: event.target.value});
-      this.setState({tempF: event.target.value*9/5 + 32});
-    }
-    if (event.target.name === "tempFset"){
-      this.setState({tempF: event.target.value});
-      this.setState({tempC: (event.target.value - 32)*5/9});
-    }
+    this.state ={
+      tempC: 0,
+      tempF: 32,
+    };
 
+//    this.setState = this.setState.bind(this); 
+    this.convertTemp = this.convertTemp.bind(this); 
   }
 
   render () { // 描画処理
-
+    // 描画時の再計算処理など
+    // divタグの中にHTMLを拡張した記法 (JSX)、
+    // HTMLフォームの拡張とそれ以外の独自コンポーネント
+    // returnの中ではHTMLのコメントは使えないが
+    // {/* から */} でコメントが入れられる
+    // classNameには、cssにある定義を適用
     const cMax = 300, cMin = -200;
+    const fMax = cMax*9/5 + 32, fMin= cMin*9/5 + 32;
+    let tempF = this.state.tempF;
+    let tempC = this.state.tempC;
 
     return (
       <div className="App">
-      Ex1: US単位とメトリックの変換<hr />
-      <input type="number" name="tempFset" value={this.state.tempF} onInput={this.handleChange} /> F<br /> 
-      <input type="number" name="tempCset" value={this.state.tempC} onInput={this.handleChange} /> C<br />
+      Ex1: US単位とメトリックの変換<hr /> {/* HTMLのbr、hrは普通に使える */}
+      <input type="number" name="tempF" value={this.state.tempF}
+         onInput={this.convertTemp} /> F<br />
+      <input type="number" name="tempC" value={this.state.tempC}
+         onInput={this.convertTemp} /> C<br />
+      <span className="slider">
+      <center>
       {cMin}(C)&nbsp;
-       <input type="range" name="tempCset" min={cMin} max={cMax} value={this.state.tempC} onChange={this.handleChange} /> {cMax}(C)
+       <input type="range" name="tempC" min={cMin} max={cMax} step="0.1" 
+             value={this.state.tempC} onChange={this.convertTemp} /> {cMax}(C)
+      </center>
+      </span>
       <hr />
       </div>
       );

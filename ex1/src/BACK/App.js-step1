@@ -1,0 +1,72 @@
+import React from 'react'; // reactの機能を取り込む (使う)
+import './App.css'; // 文のおわりのセミコロンはなくてもよい
+// このディレクトリ (フォルダ) にあるApp.css を読み込む
+// cssにはAppとsliderの表示に関する指示がある
+
+class App extends React.Component { // classを定義 (文字コードはUTF-8)
+
+  constructor(props){ // 状態が定義できるようにコンストラクタ
+    super(props); // 定形処理 (上位のコンストラクタを呼ぶ)
+  // この例ではprops (properties) は使わない
+
+    this.state ={
+      tempC: 0,
+      tempF: 32,
+    };
+
+    this.convertTemp = this.convertTemp.bind(this); 
+    // メソッド内でthisが意味を持つように指示
+  }
+
+  render () { // 描画処理
+    // 描画時の再計算処理など
+    // divタグの中にHTMLを拡張した記法 (JSX)、
+    // HTMLフォームの拡張とそれ以外の独自コンポーネント
+    // returnの中ではHTMLのコメントは使えないが
+    // {/* から */} でコメントが入れられる
+    // classNameには、cssにある定義を適用
+    const cMax = 300, cMin = -200;
+    const fMax = cMax*9/5 + 32, fMin= cMin*9/5 + 32;
+    let tempF = this.state.tempF;
+    let tempC = this.state.tempC;
+
+    // ここから描画内容
+    return (
+      <div className="App">
+      Ex1: US単位とメトリックの変換<hr /> {/* HTMLのbr、hrは普通に使える */}
+      <input type="number" name="tempF" value={this.state.tempF}
+         onInput={this.convertTemp} /> F<br />
+      <input type="number" name="tempC" value={this.state.tempC}
+         onInput={this.convertTemp} /> C<br />
+      <span className="slider">
+      <center>
+      {cMin}(C)&nbsp;
+       <input type="range" name="tempC" min={cMin} max={cMax} step="0.1" 
+             value={this.state.tempC} onChange={this.convertTemp} /> {cMax}(C)
+      </center>
+      </span>
+      <hr />
+      </div>
+      );
+
+   }
+
+   convertTemp(event){
+
+     if (event.target.name === "tempF"){
+       let tempF = parseFloat(event.target.value);
+       let tempC = (tempF - 32)*5/9;
+       this.setState ({tempC: tempC, tempF: tempF})
+     }
+
+     if (event.target.name === "tempC"){
+       let tempC = parseFloat(event.target.value);
+       let tempF = tempC*9/5 + 32;
+       this.setState ({tempC: tempC, tempF: tempF});
+     }
+
+  }
+
+} // class Appの終わり (セミコロンなし)
+
+export default App; // Appを外に見せる(定形処理)
