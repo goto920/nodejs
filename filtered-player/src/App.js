@@ -39,7 +39,7 @@ if(  navigator.userAgent.match(/iPhone/i)
 ////////////////////////
 class App extends Component {
   constructor (props){
-    super(props);
+    super();
 
     this.params = {
       inputAudio: null,
@@ -60,7 +60,7 @@ class App extends Component {
       filterType: "bypass",
       centerWidth: 0.2,
       playVolume: 80,
-      startButtonStr: 'startPlay', // Start/Pause
+      startButtonStr: 'NotReady', // Start/Pause
       processButtonStr: 'NotReady', 
        // NotReady/Process/Abort/Play
       saveButtonStr: 'NotReady' 
@@ -164,17 +164,17 @@ class App extends Component {
         </span>
        <hr />
        <span>
-       4A) Batch Processing: &nbsp; 
+       4A) Batch: &nbsp; 
           <button name='processOffline' onClick={this.handleOffline} >
-          {this.state.processButtonStr}</button> <br />
-       4B) Realtime play: &nbsp;
+          {this.state.processButtonStr}</button> <br /><br />
+       4B) Realtime: &nbsp;
           <button name='startPause' onClick={this.handlePlay} >
-          {this.state.startButtonStr}</button> (high spec PC only)<br />
+          {this.state.startButtonStr}</button> &nbsp;&nbsp; 
+          <button name="stop" onClick={this.handlePlay} >STOP</button><br />
        </span> 
        <hr />
-       5) Play processed part: 
-       <hr />
-       6) Save processed part:
+       5) <button name="save" onClick={this.handleSave} >Save</button> 
+       
        <hr />
         Playback Vol: {this.state.playVolume} <br />
         <span className='slider'> 
@@ -264,7 +264,21 @@ class App extends Component {
   }
 
   handlePlay(e){
-    let source = null;
+    let source = this.params.currentSource;
+    let effectNode = this.params.effectNode;
+
+    if (e.target.name === 'stop'){
+      if (this.state.startButtonStr !== 'NotReady') {
+        source.stop();
+        if (effectNode !== null){
+          effectNode.disconnect();
+          effectNode.onaudioprocess = null;
+        }
+        this.setState({playingAt: this.state.A, startButtonStr: 'Play'});
+        this.params.isPlaying = false;
+      }
+      return;
+    }
 
     if (e.target.name === 'startPause'){
 
@@ -312,7 +326,6 @@ class App extends Component {
        source.buffer = modified;
 
 // Create effectNode
-       let effectNode;
        let channels = this.params.inputAudio.numberOfChannels;
        let bufferSize = this.params.fftShift; // 1024 window half step
 
