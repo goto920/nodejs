@@ -2,8 +2,8 @@
   "name": "filtered-player",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/demos/filtered-player/20200917",
-  "subversion": "-99",
+  "homepage": "/demos/filtered-player/20200930",
+  "subversion": "-00",
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^10.4.9",
