@@ -57,7 +57,7 @@ class App extends Component {
       ja: false,
       playingAt: 0, 
       A: 0, B: 0,
-      filterType: 'bypass',
+      filterType: "bypass",
       centerWidth: 0.2,
       playVolume: 80,
       startButtonStr: 'startPlay', // Start/Pause
@@ -122,26 +122,26 @@ class App extends Component {
        <hr />
        <span className='selector'>
        2) Filter: &nbsp;
-       <select name='selectFilter' defaultValue='bypass' 
+       <select name="selectFilter" value={this.state.filterType}
         onChange={this.selectFilter}>
-       <option value='bypass'>bypass</option>
-       <option value='drumCover'>drumCover</option>
-       <option value='karaokeMale'>karaokeMale</option>
-       <option value='karaokeFemale'>karaokeFemale</option>
-       <option value='percussive'>percussive</option>
-       <option value='harmonic'>harmonic</option>
-{/*       <option value='customWithGUI'>customWithGUI</option> */}
-       </select><br />centerWidth: &nbsp; 
-       <select name='centerWidth' defaultValue='0.2' 
-        value = {this.state.centerWidth}
-        onChange={this.selectFilter} >
-       <option value='0.1'>0.1</option>
-       <option value='0.2'>0.2</option>
-       <option value='0.3'>0.3</option>
-       <option value='0.4'>0.4</option>
-       <option value='0.5'>0.5</option>
-       <option value='0.6'>0.6</option>
-       <option value='0.7'>0.7</option>
+       <option value="bypass">bypass</option>
+       <option value="drumCover">drumCover</option>
+       <option value="karaokeMale">karaokeMale</option>
+       <option value="karaokeFemale">karaokeFemale</option>
+       <option value="percussive">percussive</option>
+       <option value="harmonic">harmonic</option>
+       <option value="setWithGUI">setWithGUI</option>
+       </select><br />
+       centerWidth: &nbsp; 
+       <select name="centerWidth" defaultValue="0.2"
+       value = {this.state.centerWidth} onChange={this.selectFilter}>
+       <option value="0.1Total: 242.">0.1</option>
+       <option value="0.2">0.2</option>
+       <option value="0.3">0.3</option>
+       <option value="0.4">0.4</option>
+       <option value="0.5">0.5</option>
+       <option value="0.6">0.6</option>
+       <option value="0.7">0.7</option>
        </select>
        &nbsp; Range: {-this.state.centerWidth/2} -- {this.state.centerWidth/2}
        </span>
@@ -150,35 +150,31 @@ class App extends Component {
         3) Time Range: {this.state.A.toFixed(2)} -- {this.state.B.toFixed(2)}
         <center>
         <Range style = {rangeStyle} min={0} max={duration} 
-           value = {[this.state.A,this.state.B]} 
+           value = {[this.state.A,this.state.playingAt, this.state.B]} 
+           allowCross={false}
+     trackStyle={[{ backgroundColor: 'red' }, { backgroundColor: 'green' }]}
+     handleStyle={[{backgroundColor: 'yellow' }, 
+                   {backgroundColor: 'gray' },
+                   {backgroundColor: 'yellow' }]}
            onChange={this.handleTimeRange}
            />
         </center>
         Total: {duration.toFixed(2)} sec &nbsp;&nbsp; 
         Current: {this.state.playingAt.toFixed(2)}
         </span>
-{/*
        <hr />
        <span>
-       <button name='startPause' onClick={this.handlePlay} 
-          style={startBStyle}>{this.state.startButtonStr}
-       </button> &nbsp;&nbsp;
-       <button name='rewind' onClick={this.handlePlay}>Rewind
-       </button> &nbsp;&nbsp;
-       </span>
-*/}
-       <hr />
-       <span>
-       4) Process Range: &nbsp; 
+       4A) Batch Processing: &nbsp; 
           <button name='processOffline' onClick={this.handleOffline} >
-       {this.state.processButtonStr}</button> &nbsp;&nbsp;
+          {this.state.processButtonStr}</button> <br />
+       4B) Realtime play: &nbsp;
+          <button name='startPause' onClick={this.handlePlay} >
+          {this.state.startButtonStr}</button> (high spec PC only)<br />
        </span> 
        <hr />
-       <span>
-       5) Process and SaveAll: &nbsp;
-       <button name='saveAll' onClick={this.handleOffline}>
-       {this.state.saveButtonStr}</button>
-       </span>
+       5) Play processed part: 
+       <hr />
+       6) Save processed part:
        <hr />
         Playback Vol: {this.state.playVolume} <br />
         <span className='slider'> 
@@ -433,7 +429,7 @@ class App extends Component {
         case 'drumCover': 
         case 'karaokeMale': 
         case 'karaokeFemale': 
-          effector.presetFilter(e.target.value, this.params.centerWidth);
+          effector.presetFilter(e.target.value, this.state.centerWidth);
         break;
         case 'percussive': case 'harmonic':
           effector.presetFilter(e.target.value, 0);
@@ -444,6 +440,7 @@ class App extends Component {
         break; // customWithGUI not implemented
         default:
       }
+
       this.setState({filterType: e.target.value});
     } 
 
@@ -457,7 +454,7 @@ class App extends Component {
 
   handleOffline(e){
 
-    if (e.target.name === 'process' || e.target.name === 'saveAll') {
+    if (e.target.name === 'processOffline' || e.target.name === 'saveAll') {
 
       let modified = null; 
       if (e.target.name === 'saveAll') {

@@ -7,12 +7,12 @@
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^10.4.9",
-    "@testing-library/user-event": "^12.1.5",
+    "@testing-library/user-event": "^12.1.6",
     "audiobuffer-to-wav": "^1.0.0",
     "fft-windowing": "^0.1.4",
     "file-saver": "^2.0.2",
     "kissfft-js": "^0.1.8",
-    "rc-slider": "^9.3.1",
+    "rc-slider": "^9.5.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "^3.4.3"
