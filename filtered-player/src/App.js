@@ -25,6 +25,7 @@ window.OfflineAudioContext = window.OfflineAudioContext
      || window.webkitOfflineAudioContext;
 
 var audioCtx = null;
+var offlineCtx = null;
 var gainNode = null;
 var effector = null;
 
@@ -44,9 +45,13 @@ class App extends Component {
     this.params = {
       inputAudio: null,
       outputAudio: null,
+      outputLength: 0,
       filename: null,
       currentSource: null,
       isPlaying: false,
+      isBatchPlaying: false,
+      isRendering: false,
+      playStartTime: 0,
       effectNode: null,
       fftShift: 512,
     }
@@ -60,16 +65,18 @@ class App extends Component {
       filterType: "bypass",
       centerWidth: 0.2,
       playVolume: 80,
-      startButtonStr: 'NotReady', // Start/Pause
-      processButtonStr: 'NotReady', 
-       // NotReady/Process/Abort/Play
-      saveButtonStr: 'NotReady' 
-       // NotReady/Save/Abort
+      startButtonStr: 'NotYet', // Start/Pause
+      processBatchButtonStr: 'NotYet', 
+       // NotYet/Start/Abort
+      playBatchButtonStr: 'NotYet', 
+       // NotYet/Play/Pause
+      saveButtonStr: 'NotYet' 
+       // NotYet/Save/Abort
     }
 
     this.loadFile = this.loadFile.bind(this);
     this.handleLang = this.handleLang.bind(this);
-    this.handleTimeSlider = this.handleTimeSlider.bind(this);
+//    this.handleTimeSlider = this.handleTimeSlider.bind(this);
     this.handleTimeRange = this.handleTimeRange.bind(this);
     this.handleVolumeSlider = this.handleVolumeSlider.bind(this);
     this.handlePlay = this.handlePlay.bind(this);
@@ -102,9 +109,15 @@ class App extends Component {
       duration = this.params.inputAudio.duration;
 
     let startBStyle = {};
-    if (this.state.startButtonStr === 'Pause') startBStyle = {color: 'green'};
+/*
+    if (this.state.startButtonStr === 'Pause'
+       || this.state.processtBatchButtonStr === 'Abort'
+       || this.state.playBatchButtonStr === 'Pause'
+       ) startBStyle = {color: 'green'};
+*/
 
     const rangeStyle = {width: '85%', cursor: 'pointer'};
+    const dotted = {border: 'none', borderTop: '1px dotted blue'};
 
     return(
       <div className="App">
@@ -133,7 +146,7 @@ class App extends Component {
        <option value="setWithGUI">setWithGUI</option>
        </select><br />
        centerWidth: &nbsp; 
-       <select name="centerWidth" defaultValue="0.2"
+       <select name="centerWidth" 
        value = {this.state.centerWidth} onChange={this.selectFilter}>
        <option value="0.1Total: 242.">0.1</option>
        <option value="0.2">0.2</option>
@@ -165,15 +178,26 @@ class App extends Component {
        <hr />
        <span>
        4A) Batch: &nbsp; 
-          <button name='processOffline' onClick={this.handleOffline} >
-          {this.state.processButtonStr}</button> <br /><br />
+          <button name='startBatch' style={startBStyle}
+          onClick={this.handleOffline} >
+          {this.state.processBatchButtonStr}</button> &nbsp;&nbsp;
+          Play: &nbsp;&nbsp;
+          <button name='playBatch' style={startBStyle}
+          onClick={this.handleOffline} >
+          {this.state.playBatchButtonStr}</button> &nbsp;&nbsp;
+          <button name='stopBatchPlay' onClick={this.handleOffline} >
+          Stop</button>
+       <hr style={dotted} />
        4B) Realtime: &nbsp;
-          <button name='startPause' onClick={this.handlePlay} >
+          <button name='startPause' style={startBStyle} 
+          onClick={this.handlePlay} >
           {this.state.startButtonStr}</button> &nbsp;&nbsp; 
-          <button name="stop" onClick={this.handlePlay} >STOP</button><br />
+          <button name="stop" onClick={this.handlePlay} >Stop</button><br />
        </span> 
        <hr />
-       5) <button name="save" onClick={this.handleSave} >Save</button> 
+       5) Save current output: &nbsp;
+          <button name="save" onClick={this.handleSave} >
+          {this.state.saveButtonStr}</button> 
        
        <hr />
         Playback Vol: {this.state.playVolume} <br />
@@ -212,8 +236,8 @@ class App extends Component {
             this.setState({playingAt: 0});
             this.setState({startButtonStr: 'Play'});
             this.setState({A: 0, B: audioBuffer.duration});
-            this.setState({processButtonStr: 'Process', 
-                           saveButtonStr: 'SaveAll'});
+            this.setState({processBatchButtonStr: 'Start', 
+                           saveButtonStr: 'NotYet'});
             effector = null;
             effector 
               = new Effector(this.params.fftShift,audioBuffer.sampleRate);
@@ -249,32 +273,42 @@ class App extends Component {
     return;
   }
 
+/*
   handleTimeSlider(e){
     if (this.params.isPlaying) return;
-
     if (e.target.name !== 'timeSlider') return;
-
     this.setState({playingAt: parseFloat(e.target.value)});
   }
+*/
 
   handleTimeRange(value){
     if (this.params.isPlaying) return;
 
-    this.setState({A: parseFloat(value[0]), B: parseFloat(value[1])});
+    this.setState({
+      A: parseFloat(value[0]), 
+      playingAt: parseFloat(value[1]),
+      B: parseFloat(value[2])
+    });
   }
 
   handlePlay(e){
-    let source = this.params.currentSource;
-    let effectNode = this.params.effectNode;
+
 
     if (e.target.name === 'stop'){
-      if (this.state.startButtonStr !== 'NotReady') {
-        source.stop();
+      if (this.state.startButtonStr !== 'NotYet') {
+        if (this.params.currentSource !== null){
+          this.params.currentSource.stop();
+          this.params.currentSource = null;
+        }
+
+        let effectNode = this.params.effectNode;
         if (effectNode !== null){
           effectNode.disconnect();
           effectNode.onaudioprocess = null;
         }
-        this.setState({playingAt: this.state.A, startButtonStr: 'Play'});
+        this.params.outputLength = this.state.playingAt - this.state.A;
+        this.setState({playingAt: this.state.A, startButtonStr: 'Play',
+          saveButtonStr: 'Save'});
         this.params.isPlaying = false;
       }
       return;
@@ -292,7 +326,7 @@ class App extends Component {
 // unlock iOS
        if(iOS) {
          let buffer = audioCtx.createBuffer(1,1,44100); 
-         source = audioCtx.createBufferSource();
+         let source = audioCtx.createBufferSource();
          source.buffer = buffer;
          source.connect (audioCtx.destination);
          source.start();
@@ -300,7 +334,7 @@ class App extends Component {
 // End unlock iOS
 
 // Playing
-       source = audioCtx.createBufferSource();
+       let source = audioCtx.createBufferSource();
        this.params.currentSource = source;
 
        // add 0.5 sec (sampleRate/2) at the beginning and the end
@@ -329,14 +363,15 @@ class App extends Component {
        let channels = this.params.inputAudio.numberOfChannels;
        let bufferSize = this.params.fftShift; // 1024 window half step
 
+       let effectNode = null;
        if (audioCtx.createJavaScriptNode) {
           effectNode 
            = audioCtx.createJavaScriptNode(bufferSize,channels,channels);
-          console.log ('createJavaScriptNode');
+          // console.log ('createJavaScriptNode');
        } else if (audioCtx.createScriptProcessor) {
          effectNode = audioCtx.createScriptProcessor(bufferSize, 
           channels,channels);
-          console.log ('createScriptProcessor');
+          // console.log ('createScriptProcessor');
        } // end if audioCtx
        this.params.effectNode = effectNode;
 
@@ -346,17 +381,6 @@ class App extends Component {
         gainNode.connect(audioCtx.destination);
         source.start(0,this.state.playingAt);
 
-// test filters (GUI)
-//        effector.addFilter(-1,0,1,40000,'M');
-//        effector.addFilter(-0.2,300,0.2,40000,'M');
-//        effector.addFilter(-1,0,1,40000,'P');
-//        effector.addFilter(-1,0,1,40000,'H');
-//        effector.presetFilter('karaokeMale');
-//        effector.presetFilter('drumCover');
-//        effector.presetFilter('percussive');
-//        effector.presetFilter('harmonic');
-//        effector.presetFilter('bypass');
-
         this.params.outputAudio =  audioCtx.createBuffer(
           modified.numberOfChannels, modified.length, modified.sampleRate);
 
@@ -365,14 +389,12 @@ class App extends Component {
 
           let inputBuffer = e.inputBuffer;
           let outputBuffer = e.outputBuffer;
-
-//          effector.copy(inputBuffer, outputBuffer); // for test
           effector.process(inputBuffer, outputBuffer);
-// save data
 
-/*
          let leftOut = outputBuffer.getChannelData(0);
          let rightOut = outputBuffer.getChannelData(1);
+
+        // save data
          let processedLeft = this.params.outputAudio.getChannelData(0);
          let processedRight = this.params.outputAudio.getChannelData(1);
 
@@ -381,14 +403,14 @@ class App extends Component {
            processedLeft[offset + sample] = leftOut[sample];
            processedRight[offset + sample] = rightOut[sample];
          }
-*/
 
          if (this.state.playingAt*inputBuffer.sampleRate >= modified.length){
             source.stop();
+            this.params.currentSource = null;
             effectNode.disconnect();
             effectNode.onaudioprocess = null;
-            // effector = null;
-            // this.fakeDownload(this.params.outputAudio);
+            effector = null;
+            this.setState({startButtonStr: 'Play', saveButtonStr: 'Save'});
             return;
           }
 
@@ -467,24 +489,78 @@ class App extends Component {
 
   handleOffline(e){
 
-    if (e.target.name === 'processOffline' || e.target.name === 'saveAll') {
+    if (e.target.name === 'playBatch') {
+      if (this.state.playBatchButtonStr === 'Play'){
+        // console.log('batchPlay');
+        if (this.params.isPlaying) return;
 
-      let modified = null; 
-      if (e.target.name === 'saveAll') {
-        modified = this.addOneSec(this.params.inputAudio, 
-           0, 
-           this.params.inputAudio.length);
-      } else { 
-        modified = this.addOneSec(this.params.inputAudio,
-           this.state.A*this.params.inputAudio.sampleRate,
-           this.state.B*this.params.inputAudio.sampleRate);
+        let source = audioCtx.createBufferSource()
+        this.params.currentSource = source;
+
+        source.buffer = this.params.outputAudio;
+        source.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        source.start(0,this.state.playingAt);
+        this.setState({playBatchButtonStr: 'Pause'});
+        this.params.playStartTime = audioCtx.currentTime;
+        this.params.isPlaying = true;
+
+      } else if (this.state.playBatchButtonStr === 'Pause'){
+        if (!this.params.isPlaying) return;
+
+        this.params.currentSource.stop();
+        this.setState({
+           playingAt: audioCtx.currentTime - this.params.playStartTime
+        });
       }
 
-      let offlineCtx = new OfflineAudioContext(
+      return;
+    }
+
+    if (e.target.name === 'stopBatchPlay'){
+        // console.log('batchPlay Stop');
+
+      if (this.params.currentSource !== null){
+        let source = this.params.currentSource;
+        source.stop();
+        this.params.currentSource = null;
+      }
+      this.params.isPlaying = false;
+      this.setState({playBatchButtonStr: 'Play'});
+      return;
+    }
+
+    if (e.target.name === 'startBatch') {
+
+      if (this.state.processBatchButtonStr === 'Abort'){
+
+        if (this.params.isRendering){
+          this.params.isRendering = false;
+          this.setState({
+            processBatchButtonStr: 'Start',
+            playBatchButtonStr: 'Play'
+          });
+          offlineCtx = null;
+          this.params.outputAudio 
+           = this.trimOutput(this.params.outputAudio,
+             this.state.playingAt - this.state.A);
+          this.setState({playingAt: this.state.A});
+         }
+
+        return;
+
+      } else if (this.state.processBatchButtonStr !== 'Start') return;
+
+      let modified = this.addOneSec(this.params.inputAudio,
+           this.state.A*this.params.inputAudio.sampleRate,
+           this.state.B*this.params.inputAudio.sampleRate);
+
+      offlineCtx = new OfflineAudioContext(
         modified.numberOfChannels, modified.length, modified.sampleRate
       );
 
       let source = offlineCtx.createBufferSource();     
+      this.params.currentSource = source;
       source.buffer = modified;
 
        let effectNode = null;
@@ -505,11 +581,15 @@ class App extends Component {
       let output 
         = audioCtx.createBuffer(modified.numberOfChannels, 
            modified.length, modified.sampleRate);
+      this.params.outputAudio = output;
       let leftOut = output.getChannelData(0);
       let rightOut = output.getChannelData(1);
 
       let offset = 0;
       effectNode.onaudioprocess = function(e) {
+
+         if (!this.params.isRendering) return; // For Abort
+        
          let input = e.inputBuffer; // input is OK
          // let output = e.outputBuffer; // does not work as expected
 
@@ -533,17 +613,15 @@ class App extends Component {
       }.bind(this);
 
       source.start();
+      this.params.isRendering = true;
       offlineCtx.startRendering();
+      this.setState({processBatchButtonStr: 'Abort'});
+
       offlineCtx.oncomplete = function(e) {
         // e.renderedBuffer; // useless (bug?)
-        let source = audioCtx.createBufferSource();
-        source.buffer = output;
-        source.connect(gainNode); 
-        gainNode.connect(audioCtx.destination);
-        source.start();
-        if (e.target.name === 'saveAll') this.fakeDownload(output);
-      }.bind(this);
+      }
 
+     return;
    } // end if testPlay
 
   } 
@@ -572,9 +650,36 @@ class App extends Component {
   }
 
   handleSave(e){ // offline processing (may work for this)
+
+    if (e.target.name !== 'save') return;
+
     if (this.params.outputAudio !== null)
-      this.fakeDownload(this.params.outputAudio);
+      this.fakeDownload(
+       this.trimOutput(this.params.outputAudio, this.params.outputLength));
+
   } // end handleSave
+
+
+  trimOutput(audioBuffer,duration){
+
+    let modified = audioCtx.createBuffer(
+           audioBuffer.numberOfChannels, 
+           audioBuffer.sampleRate * duration,
+           audioBuffer.sampleRate
+    );
+
+    let inL = audioBuffer.getChannelData(0);
+    let inR = audioBuffer.getChannelData(1);
+    let outL = modified.getChannelData(0);
+    let outR = modified.getChannelData(1);
+
+    for (let i=0; i < modified.length; i++){ 
+      outL[i] = inL[i]; 
+      outR[i] = inR[i];
+    }
+
+    return modified;
+  }
 
   fakeDownload(audioBuffer){
 

@@ -2,7 +2,7 @@
   "name": "filtered-player",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/demos/filtered-player/20200930",
+  "homepage": "/demos/filtered-player/20201001",
   "subversion": "-00",
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
