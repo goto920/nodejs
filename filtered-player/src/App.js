@@ -176,8 +176,9 @@ class App extends Component {
         Current: {this.state.playingAt.toFixed(2)}
         </span>
        <hr />
-       <span>
-       4A) Batch: &nbsp; 
+       <span className="small-button">
+       4) Processing: Batch or Realtime<br />
+       Batch: &nbsp; 
           <button name='startBatch' style={startBStyle}
           onClick={this.handleOffline} >
           {this.state.processBatchButtonStr}</button> &nbsp;&nbsp;
@@ -188,16 +189,16 @@ class App extends Component {
           <button name='stopBatchPlay' onClick={this.handleOffline} >
           Stop</button>
        <hr style={dotted} />
-       4B) Realtime: &nbsp;
+       Realtime: &nbsp;
           <button name='startPause' style={startBStyle} 
           onClick={this.handlePlay} >
           {this.state.startButtonStr}</button> &nbsp;&nbsp; 
           <button name="stop" onClick={this.handlePlay} >Stop</button><br />
-       </span> 
        <hr />
-       5) Save current output: &nbsp;
+       5) Export output buffer: &nbsp;
           <button name="save" onClick={this.handleSave} >
           {this.state.saveButtonStr}</button> 
+       </span> 
        
        <hr />
         Playback Vol: {this.state.playVolume} <br />
@@ -308,7 +309,7 @@ class App extends Component {
         }
         this.params.outputLength = this.state.playingAt - this.state.A;
         this.setState({playingAt: this.state.A, startButtonStr: 'Play',
-          saveButtonStr: 'Save'});
+          saveButtonStr: 'Export'});
         this.params.isPlaying = false;
       }
       return;
@@ -492,7 +493,7 @@ class App extends Component {
     if (e.target.name === 'playBatch') {
       if (this.state.playBatchButtonStr === 'Play'){
         // console.log('batchPlay');
-        if (this.params.isPlaying) return;
+        if (this.params.isBatchPlaying) return;
 
         let source = audioCtx.createBufferSource()
         this.params.currentSource = source;
@@ -503,10 +504,10 @@ class App extends Component {
         source.start(0,this.state.playingAt);
         this.setState({playBatchButtonStr: 'Pause'});
         this.params.playStartTime = audioCtx.currentTime;
-        this.params.isPlaying = true;
+        this.params.isBatchPlaying = true;
 
       } else if (this.state.playBatchButtonStr === 'Pause'){
-        if (!this.params.isPlaying) return;
+        if (!this.params.isBatchPlaying) return;
 
         this.params.currentSource.stop();
         this.setState({
@@ -519,14 +520,18 @@ class App extends Component {
 
     if (e.target.name === 'stopBatchPlay'){
         // console.log('batchPlay Stop');
+      if (!this.params.isBatchPlaying) return;
 
       if (this.params.currentSource !== null){
         let source = this.params.currentSource;
         source.stop();
-        this.params.currentSource = null;
+        // this.params.currentSource = null;
       }
       this.params.isPlaying = false;
-      this.setState({playBatchButtonStr: 'Play'});
+      this.params.outputLength = this.state.playingAt - this.state.A;
+      this.setState({
+         playBatchButtonStr: 'Play',
+         processBatchButtonStr: 'Start'});
       return;
     }
 
@@ -538,8 +543,9 @@ class App extends Component {
           this.params.isRendering = false;
           this.setState({
             processBatchButtonStr: 'Start',
-            playBatchButtonStr: 'Play'
+            playBatchButtonStr: 'Play',
           });
+          this.params.isBatchPlaying = false;
           offlineCtx = null;
           this.params.outputAudio 
            = this.trimOutput(this.params.outputAudio,
@@ -569,8 +575,10 @@ class App extends Component {
        } else if (offlineCtx.createScriptProcessor) {
          effectNode = offlineCtx.createScriptProcessor(this.params.fftShift,2,2)
        } else {
-         console.log ('offlineCtx scriptprocessor not supported');
+         console.log (
+           'offlineCtx JavaScriptNode/ScriptProcessor not supported');
          effectNode = null;
+         return;
        }  // end if audioCtx
        this.params.effectNode = effectNode;
 
@@ -619,7 +627,14 @@ class App extends Component {
 
       offlineCtx.oncomplete = function(e) {
         // e.renderedBuffer; // useless (bug?)
-      }
+        this.params.isBatchPlaying = false;
+        this.params.outputLength = this.state.playingAt - this.state.A;
+        this.setState({
+          playBatchButtonStr: 'Play',
+          processBatchStr: 'Start',
+          saveButtonStr: 'Export'}
+        );
+      }.bind(this);
 
      return;
    } // end if testPlay
