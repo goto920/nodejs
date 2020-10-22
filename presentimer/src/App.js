@@ -4,21 +4,7 @@ import './App.css';
 import packageJSON from '../package.json'
 import WAAClock from 'waaclock'
 import BufferLoader from './buffer-loader'
-import cowbell_mid from './cowbell_mid.mp3'
-import cowbell_high from './cowbell_high.mp3'
-import rideCup from './rideCup.mp3'
-import church from './church.mp3'
-import hotel from './hotel.mp3'
-import more01 from './01more.mp3'
-import more02 from './02more.mp3'
-import more03 from './03more.mp3'
-import more04 from './04more.mp3'
-import more05 from './05more.mp3'
-import more10 from './10more.mp3'
-import more15 from './15more.mp3'
-import more20 from './20more.mp3'
-import endTalk from './endTalk.mp3'
-import endSession from './endSession.mp3'
+import soundList from './soundList.js';
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
@@ -71,21 +57,7 @@ class App extends Component {
     clock.start()
 
     let inputFiles = []
-    inputFiles[0] = cowbell_mid 
-    inputFiles[1] = cowbell_high
-    inputFiles[2] = rideCup
-    inputFiles[3] = church
-    inputFiles[4] = hotel
-    inputFiles[5] = more01 
-    inputFiles[6] = more02
-    inputFiles[7] = more03 
-    inputFiles[8] = more04 
-    inputFiles[9] = more05
-    inputFiles[10] = more10 
-    inputFiles[11] = more15 
-    inputFiles[12] = more20
-    inputFiles[13] = endTalk
-    inputFiles[14] = endSession
+    inputFiles = soundList;
 
     let bufferLoader = new BufferLoader(
       context, inputFiles, function(bufferList) {
@@ -201,7 +173,7 @@ class App extends Component {
        <input type='radio' name='alarmSound' value='church' 
            onChange={this.handleUI}/>Church, 
        <input type='radio' name='alarmSound' value='hotel' 
-           defaultChecked='true' onChange={this.handleUI}/>Hotel, 
+           onChange={this.handleUI}/>Hotel, 
        <input type='radio' name='alarmSound' value='voice' 
            onChange={this.handleUI}/>Voice,
        <input type='radio' name='alarmSound' value='mute' 
@@ -209,7 +181,9 @@ class App extends Component {
        </span>
       <br/>
       <hr/>
-      Version: {version}, <a href={homepage} target='_blank'>Manual/Update</a>
+      Version: {version}, 
+       <a href={homepage} target="_blank" 
+       rel="noopener noreferrer">Manual/Update</a>
       </div>
     );
   }

@@ -2,7 +2,7 @@
   "name": "presentimer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/demos/presentimer/20200403",
+  "homepage": "/demos/presentimer/20201022",
   "subversion": "00",
   "dependencies": {
     "react": "^16.13.1",
