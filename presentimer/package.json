@@ -2,7 +2,7 @@
   "name": "presentimer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/demos/presentimer/20201022",
+  "homepage": "/demos/presentimer/20201026",
   "subversion": "00",
   "dependencies": {
     "react": "^16.14.0",
@@ -11,7 +11,7 @@
     "waaclock": "^0.5.3"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "BROWSER='/opt/google/chrome/chrome' react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"

@@ -21,7 +21,7 @@ class App extends Component {
     super(props)
 
     this.state = {
-      startButtonStr: 'Start',
+      timerState: 'initial', // 'initial', 'running', 'paused'
       timerString: '00:00',
       timerStyle: {color: 'black'}
     }
@@ -41,8 +41,8 @@ class App extends Component {
     this.processTimer = this.processTimer.bind(this)
     this.playSound = this.playSound.bind(this)
 
-    this.state.timerString 
-      = ('00' + this.params.presentationTime).slice(-2) + ':00' 
+    this.state.timerString = ('00' + this.params.presentationTime).slice(-2)
+       + ':00' 
     this.timerEvent = undefined
     this.soundList = []
   }
@@ -66,17 +66,26 @@ class App extends Component {
      }.bind(this)
     )
     bufferLoader.load()
+
   }
 
   componentWillUnmount () {
     window.removeEventListener('beforeunload', this.handleWindowClose)
-    context.close()
   }
  
   render() {
 
     const color = {color: this.state.timerStyle.color}
-    const {timerString, startButtonStr} = this.state
+    const timerString = this.state.timerString
+    let startButtonStr
+
+    if (this.state.timerState === 'initial') 
+      startButtonStr = 'Start'
+    else if (this.state.timerState === 'paused') 
+      startButtonStr = 'Cont.'
+    else if (this.state.timerState === 'running') 
+      startButtonStr = 'Pause'
+    else console.log('timerState error')
 
     return (
       <div className='presentimer'>
@@ -86,8 +95,7 @@ class App extends Component {
       <div className='timebox' style={color}>{timerString}</div>
       <hr/>
       <span className='redbutton'>
-      <button name='startStop' value={startButtonStr}
-                onClick={this.handleUI}>{startButtonStr}</button>
+      <button name='startStop' onClick={this.handleUI}>{startButtonStr}</button>
       </span>
       &nbsp; &nbsp;
       <span className='redbutton'>
@@ -167,7 +175,7 @@ class App extends Component {
        <input type='radio' name='alarmSound' value='hotel' 
            onChange={this.handleUI}/>Hotel, 
        <input type='radio' name='alarmSound' value='voice' 
-           defaultChecked onChange={this.handleUI}/>Voice,
+           onChange={this.handleUI}/>Voice,
        <input type='radio' name='alarmSound' value='mute' 
            onChange={this.handleUI}/>Mute
        </span>
@@ -181,33 +189,30 @@ class App extends Component {
   }
 
   handleUI (event) {
-
     if (event.target.name === 'startStop'){
 
-      switch (this.state.startButtonStr){
+      if (this.state.timerState === 'running'){ // stop
+        this.params.pausedAt = context.currentTime - this.params.beginTime
+        this.timerEvent.clear()
+        this.setState({timerState: 'paused'})
+      } else if (this.state.timerState === 'initial') { // start
 
-        case 'Start':
-          if (context.state === 'suspended') context.resume()
-          this.setState({timerStyle: {color: 'blue'}})
-          this.params.beginTime = context.currentTime
-          this.timerEvent = clock.callbackAtTime(function (event) {
-            this.processTimer() 
-          }.bind(this), context.currentTime)
+        this.params.beginTime = context.currentTime
+        this.timerEvent = clock.callbackAtTime(function (event) {
+        this.processTimer()
+         }.bind(this), context.currentTime)
+        .repeat(1.0)
+        .tolerance({early: 0.1, late: 1})
+        this.setState({timerState: 'running'})
+      } else if (this.state.timerState === 'paused') { // continue
+        this.params.beginTime = context.currentTime 
+             - this.params.pausedAt 
+        this.timerEvent = clock.callbackAtTime(function (event) {
+        this.processTimer()
+         }.bind(this), context.currentTime + (this.params.pausedAt % 1))
         .repeat(1.0)
         .tolerance({early: 0.1, late: 0.1})
-        this.setState({startButtonStr: 'Pause'})
-        break;
-
-        case 'Pause':
-          if (context.state === 'running') context.suspend()
-          this.setState({startButtonStr: 'Cont.'})
-        break;
-
-        case 'Cont.':
-          if (context.state === 'running') context.resume()
-          this.setState({startButtonStr: 'Pause'})
-        break;
-        default:
+        this.setState({timerState: 'running'})
       }
 
       return
@@ -216,16 +221,14 @@ class App extends Component {
     if (event.target.name === 'reset'){
       if (this.timerEvent !== undefined) this.timerEvent.clear()
       let timerStr = this.params.presentationTime + ':00' 
-      timerStr = ('00' + this.params.presentationTime).slice(-2) + ':00'
-      this.setState({startButtonStr: 'Start', timerString: timerStr,
+      this.setState({timerState: 'initial', timerString: timerStr,
          timerStyle: {color: 'black'}})
-      if (context.state === 'running') context.suspend()
       return
     }
 
     if (event.target.name === 'presenTime'){
       this.params.presentationTime = parseInt(event.target.value,10)
-      let timerStr = ('00' + this.params.presentationTime).slice(-2) + ':00'
+      let timerStr = this.params.presentationTime + ':00' 
       this.setState({timerString: timerStr})
       return
     }
@@ -234,7 +237,8 @@ class App extends Component {
       this.params.warningTime = parseInt(event.target.value,10)
       if (this.params.warningTime >= this.params.presentationTime)
          this.params.warningTime = 0 // none
-      return
+
+
     }
 
     if (event.target.name === 'qAndATime'){
@@ -244,6 +248,7 @@ class App extends Component {
 
     if (event.target.name === 'alarmSound'){
       this.params.sound = event.target.value
+      // console.log(this.params.sound)
       return
     }
 
@@ -258,110 +263,123 @@ class App extends Component {
     let currentSec = context.currentTime - this.params.beginTime
     let timerStr
     let over
+    let color
 
     if (currentSec 
-       <= (this.params.presentationTime - this.params.warningTime)*60){
+       < (this.params.presentationTime - this.params.warningTime)*60){
       let left = this.params.presentationTime*60 - currentSec
       timerStr = ('00' + parseInt(left/60,10)).slice(-2) 
            + ':' + ('00' + parseInt(left % 60,10)).slice(-2) 
-      if (parseInt(left - this.params.warningTime*60) === 0){
-           this.playSound(1)
-           this.setState({timerStyle: {color: 'orange'}})
-      }
-    } else if (currentSec <= this.params.presentationTime*60){
+      color = 'blue'
+    } else if (currentSec < this.params.presentationTime*60){
       let left = this.params.presentationTime*60 - currentSec
       timerStr = ('00' + parseInt(left/60,10)).slice(-2) 
           + ':' + ('00' + parseInt(left % 60,10)).slice(-2) 
-      if (parseInt(left) === 0) {
-        this.playSound(2)
-        this.setState({timerStyle: {color: 'green'}})
-      }
+      color = 'orange'
     } else if (currentSec 
-        <= (this.params.presentationTime + this.params.qAndATime)*60 ){
+        <= (this.params.presentationTime
+          + this.params.qAndATime)*60 ){
       over = currentSec - this.params.presentationTime*60 
       timerStr = ('+' + parseInt(over/60,10))
-           + ':' + ('00' + parseInt(over % 60)).slice(-2) 
-      if (parseInt(over - this.params.qAndATime*60) === 0){
-        this.playSound(3)
-        this.setState({timerStyle: {color: 'red'}})
-      }
+           + ':' + ('00' + parseInt(over % 60,10)).slice(-2) 
+      color = 'green'
     } else {
       // console.log('End Q and A Time')
       over = currentSec - parseInt(this.params.presentationTime,10)*60 
       timerStr = ('++' + parseInt(over/60,10))
            + ':' + ('00' + parseInt(over % 60,10)).slice(-2) 
+      color = 'red'
     }
 
-    this.setState({timerString: timerStr })
+    if (color === this.state.timerStyle.color){
+      this.setState({timerString: timerStr})
+    } else {
+      this.setState({timerString: timerStr, timerStyle: {color: color}})
 
+      if (this.params.sound !== 'mute'){
+        if (color === 'orange') this.playSound(1)
+        else if (color === 'green')  this.playSound(2)
+        else if (color === 'red')  this.playSound(3)
+      }
+    }
   } // end of processTimer()
 
   playSound(phase){
-
-    if (this.params.sound === 'mute') return;
-
-    let sound
-    switch (this.params.sound){
-      case 'cowbell_mid': sound = this.soundList[0]; break;
-      case 'cowbell_high': sound = this.soundList[1]; break;
-      case 'cowbell_rideCup': sound = this.soundList[2]; break;
-      case 'cowbell_church': sound = this.soundList[3]; break;
-      case 'cowbell_hotel': sound = this.soundList[4]; break;
-      default:
-        sound = null;
-    }
-
-    switch (this.params.warningTime){ // x more minutes
-      case 0: this.params.warningSound = null; break;
-      case 1: this.params.warningSound = this.soundList[5]; break;
-      case 2: this.params.warningSound = this.soundList[6]; break;
-      case 3: this.params.warningSound = this.soundList[7]; break;
-      case 4: this.params.warningSound = this.soundList[8]; break;
-      case 5: this.params.warningSound = this.soundList[9]; break;
-      case 10: this.params.warningSound = this.soundList[10]; break;
-      case 15: this.params.warningSound = this.soundList[11]; break;
-      case 20: this.params.warningSound = this.soundList[12]; break;
-      default: this.params.warningSound = null;
-    }
-  
     let source
-    if (phase === 1){
-      source = context.createBufferSource()
-      if (this.params.sound === 'voice')
-        source.buffer = this.params.warningSound // X more minutes
-      else source.buffer = sound
+    // console.log(phase)
+    let sound
+    if (this.params.sound === 'cowbell_mid') 
+        sound = this.soundList[0] 
+    else if (this.params.sound === 'cowbell_high') 
+        sound = this.soundList[1] 
+    else if (this.params.sound === 'rideCup') 
+        sound = this.soundList[2] 
+    else if (this.params.sound === 'church') 
+        sound = this.soundList[3] 
+    else if (this.params.sound === 'hotel') 
+        sound = this.soundList[4] 
 
-      source.connect(context.destination)
-      source.start();
+    if (this.params.warningTime === 0)
+      this.params.warningSound = null
+    else if (this.params.warningTime === 1)
+      this.params.warningSound = this.soundList[5]
+    else if (this.params.warningTime === 2)
+      this.params.warningSound = this.soundList[6]
+    else if (this.params.warningTime === 3)
+      this.params.warningSound = this.soundList[7]
+    else if (this.params.warningTime === 4)
+      this.params.warningSound = this.soundList[8]
+    else if (this.params.warningTime === 5)
+      this.params.warningSound = this.soundList[9]
+    else if (this.params.warningTime === 10)
+      this.params.warningSound = this.soundList[10]
+    else if (this.params.warningTime === 15)
+      this.params.warningSound = this.soundList[11]
+    else if (this.params.warningTime === 20)
+      this.params.warningSound = this.soundList[12]
+
+    if (phase === 1){
+      if (this.params.sound === 'voice'){
+        source = context.createBufferSource()
+        source.buffer = this.params.warningSound // X more minutes
+        source.connect(context.destination)
+        source.start(context.currentTime)
+      } else {
+        source = context.createBufferSource()
+        source.buffer = sound
+        source.connect(context.destination)
+        source.start(context.currentTime)
+      }
       return
     } 
 
     if (phase === 2){
 
-      if (this.params.sound === 'voice'){
+     if (this.params.sound === 'voice'){
         source = context.createBufferSource()
         source.buffer = this.soundList[13] // End of Talk
         source.connect(context.destination)
-        source.start();
-      } else {
-        for (let i = 0; i < 2; i++){
+        source.start(context.currentTime)
+     } else {
+        for (let i = 0; i < phase; i++){
           source = context.createBufferSource()
           source.buffer = sound // bell
           source.connect(context.destination)
           source.start(context.currentTime + i*1.5)
         }
-      }
-      return
-    }
+     }
+     return
+   }
 
-    if (phase === 3){
-      if (this.params.sound === 'voice') {
-        source = context.createBufferSource()
-        source.buffer = this.soundList[14] // End of Session
-        source.connect(context.destination)
-        source.start();
-      } else {
-        for (let i = 0; i < 3; i++){
+   if (phase === 3){
+      // console.log(this.params.sound)
+     if (this.params.sound === 'voice') {
+       source = context.createBufferSource()
+       source.buffer = this.soundList[14] // End of Session
+       source.connect(context.destination)
+       source.start(context.currentTime)
+     } else {
+        for (let i = 0; i < phase; i++){
           source = context.createBufferSource()
           source.buffer = sound
           source.connect(context.destination)
@@ -372,6 +390,7 @@ class App extends Component {
    } // end phase 2
 
    return
+   
   } // end of playSound()
 
 }

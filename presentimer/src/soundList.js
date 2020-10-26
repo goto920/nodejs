@@ -14,19 +14,9 @@ import more20 from './soundFonts/20more.mp3';
 import endTalk from './soundFonts/endTalk.mp3';
 import endSession from './soundFonts/endSession.mp3';
 
-/*
-var soundList = [
-'cowbell_mid.mp3', 'cowbell_high.mp3', 'rideCup.mp3', 'church.mp3', 'hotel.mp3',
-'01more.mp3', '02more.mp3', '03more.mp3', '04more.mp3',  '05more.mp3',  
-'10more.mp3', '15more.mp3', '20more.mp3', 'endTalk.mp3', 'endSession.mp3'];
-*/
-
 var soundList = [
 cowbell_mid, cowbell_high, rideCup, church, hotel,
 more01, more02, more03, more04,  more05,  
 more10, more15, more20, endTalk, endSession];
 
-console.log('soundList', soundList);
-
 export default soundList;
-
