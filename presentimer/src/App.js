@@ -188,14 +188,23 @@ class App extends Component {
 
         case 'Start':
           if (context.state === 'suspended') context.resume()
+
+          // Unlock iOS audio output
+          let buffer = context.createBuffer(1,1,44100) 
+          let source = context.createBufferSource()
+          source.buffer = buffer
+          source.connect (context.destination)
+          source.start()
+          
           this.setState({timerStyle: {color: 'blue'}})
           this.params.beginTime = context.currentTime
+
           this.timerEvent = clock.callbackAtTime(function (event) {
             this.processTimer() 
           }.bind(this), context.currentTime)
-        .repeat(1.0)
-        .tolerance({early: 0.1, late: 0.1})
-        this.setState({startButtonStr: 'Pause'})
+          .repeat(1.0)
+          .tolerance({early: 0.1, late: 0.1})
+          this.setState({startButtonStr: 'Pause'})
         break;
 
         case 'Pause':
