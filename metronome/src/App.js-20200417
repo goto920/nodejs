@@ -11,27 +11,23 @@ import soundList from './soundList.js'
 
 // global variable
 window.AudioContext = window.AudioContext || window.webkitAudioContext
-var context = null
-var clock = null
-var timerClock = null
+var context
+var clock
+var timerClock
 var gainNode = []
 
 const version = (packageJSON.homepage + packageJSON.subversion).slice(-10)
- // defined in package.json
+ // define in package.json
+// const early = 0.1
 const early = 0.1
 const late = 0.1
 const jaText = messages.ja
 const usText = messages.us
-
-var m
-// alert(window.navigator.language)
-if (window.navigator.language.slice(0,2) === 'ja') m = jaText
-else m = usText
+var m = usText
 
 class App extends Component {
   constructor (props) {
-    // super(props)
-    super()
+    super(props)
 
     this.params = {
       minBpm: 30.0,
@@ -62,7 +58,6 @@ class App extends Component {
       newSongName: ''
     }
 
-
     for (let i = 0; i < loadedClickPatterns.length; i++) {
       if (loadedClickPatterns[i].default === true) {
         this.params.default_clickPatternNo = i
@@ -84,7 +79,7 @@ class App extends Component {
     this.timeOutEvent = 0
 
     this.state = {
-      ja: (m === jaText),
+      ja: false,
       rest: 0,
       restBars: 0,
       playing: false,
@@ -121,10 +116,7 @@ class App extends Component {
       selectedSong: {name: 'none'} // default
     } // end state
 
-    this.restoreSavedList()
-    this.state.selectedSetList = this.params.setLists[0]
-
-//    this.setState = this.setState.bind(this)
+    this.setState = this.setState.bind(this)
     this.startStopDrums = this.startStopDrums.bind(this)
     this.customPlay = this.customPlay.bind(this)
     this.handleMenu = this.handleMenu.bind(this)
@@ -153,20 +145,18 @@ class App extends Component {
     }
   } // end constructor
 
-//  componentWillMount () { // before render()
-  restoreSavedList () { // in constructor
+  componentWillMount () { // before render()
     const savedSetLists = JSON.parse(localStorage.getItem('savedSetLists'))
+
     if (savedSetLists === null) {
-      this.params.setLists.push(
-        {name: 'default', items: []}, loadedSetListSample)
+      this.params.setLists.push({name: 'default', items: []}, loadedSetListSample)
     } else {
       for (let i = 0; i < savedSetLists.length; i++) {
         this.params.setLists.push(savedSetLists[i])
       }
       this.params.setLists.push(loadedSetListSample)
     }
-    // this.setState({selectedSetList: this.params.setLists[0]})
-    // this.state.selectedSetList = this.params.setLists[0]
+    this.setState({selectedSetList: this.params.setLists[0]})
   }
 
   componentDidMount () {
@@ -205,8 +195,7 @@ class App extends Component {
     if (this.params.setLists.length > 0) {
       let saveLists = []
       for (let i = 0; i < this.params.setLists.length; i++) {
-        if (this.params.setLists[i].name !== 'sample')
-          saveLists.push(this.params.setLists[i])
+        if (this.params.setLists[i].name !== 'sample') { saveLists.push(this.params.setLists[i]) }
       }
       // console.log('save ' + saveLists.length + ' items')
       if (saveLists.length > 0) {
@@ -543,7 +532,7 @@ class App extends Component {
             onChange={handlePattern}>
             {drumPatternOptions}
           </select>
-        </span>&nbsp; <br />
+        </span>&nbsp;
         <input type='checkbox' name='voiceOn'
           checked={voiceOn} onChange={handlePattern} />
         {m.voice}: <select name='voice' value={voice} onChange={handlePattern}>
@@ -681,7 +670,7 @@ class App extends Component {
     }
 
     if (event.target.name === 'stop') {
-      for (let notes = 0; notes < this.tickEvents.length; notes++) { this.tickEvents[notes].clear() }
+      for (let beat = 0; beat < this.tickEvents.length; beat++) { this.tickEvents[beat].clear() }
       this.tickEvents.splice(0, this.tickEvents.length)
       loopStat.playing = false
       this.setState({loopStat: loopStat})
@@ -689,7 +678,7 @@ class App extends Component {
     }
 
     if (event.target.name === 'start') {
-     if (clock === null) {
+     if (clock === undefined) {
        clock = new WAAClock(context)
        timerClock = clock
        clock.start()
@@ -722,14 +711,14 @@ class App extends Component {
       if (loopStat.bar === 0) { this.params.startTime = context.currentTime } else { this.params.startTime = this.params.nextTick }
 
       this.params.count = 0
-      for (let notes = 0; notes < this.params.numerator; notes++) {
+      for (let beat = 0; beat < this.params.numerator; beat++) {
         event = clock.callbackAtTime(
           function (event) {
             this.playPattern(event.deadline)
           }.bind(this),
-          this.nextTick(notes)
+          this.nextTick(beat)
         ).tolerance({early: early, late: late})
-        this.tickEvents[notes] = event
+        this.tickEvents[beat] = event
       } // end for
 
       loopStat.bar++
@@ -937,8 +926,6 @@ class App extends Component {
   } // end handleSetLists
 
   startStopDrums (event) {
-    if (context.state === 'suspended') context.resume()
-/*
 // Unlock iOS 
      let buffer = context.createBuffer(1,1,22050); 
      let source = context.createBufferSource();
@@ -946,9 +933,7 @@ class App extends Component {
      source.connect (context.destination);
      source.start();
 // End unlock
-*/
     if (event.target.name === 'startStop') {
-
       if (this.state.loopStat.playing) {
         this.customPlay({target: {name: 'stop'}})
       }
@@ -970,12 +955,13 @@ class App extends Component {
     }
 
     if (event.target.name === 'start') {
-      if (clock === null){
+      if (clock === undefined){
        clock = new WAAClock(context)
        timerClock = clock
        clock.start()
       }
       const selected = this.params.currentPattern
+      // console.log('start with: ' + selected.name)
       this.params.numerator = selected.numerator
       this.params.denominator = selected.denominator
 
@@ -1009,21 +995,21 @@ class App extends Component {
   } // end startStopDrums()
 
 // https://github.com/sebpiq/WAAClock/blob/master/demos/beatSequence.js
-  nextTick (noteIndex) {
-    const noteInterval = 60.0 / (this.state.bpm * this.params.denominator / 4)
-    const barInterval = noteInterval * this.params.numerator
+  nextTick (beatInd) {
+    const beatDur = 60.0 / (this.state.bpm * this.params.denominator / 4)
+    const barDur = beatDur * this.params.numerator
 
     const currentTime = context.currentTime
     const relativeTime = Math.max(0, currentTime - this.params.startTime)
-    var currentBar = Math.floor(relativeTime / barInterval)
+    var currentBar = Math.floor(relativeTime / barDur)
 
     let offset = 0
-    if (this.params.swing && (noteIndex % 2) === 1) {
-      offset = (this.state.swingVal - 1.5) / 1.5 * noteInterval
+    if (this.params.swing && (beatInd % 2) === 1) {
+      offset = (this.state.swingVal - 1.5) / 1.5 * beatDur
     }
 
     return this.params.startTime + offset +
-           currentBar * barInterval + noteIndex * noteInterval
+           currentBar * barDur + beatInd * beatDur
   }
 
   playPattern (deadline) {
