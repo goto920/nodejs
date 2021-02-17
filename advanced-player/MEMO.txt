@@ -1,0 +1,86 @@
+audioworklet version of filtered-player
+
+https://qiita.com/ryoyakawai/items/1160586653330ccbf4a4
+https://googlechromelabs.github.io/web-audio-samples/audio-worklet/
+
+class CLASS extends AudioWorkletProcessor {
+  process(inputs, outputs) {
+    return true;
+  }
+}
+
+registerProcessor('NAME', CLASS);
++++++++++++ 
+From main
+
+await context.audioWorklet.addModule('noise-generator.js');
+const noiseGenerator = new AudioWorkletNode(context, 'noise-generator');
+
+problem with loading (file PATH?)
+
+React Example: https://github.com/spidercatnat/react-audio-worklet-example
+
+addModule() problem
+  worklet JS files cannot be loaded
+  use PUBLIC URL
+
+Everything in async function?
+
+https://www.g200kg.com/archives/2019/01/webaudio-api-au.html
+
+Buffer size is 128 frame (fixed).
+
+https://slacker.ro/2020/05/07/high-performance-web-audio-with-audioworklet-in-firefox/
+
+async play  (AudioWorkletNode in here)
+
+import in AudioWorkletProcessor does not work -- expose-loader ?
+
+Examples https://padenot.github.io/web-audio-api/#AudioWorklet-Examples
+
+RequireJS optimizer
+
+https://requirejs.org/docs/optimization.html#requirements
+
+https://superpowered.com/js-wasm-sdk/docs.html
+
+https://github.com/vercel/ncc 
+--> module???
+
+++++++++++++++++++++++
+Worklet loader 
+https://github.com/reklawnos/worklet-loader
+NG
+++++++++++++++++++
+Use webpack
+const webpack = require('webpack');
+const path = require('path');
+const fs = require('fs');
+
+module.exports = {
+  mode: "production",
+  entry: './src/filter-processor.js',
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'worklet.js',
+  },
+  externals: ["fs"],
+};
+# npx webpack
+
+src/
+dist/worklet.js
+node_modules/kissfft-js/
+++++
+https://www.toptal.com/webassembly/webassembly-rust-tutorial-web-audio
+React and Rust
+RRust
+
+++++++++++++++++++
+browserify!!かな?
+
+npm install -g browserify
+npm install esmify --save-dev
+
+  browserify index.js -p esmify > bundle.js
+Error: Cannot find module 'browser-resolve'

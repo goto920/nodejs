@@ -1,0 +1,12 @@
+{
+  "us": {
+   "title": "KG's Filtering Player",
+   "guide": "guide/update",
+   "homepage": "https://goto920.github.io/demos/advanced-player/"
+  },
+  "ja" : {
+   "title": "KG's フィルタリングプレイヤー",
+   "guide": "ガイド/更新",
+   "homepage": "https://goto920.github.io/demos/advanced-player/index-jp.html"
+  }
+}
