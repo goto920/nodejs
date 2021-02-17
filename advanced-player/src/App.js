@@ -24,10 +24,7 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 window.OfflineAudioContext = window.OfflineAudioContext 
      || window.webkitOfflineAudioContext;
 
-// var audioCtx = null;
 var offlineCtx = null;
-// var gainNode = null;
-// var effector = null;
 
 var iOS = false;
 if(  navigator.userAgent.match(/iPhone/i) 
@@ -121,7 +118,7 @@ class App extends Component {
     try {
       await this.audioCtx.audioWorklet.addModule('worklet/bundle.js');
     } catch(e) {
-      alert(e + '\n load failed');
+      alert(e + '\n audioWorklet: load failed');
       return false;
     }
 
@@ -270,6 +267,10 @@ class App extends Component {
             // effector = null;
           }
 
+           // load effect module    
+          if (!this.state.modLoaded) 
+             this.setState({modLoaded: this.loadModule()});
+
         }.bind(this),
           function (error) { console.log ("Filereader error: " + error.err) 
         }
@@ -279,9 +280,6 @@ class App extends Component {
 
     reader.readAsArrayBuffer(file);
 
-  // load effect module    
-    if (!this.state.modLoaded) 
-      this.setState({modLoaded: this.loadModule()});
 
   }
 
