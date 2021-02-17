@@ -2,12 +2,12 @@
   "name": "metronome",
   "version": "0.9.8",
   "private": true,
-  "homepage": "/demos/metronome2/20200417",
+  "homepage": "/demos/metronome2/20201028",
   "subversion": "00",
   "dependencies": {
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-scripts": "^3.4.3",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "react-scripts": "^3.4.4",
     "waaclock": "^0.5.3"
   },
   "scripts": {

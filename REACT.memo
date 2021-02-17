@@ -3,3 +3,12 @@ https://reactjs.org/docs/create-a-new-react-app.html
 npx create-react-app my-app
 cd my-app
 npm start
+
+++++++++++++++
+NPM update itself
+ npm install -g npm
+
++++++++++++++++++++++++
+
+For new version of create-react-app
+npx create-react-app my-app --template cra-template-pwa

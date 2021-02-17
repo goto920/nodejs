@@ -2,16 +2,16 @@
   "name": "variablespeedplayer",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/demos/variableplayer/20200401",
-  "subversion": "-08",
+  "homepage": "/demos/variableplayer/20201105",
+  "subversion": "-00",
   "dependencies": {
     "audiobuffer-to-wav": "^1.0.0",
     "file-saver": "^2.0.2",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-scripts": "^3.4.3",
-    "soundtouchjs": "^0.1.23",
-    "whatwg-fetch": "^3.4.0"
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "react-scripts": "^3.4.4",
+    "soundtouchjs": "^0.1.24",
+    "whatwg-fetch": "^3.4.1"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -983,15 +983,17 @@ class App extends Component {
 
       this.params.count = 0
       this.params.startTime = context.currentTime
-      for (let beat = 0; beat < this.params.numerator; beat++) {
+
+      for (let notes = 0; notes < this.params.numerator; notes++) {
         event = clock.callbackAtTime(
            function (event) {
              this.playPattern(event.deadline)
            }.bind(this),
-          this.nextTick(beat)
+          this.nextTick(notes)
         ).repeat((this.params.numerator * 60.0) / clickPmin)
          .tolerance({early: early, late: late}) // tight early tolerance
-        this.tickEvents[beat] = event
+
+        this.tickEvents[notes] = event
       } // end for
 
       this.handleTimer({target: {name: 'startTimer'}})

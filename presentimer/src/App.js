@@ -188,14 +188,6 @@ class App extends Component {
 
         case 'Start':
           if (context.state === 'suspended') context.resume()
-
-          // Unlock iOS audio output
-          let buffer = context.createBuffer(1,1,44100) 
-          let source = context.createBufferSource()
-          source.buffer = buffer
-          source.connect (context.destination)
-          source.start()
-          
           this.setState({timerStyle: {color: 'blue'}})
           this.params.beginTime = context.currentTime
 
@@ -213,7 +205,7 @@ class App extends Component {
         break;
 
         case 'Cont.':
-          if (context.state === 'running') context.resume()
+          if (context.state !== 'running') context.resume()
           this.setState({startButtonStr: 'Pause'})
         break;
         default:
@@ -274,8 +266,8 @@ class App extends Component {
       timerStr = ('00' + parseInt(left/60,10)).slice(-2) 
            + ':' + ('00' + parseInt(left % 60,10)).slice(-2) 
       if (parseInt(left - this.params.warningTime*60) === 0){
-           this.playSound(1)
-           this.setState({timerStyle: {color: 'orange'}})
+         this.playSound(1)
+         this.setState({timerStyle: {color: 'orange'}})
       }
     } else if (currentSec <= this.params.presentationTime*60){
       let left = this.params.presentationTime*60 - currentSec
@@ -307,15 +299,15 @@ class App extends Component {
 
   playSound(phase){
 
-    if (this.params.sound === 'mute') return;
+    if (this.params.sound === 'Mute') return;
 
     let sound
     switch (this.params.sound){
       case 'cowbell_mid': sound = this.soundList[0]; break;
       case 'cowbell_high': sound = this.soundList[1]; break;
-      case 'cowbell_rideCup': sound = this.soundList[2]; break;
-      case 'cowbell_church': sound = this.soundList[3]; break;
-      case 'cowbell_hotel': sound = this.soundList[4]; break;
+      case 'rideCup': sound = this.soundList[2]; break;
+      case 'church': sound = this.soundList[3]; break;
+      case 'hotel': sound = this.soundList[4]; break;
       default:
         sound = null;
     }
