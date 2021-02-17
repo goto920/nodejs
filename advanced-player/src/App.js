@@ -78,6 +78,7 @@ class App extends Component {
     }
 
     this.loadFile = this.loadFile.bind(this);
+    this.loadModule = this.loadModule.bind(this);
     this.handleLang = this.handleLang.bind(this);
     this.handleTimeRange = this.handleTimeRange.bind(this);
     this.handleVolumeSlider = this.handleVolumeSlider.bind(this);
@@ -267,7 +268,8 @@ class App extends Component {
             // effector = null;
           }
 
-           // load effect module    
+          // load effect module    
+          console.log('audio file loaded');
           if (!this.state.modLoaded) 
              this.setState({modLoaded: this.loadModule()});
 
