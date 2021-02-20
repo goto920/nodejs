@@ -79,9 +79,6 @@ class App extends Component {
 
   componentDidMount () { // after render()
     audioCtx = new window.AudioContext()
-    if (audioCtx.audioWorklet) 
-       console.log ('audioWorklet exists!')
-    else console.log ('audioWorklet not found')
     gainNode = audioCtx.createGain()
     window.addEventListener('beforeClosing', this.handleWindowClose)
   }
@@ -248,6 +245,10 @@ class App extends Component {
    this.params.filename = file.name;
 
    let reader = new FileReader()
+
+   if (audioCtx) audioCtx.close();
+   audioCtx = new window.AudioContext()
+   gainNode = audioCtx.createGain()
 
    reader.onload = function (e) {
 
