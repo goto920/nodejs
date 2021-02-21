@@ -334,7 +334,7 @@ class Effector {
 
       for (let time = 0; time < buflen; time++){ // buflen (max 17)
         powerArrayL.push(fftObjBuffer[time].power[0][freqBin]);
-        powerArrayR.length = 0;
+        // powerArrayR.length = 0;
         powerArrayR.push(fftObjBuffer[time].power[1][freqBin]);
       }
 
