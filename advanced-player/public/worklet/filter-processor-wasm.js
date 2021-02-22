@@ -29,7 +29,7 @@
  */
 
 import { FFTR } from 'kissfft-js';
-// import Windowing from 'fft-windowing'; // did not work in worklet
+import Module from './wasm/process_fft'; 
 
 class FilterProcessor extends AudioWorkletProcessor {
 
@@ -39,6 +39,9 @@ class FilterProcessor extends AudioWorkletProcessor {
     this.sampleRate = options.processorOptions.sampleRate;
     this.fftShift   = options.processorOptions.fftShift; 
     // 512 windowSize = 2*512 = 1024
+
+    this.processFFT = new Module.ProcessFFT(2*this.fftShift);
+
     this.ioSize  = 128; // # samples per process (from the spec)
     console.log('Worklet options: ' + this.sampleRate + ' ' + this.fftShift);
 
@@ -148,19 +151,30 @@ class FilterProcessor extends AudioWorkletProcessor {
       // console.log('FFT ibuf len = ', this.inputBuffer[0].length);
 
     // FFT forward
-    /*
-      const fftCoef = this.justFFT(this.inputBuffer);
+      let fftCoef = this.justFFT(this.inputBuffer);
       this.inputBuffer[0].splice(0,this.fftShift); 
       this.inputBuffer[1].splice(0,this.fftShift);
-    */
-      const fftObj = this.calcFFT(this.inputBuffer);
-      // Shift by deleting fftShift samples from the head
-      this.inputBuffer[0].splice(0,this.fftShift); 
-      this.inputBuffer[1].splice(0,this.fftShift);
+     
+if (true) {
+      let vec = this.processFFT.returnVector();
+      // prepare float vector for C++ class method arg
+      for (let i = 0; i < fftCoef[0].length; i++)  
+        vec.push_back(fftCoef[0][i]);
+      for (let i = 0; i < fftCoef[1].length; i++) 
+        vec.push_back(fftCoef[1][i]);
 
-      if (fftObj === null) return true;
-      const fftCoef = this.fftFilter(fftObj);
+      const ret = this.processFFT.process(vec);
 
+      // extract data from returned float vector
+      for (let i = 0; i < ret.size()/2; i++) 
+         fftCoef[0][i] = ret.get(i);
+      for (let i = ret.size()/2; i < ret.size(); i++) 
+         fftCoef[1][i-ret.size()/2] = ret.get(i);
+
+      vec.delete();
+      ret.delete(); 
+}
+      
     // Inverse
     const pcmData = [  
       this.fftr.inverse(fftCoef[0]).map(x => x/(2*this.fftShift)), 
@@ -196,120 +210,6 @@ class FilterProcessor extends AudioWorkletProcessor {
     return true;
   } // end process()
 
-  calcFFT (inputSamples){
-
-    const fftCoef = [
-      this.fftr.forward(this.applyHannWindow(inputSamples[0])).slice(),
-      this.fftr.forward(this.applyHannWindow(inputSamples[1])).slice()
-    ]; // 0: Left, 1: Right
-
-    const power = [
-        new Float32Array(this.fftShift + 1),
-        new Float32Array(this.fftShift + 1) 
-    ]; // 0: Left, 1: Right plus1 for DC
-    
-    for (let freqBin = 0; freqBin <= this.fftShift; freqBin++){
-      power[0][freqBin] = fftCoef[0][2*freqBin]* fftCoef[0][2*freqBin]
-               + fftCoef[0][2*freqBin+1]* fftCoef[0][2*freqBin+1]
-      power[1][freqBin] = fftCoef[1][2*freqBin]* fftCoef[1][2*freqBin]
-               + fftCoef[1][2*freqBin+1]* fftCoef[1][2*freqBin+1]
-     }
-
-     const fftObj = {
-       fftCoef: fftCoef,
-       pan: [],
-       power: power,
-       percL: [],
-       percR: []
-     }
-
-     this.calcPan(fftObj); // values returned in fftObj
-     this.fftObjBuffer.push(fftObj); // append to the buffer
-
-     const fftObjRet = this.calcPerc(this.fftObjBuffer); 
-      // fftObj returned if there are enough samples
-     return fftObjRet;
-
-   } // end calcFFT
-
-   calcPan (fftObj) {
-
-     const fft = fftObj.fftCoef;
-     const numCoef = fft[0].length/2;
-     const pan = new Float32Array(numCoef);
-     const panAmp = new Float32Array(numCoef);
-
-/*
-  Note: frequency-domain data is stored from dc up to 2pi. 
-  so cx_out[0] is the dc bin of the FFT and cx_out[nfft/2] is 
-  the Nyquist bin (if exists)
-*/
-
-//    console.log('numCoef', numCoef);
-
-    for(let freqBin = 0; freqBin < numCoef; freqBin++){
-      const base = 2*freqBin; 
-
-      const innerProd 
-          = fft[0][base]*fft[1][base] + fft[0][base+1]*fft[1][base+1]
-      const crossProd 
-          = fft[0][base]*fft[1][base+1] - fft[0][base+1]*fft[1][base]
-         // Don't forget minus
-
-      const abs = Math.sqrt(
-         Math.pow(fft[0][base] + fft[1][base],2)
-       + Math.pow(fft[0][base+1] + fft[1][base+1],2)
-      );
-
-      const absL = Math.sqrt( 
-          Math.pow(fft[0][base],2) + Math.pow(fft[0][base+1],2));
-      const absR = Math.sqrt(
-          Math.pow(fft[1][base],2) + Math.pow(fft[1][base+1],2));
-      const absLR = Math.sqrt(
-        Math.pow(fft[0][base] - fft[1][base],2)
-        + Math.pow(fft[0][base+1] - fft[1][base+1],2)
-      );
-
-      let frac = 0; 
-      if (absL < absR){
-        if (innerProd < 0) {
-          frac = 0;
-          panAmp[freqBin] = (absLR - absL)/abs;
-        } else if (innerProd <= absR*absR) {
-          frac = innerProd/(absR*absR); 
-          panAmp[freqBin] = Math.max(absL,absLR) - Math.abs(crossProd)/absR; 
-        } else {
-          frac = 1;
-          panAmp[freqBin] = absL - absLR;
-        }
-        pan[freqBin] = (1-frac)/(1+frac);
-        // console.log('bin, fracA', freqBin, frac);
-
-      } else { // absL >= absR
-        if (innerProd < 0) {
-          frac = 0;
-          panAmp[freqBin] = (absLR - absR)/abs;
-        } else if (innerProd <= absL*absL) {
-          frac = innerProd/(absL*absL); 
-          panAmp[freqBin] = Math.max(absR,absLR) - Math.abs(crossProd)/absL; 
-        } else {
-          frac = 1;
-          panAmp[freqBin] = absR - absLR;
-        }
-
-        pan[freqBin] = (frac-1)/(1+frac);
-      } // console.log('bin, fracB', freqBin, frac);
-
-      if (isNaN(pan[freqBin])) pan[freqBin] = 0;
-      if (isNaN(panAmp[freqBin])) panAmp[freqBin] = 0;
-    } // end for freqBin
-
-    fftObj.pan = pan;
-    fftObj.panAmp = panAmp;
-
-    return;
-
-  } // end calcPan()
 
   calcPerc(fftObjBuffer){
 

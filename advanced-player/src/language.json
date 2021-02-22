@@ -1,10 +1,12 @@
 {
   "us": {
+   "sorry": "Sorry, this program does not work on your web browser because AudioWorklet is missing",
    "title": "KG's Filtering Player",
    "guide": "guide/update",
    "homepage": "https://goto920.github.io/demos/advanced-player/"
   },
   "ja" : {
+   "sorry": "すみません。AudioWorkletがないので、このプログラムはあなたのwebブラウザでは動きません。",
    "title": "KG's フィルタリングプレイヤー",
    "guide": "ガイド/更新",
    "homepage": "https://goto920.github.io/demos/advanced-player/index-jp.html"

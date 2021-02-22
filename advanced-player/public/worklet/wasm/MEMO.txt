@@ -1,0 +1,9 @@
+#emcc --bind -o process_fft.js ProcessFFT.cpp 
+
+Makefile (-O2 does not work)
+
+latencyHints
+
+http://kapadia.github.io/emscripten/2013/09/13/emscripten-pointers-and-pointers.html
+
+https://web.dev/profiling-web-audio-apps-in-chrome/
