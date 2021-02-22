@@ -94,7 +94,9 @@ class App extends Component {
   }
 
   componentDidMount () { // after render()
-    audioCtx = new window.AudioContext();
+    audioCtx = new window.AudioContext({
+      latencyHint: "playback"
+    });
     gainNode = audioCtx.createGain();
     window.addEventListener('beforeClosing', this.handleWindowClose);
   }
