@@ -59,7 +59,6 @@ class App extends Component {
       isBatchPlaying: false,
       isRendering: false,
       playStartTime: 0,
-      effectNode: null,
       fftShift: 512,
       sliderTimer: null, 
     }
@@ -89,7 +88,7 @@ class App extends Component {
     this.handleVolumeSlider = this.handleVolumeSlider.bind(this);
     this.handlePlay = this.handlePlay.bind(this);
     // this.handleSave = this.handleSave.bind(this);
-    // this.selectFilter = this.selectFilter.bind(this);
+    this.selectFilter = this.selectFilter.bind(this);
     // this.fakeDownload = this.fakeDownload.bind(this);
     this.updateTime = this.updateTime.bind(this);
   }
@@ -379,20 +378,32 @@ class App extends Component {
 
 // PlayThread
        this.params.isPlaying = true;
-       const effectNode = new AudioWorkletNode(
+
+       const effectorNode = new AudioWorkletNode(
          this.audioCtx,'filter-processor', {  
            processorOptions: {
              sampleRate: this.params.inputAudio.sampleRate,
              fftShift: this.params.fftShift
            }
        });
-       this.params.effectNode = effectNode;
+       // presetFilter
+
+       const message = {  
+          function: 'presetFilter',
+          type: this.state.filterType, arg: this.state.centerWidth }
+
+       console.log('sent: ', message);
+       effectorNode.port.postMessage(message);
+       effectorNode.port.onmessage = (e) => 
+            console.log('recvd: ', e.data);
+
+       this.effectorNode = effectorNode;
        const source = this.audioCtx.createBufferSource();
        this.params.currentSource = source;
        source.buffer = this.params.inputAudio;
 
-       source.connect(effectNode);
-       effectNode.connect(this.gainNode);
+       source.connect(effectorNode);
+       effectorNode.connect(this.gainNode);
        this.gainNode.connect(this.audioCtx.destination);
        source.start(0,this.state.playingAt,this.state.B - this.state.playingAt);
 
@@ -436,31 +447,29 @@ class App extends Component {
 
   selectFilter(e){
 
-    if (e.target.name === 'selectFilter' && this.effector !== null) {
-
-      switch(e.target.value){
-        case 'drumCover': 
-        case 'karaokeMale': 
-        case 'karaokeFemale': 
-          this.effector.presetFilter(e.target.value, this.state.centerWidth);
-        break;
-        case 'percussive': case 'harmonic':
-          this.effector.presetFilter(e.target.value, 0);
-        break;
-        case 'bypass': 
-        case 'customWithGUI': 
-          this.effector.presetFilter('bypass', 0);
-        break; // customWithGUI not implemented
-        default:
-      }
-
+    if (e.target.name === 'selectFilter'){
       this.setState({filterType: e.target.value});
+      if (this.effectorNode !== null) {
+        this.effectorNode.port.postMessage({
+          function: 'presetFilter',
+          type: e.target.value, 
+          arg: this.state.centerWidth  
+        });
+        this.effectorNode.port.onmessage = (e) => console.log(e.data);
+      }
     } 
 
-    if (e.target.name === 'centerWidth' 
-       && this.effector !== null && this.state.filterType !== null) {
-       this.effector.presetFilter(this.state.filterType, parseFloat(e.target.value));
+    if (e.target.name === 'centerWidth' && this.state.filterType !== null) {
        this.setState({centerWidth: parseFloat(e.target.value)});
+
+       if (this.effectorNode !== null) {
+         this.effectorNode.port.postMessage({
+           function: 'presetFilter',
+           type: this.state.filterType,
+           arg: parseFloat(e.target.value)
+         });
+         this.effectorNode.port.onmessage = (e) => console.log(e.data);
+       }
     }
 
   } // End selectFilter()

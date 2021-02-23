@@ -53,21 +53,27 @@ class FilterProcessor extends AudioWorkletProcessor {
     this.filterChain = [];
        // fromPan, fromFreq, toPan, toFreq, action 
        // ('T': through, 'M': mute, 'P': percussive, 'H': harmonic)
-    // this.port.onmessage = this.onmessage.bind(this);
-  } // end constructor()
 
-  onmessage(event) {
-    const { data } = event;
-    this.isPlaying = data; 
-  }
+
+    this.port.onmessage = (e) => {
+      const { data } = e;
+      console.log('worklet recvd: ', data);
+      const res = {type: 'return', arg: ''};
+      switch(data.function){
+        case 'presetFilter':
+          this.presetFilter(data.type, data.arg); res.arg = 'OK'; break;
+        default: res.arg = 'NG';
+      }
+      this.port.postMessage(res);
+    } // end onmessage() (should be in the constructor)
+
+  } // end constructor()
 
   applyHannWindow(input){
     const retval = input;
     retval.map ((x,index) => x*this.hannWindow[index]);
     return retval;
   }
-
-  
 
   addFilter(fromPan, fromFreq, toPan, toFreq, action){ 
 
@@ -90,7 +96,7 @@ class FilterProcessor extends AudioWorkletProcessor {
   presetFilter(type, option){
 
      this.clearAllFilter();
-     //console.log('filter, option ', type, option);
+     console.log('filter, option ', type, option);
 
      let width;
      switch (type){
@@ -148,18 +154,21 @@ class FilterProcessor extends AudioWorkletProcessor {
       // console.log('FFT ibuf len = ', this.inputBuffer[0].length);
 
     // FFT forward
-    /*
+
+    /* // fot Test
       const fftCoef = this.justFFT(this.inputBuffer);
       this.inputBuffer[0].splice(0,this.fftShift); 
       this.inputBuffer[1].splice(0,this.fftShift);
     */
-      const fftObj = this.calcFFT(this.inputBuffer);
-      // Shift by deleting fftShift samples from the head
-      this.inputBuffer[0].splice(0,this.fftShift); 
-      this.inputBuffer[1].splice(0,this.fftShift);
 
-      if (fftObj === null) return true;
-      const fftCoef = this.fftFilter(fftObj);
+    // process effect
+    const fftObj = this.calcFFT(this.inputBuffer);
+      // Shift by deleting fftShift samples from the head
+    this.inputBuffer[0].splice(0,this.fftShift); 
+    this.inputBuffer[1].splice(0,this.fftShift);
+    if (fftObj === null) return true;
+
+    const fftCoef = this.fftFilter(fftObj);
 
     // Inverse
     const pcmData = [  
@@ -379,7 +388,7 @@ class FilterProcessor extends AudioWorkletProcessor {
     const percL = fftObj.perc[0];
     const percR = fftObj.perc[1];
 
-    return [fftL, fftR]; // for test
+    // return [fftL, fftR]; // for test
 
     let outL = fftL.slice();
     let outR = fftR.slice();
