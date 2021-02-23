@@ -253,7 +253,7 @@ class App extends Component {
     }
 
     this.audioCtx = new AudioContext({
-      latencyHint: 10.0
+      latencyHint: "playback"
     }
     );
     this.gainNode = this.audioCtx.createGain();

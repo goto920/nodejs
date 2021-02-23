@@ -84,3 +84,14 @@ npm install esmify --save-dev
 
   browserify index.js -p esmify > bundle.js
 Error: Cannot find module 'browser-resolve'
+++++++++++++++++++++++++++++++++++++++
+WASM module
+emcc -O2 does not work
+
+Run on https server
+HTTPS=true npm start
+or sudo https-serve (in build)
+
+npm install -g https-serve
+key generation
++++++++++++

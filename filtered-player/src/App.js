@@ -94,10 +94,6 @@ class App extends Component {
   }
 
   componentDidMount () { // after render()
-    audioCtx = new window.AudioContext({
-      latencyHint: "playback"
-    });
-    gainNode = audioCtx.createGain();
     window.addEventListener('beforeClosing', this.handleWindowClose);
   }
  
@@ -113,12 +109,6 @@ class App extends Component {
       duration = this.params.inputAudio.duration;
 
     let startBStyle = {};
-/*
-    if (this.state.startButtonStr === 'Pause'
-       || this.state.processtBatchButtonStr === 'Abort'
-       || this.state.playBatchButtonStr === 'Pause'
-       ) startBStyle = {color: 'green'};
-*/
 
     const rangeStyle = {width: '85%', cursor: 'pointer'};
     const dotted = {border: 'none', borderTop: '1px dotted blue'};
@@ -230,6 +220,11 @@ class App extends Component {
 
     let file = e.target.files[0]; 
     this.params.filename = file.name;
+
+    if (audioCtx === null) {
+      audioCtx = new window.AudioContext({ latencyHint: "playback" });
+      gainNode = audioCtx.createGain();
+    }
  
     let reader = new FileReader();
     reader.onload = function(e) {

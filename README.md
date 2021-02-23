@@ -2,7 +2,7 @@
 
 Programming practice for nodejs and react application
 
-1. Pure JavaScript Applications
+1. Pure JavaScript Applications (now in separate repositories)
 
 - [metronome](metronome)      -- simple metronome using React and Web Audio API
 - [presentimer](presentimer)    -- presentation timer (keep time of talk and Q and A)
@@ -10,7 +10,7 @@ Programming practice for nodejs and react application
 
 
 -----------------------
-2. feedbackBooster 
+2. feedbackBooster (now in a separate repository)
 
 - User Interface for Feedback Booster written in Java
 - Java program runs on the JavaScript express server 

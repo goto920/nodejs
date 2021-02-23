@@ -1,4 +1,3 @@
-// import {RFFT} from 'fftw-js'; // fftw-js
 import {FFTR} from 'kissfft-js';
 import Windowing from 'fft-windowing';
 
@@ -8,7 +7,6 @@ class Effector {
     this.shiftSize = shiftSize;
     this.sampleRate = sampleRate;
 
-//    this.rfft = new RFFT(2*this.shiftSize); // fftw-js
     this.rfft = new FFTR(2*this.shiftSize); // kissfft-js
 
     this.fftObjBuffer = []; // up to 17
@@ -17,9 +15,11 @@ class Effector {
     this.lastInput[0] = new Float32Array(shiftSize).fill(0);
     this.lastInput[1] = new Float32Array(shiftSize).fill(0);
 
-    this.lastOut = [];
-    this.lastOut[0] = new Float32Array(shiftSize).fill(0);
-    this.lastOut[1] = new Float32Array(shiftSize).fill(0);
+    this.lastOut = [[],[]];
+/*
+    this.lastOut[0] = new Float32Array(2*shiftSize).fill(0);
+    this.lastOut[1] = new Float32Array(2*shiftSize).fill(0);
+*/
 
     this.filterChain = []; 
        // fromPan, fromFreq, toPan, toFreq, action 
@@ -149,26 +149,33 @@ class Effector {
        pcmData[1] = this.rfft.inverse(fftCoef[1]).slice();
 
        // console.log(pcmData[0]);
-
     } else {
        // console.log ('fftObj is null');
-       pcmData[0] = new Float32Array(this.shiftSize*2 + 2).fill(0);
-       pcmData[1] = new Float32Array(this.shiftSize*2 + 2).fill(0);
+       pcmData[0] = new Float32Array(this.shiftSize*2).fill(0);
+       pcmData[1] = new Float32Array(this.shiftSize*2).fill(0);
     }
 
 // Add two outputs in overlapped hann window 
+    const base = Math.max(0,this.lastOut[0].length - this.shiftSize);
     for(let channel = 0; channel <= 1; channel++){
-      let outputData = outputBuffer.getChannelData(channel);
+      for (let sample = 0 ; sample < this.shiftSize; sample++)
+       this.lastOut[channel][base + sample]
+           += pcmData[channel][sample]/(2*this.shiftSize);
 
-      for (let sample = 0; sample < this.shiftSize; sample++)
-         outputData[sample] = this.lastOut[channel][sample] 
-           + pcmData[channel][sample]/(2*this.shiftSize);
+      for (let sample = this.shiftSize; sample < 2*this.shiftSize; sample++)
+         this.lastOut[channel].push(
+           pcmData[channel][sample]/(2*this.shiftSize));
+    }
 
-      for (let sample = 0; sample < this.shiftSize; sample++)
-         this.lastOut[channel][sample] 
-           = pcmData[channel][this.shiftSize + sample]/(2*this.shiftSize);
-      // store latter half of fft inverse output
+    if (this.lastOut[0].length < 64*this.shiftSize) return;
 
+    for(let channel = 0; channel <= 1; channel++){
+      const outputData = outputBuffer.getChannelData(channel);
+
+      for (let sample = 0; sample < 2*this.shiftSize; sample++)
+        outputData[sample] = this.lastOut[channel][sample];
+
+      this.lastOut[channel].splice(0,this.shiftSize);
     }
 
     return;

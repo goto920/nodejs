@@ -198,7 +198,8 @@ if (true) {
     } // end if (this.inputBuffer[0].length >= 2*this.fftShift)
 
     // no output because the last fftShift samples are to be overlaped
-    if (this.outputBuffer[0].length < this.fftShift) return true;
+    // add delay
+    if (this.outputBuffer[0].length < 64*this.fftShift) return true;
 
     // output 128 (this.ioSize) samples
     output[0].set(this.outputBuffer[0].slice(0,this.ioSize));
