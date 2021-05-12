@@ -1,28 +1,53 @@
-//#include <emscripten/bind.h>
-//#include <emscripten/emscripten.h>
+#include <emscripten/bind.h>
 #include <vector>
 #include <iostream>
 #include <cmath>
 #include <algorithm>
 
-// using namespace emscripten;
+using namespace emscripten;
 
 class ProcessFFT {
 
 public:
   ProcessFFT(int windowSize, float sampleRate) 
-     : windowSize(windowSize), sampleRate(sampleRate) {}
-
-  float* process(float* &input){
-    return input;
+     : windowSize(windowSize), sampleRate(sampleRate) {
   }
 
-  void presetFilter(const char* type, const float option){
+  std::vector<float> process(std::vector<float> &inVector){
+
+    std::vector<float> left, right;
+    left.assign(inVector.begin(), 
+      inVector.begin() + inVector.size()/2);
+    right.assign(inVector.begin() + inVector.size()/2, 
+      inVector.end());
+
+/*
+      FFTObj *fftObj = new FFTObj(left,right);
+      calcPan(fftObj);
+      FFTObj* ret = calcPerc(fftObj);
+      ret = applyFilter(ret);
+      delete ret;
+*/
+
+    std::vector<float> outVector(2*(windowSize+1));
+    int range = outVector.size();
+    for (int i = 0; i < range/2; i++) outVector[i] = left[i];
+    for (int i = range/2; i < range; i++) outVector[i] = right[i-range/2];
+
+    return outVector;
   }
+
+  std::vector<float> getVector(){ 
+    const std::vector<float> v (2*(windowSize+1));
+    return v;
+  }
+
+  void presetFilter(const std::string type, const float option){}
 
 private:
   int windowSize;
   float sampleRate;
+  std::vector<float> inVector, outVector;
 
   class FFTObj {
     friend class ProcessFFT;
@@ -62,7 +87,6 @@ private:
   };
 
   std::vector<Filter *> filterChain;
-
 
   void calcPan(FFTObj* &fftObj){
     const int numCoef = fftObj->left.size()/2;
@@ -239,14 +263,12 @@ private:
 
 };
 
-/*
 EMSCRIPTEN_BINDINGS(process_fft_class) {
   class_<ProcessFFT>("ProcessFFT")
     .constructor<int,float>()
     .function("process", &ProcessFFT::process)
-    .function("returnVector", &ProcessFFT::returnVector)
+    .function("getVector", &ProcessFFT::getVector)
     .function("presetFilter", &ProcessFFT::presetFilter)
     ;
   register_vector<float>("vectorFloat");
 }
-*/

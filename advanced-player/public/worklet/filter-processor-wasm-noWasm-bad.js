@@ -29,7 +29,7 @@
  */
 
 import { FFTR } from 'kissfft-js';
-import Module from './wasm/process_fft'; 
+import { ProcessFFT } from './wasm/process_fft'; 
 
 class FilterProcessor extends AudioWorkletProcessor {
 
@@ -40,9 +40,8 @@ class FilterProcessor extends AudioWorkletProcessor {
     this.fftShift   = options.processorOptions.fftShift; 
     // 512 windowSize = 2*512 = 1024
 
-    this.processFFT = new Module.ProcessFFT(
+    this.processFFT = new ProcessFFT(
           2*this.fftShift, parseFloat(this.sampleRate));
-    this.arg = this.processFFT.getInVector();
 
     this.ioSize  = 128; // # samples per process (from the spec)
     console.log('Worklet options: ' + this.sampleRate + ' ' + this.fftShift);
@@ -115,21 +114,9 @@ class FilterProcessor extends AudioWorkletProcessor {
      
 if (true) {
       // prepare float vector for C++ class method arg
-
-      // const vec = this.processFFT.returnVector();
-
-      const nsamples = fftCoef[0].length;
-      for (let i = 0; i < 2*nsamples; i++){ 
-        if (i < nsamples) {
-          // vec.push_back(fftCoef[0][i]);
-          this.arg.set(i,fftCoef[0][i]);
-        } else { 
-          // vec.push_back(fftCoef[1][i-nsamples]);
-          this.arg.set(i,fftCoef[1][i-nsamples]);
-        }
-      }
-      const ret = this.processFFT.process(this.arg);
-      // const ret = this.processFFT.process(vec); vec.delete();
+      const ret = this.processFFT.process([...fftCoef[0],...fftCoef[1]]);
+      fftCoef[0].set(ret.subarray(0, ret.length/2));
+      fftCoef[1].set(ret.subarray(ret.length/2,ret.length));
 
       // extract data from returned float vector
       for (let i = 0; i < ret.size(); i++) {

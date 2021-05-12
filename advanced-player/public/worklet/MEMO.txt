@@ -5,3 +5,11 @@ https://bl.ocks.org/jonathanlurie/e4aaa37e2d9c317ce44eae5f6011495d
 
 latencyHint: 0.5
 https://developer.mozilla.org/en-US/docs/Web/API/AudioContextOptions
+
+vector at JS side
+    get
+    push_back
+    resize
+    set
+    size
+

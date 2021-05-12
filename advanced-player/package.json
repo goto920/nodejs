@@ -1,7 +1,7 @@
 {
   "name": "advanced-player",
   "version": "0.1.0",
-  "subversion": "20210221-00",
+  "subversion": "20210224-00",
   "private": true,
   "homepage": ".",
   "dependencies": {
@@ -9,6 +9,7 @@
     "@testing-library/react": "^11.2.5",
     "@testing-library/user-event": "^12.6.3",
     "audiobuffer-to-wav": "^1.0.0",
+    "fft-windowing": "^0.1.4",
     "file-saver": "^2.0.5",
     "kissfft-js": "^0.1.8",
     "rc-slider": "^9.7.1",

@@ -1,15 +1,18 @@
 DEPS = ProcessFFT.cpp
 
 build: $(DEPS)
-	@emcc --bind -O1 \
+	@emcc -O1 \
 	-s WASM=1 \
 	-s BINARYEN_ASYNC_COMPILATION=0 \
 	-s DISABLE_EXCEPTION_CATCHING=0 \
 	-s SINGLE_FILE=1 \
 	-s ASSERTIONS=1 \
-	ProcessFFT-embind.cpp \
-	-o process_fft.js \
-	--post-js ./post-export.js
+	-s 'EXTRA_EXPORTED_RUNTIME_METHODS=["ccall", "cwrap"]' \
+	-s 'EXPORTED_FUNCTIONS=["ProcessFFT::_process","ProcessFFT::_presetFilter"]' \
+	ProcessFFT.cpp \
+	-o process_fft.js
+
+#	--post-js ./post-cwrap.js
 
 clean:
 	@rm -f process_filter.js
